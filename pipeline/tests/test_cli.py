@@ -1,4 +1,4 @@
-"""명령행 진입점과 미구현 단계의 산출물 보호를 검증한다."""
+"""명령행 진입점과 오류 시 오래된 산출물 사용 방지를 검증한다."""
 
 import subprocess
 import sys
@@ -14,11 +14,14 @@ def test_help() -> None:
     assert b"--out" in result.stdout
 
 
-def test_unimplemented_processing_does_not_create_output(tmp_path) -> None:
+def test_invalid_input_writes_report_and_removes_stale_output(tmp_path) -> None:
     output = tmp_path / "processed"
+    output.mkdir()
+    (output / "profiles.json").write_text("stale", encoding="utf-8")
     result = subprocess.run(
         [sys.executable, "-m", "appbti_pipeline", "--input", str(tmp_path), "--out", str(output)],
         capture_output=True,
     )
     assert result.returncode == 2
-    assert not output.exists()
+    assert not (output / "profiles.json").exists()
+    assert (output / "validation_report.json").exists()
