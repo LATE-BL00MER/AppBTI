@@ -1,0 +1,34 @@
+# 시연 전용 정의. 실제 제공처의 연령 구간·중분류·통계가 아니다.
+extends: codebook.yaml
+is_mock: true
+source: "가상 통계 · 2025년 1~6월 · 전국 설정 · A~F 가상 6집단"
+age_groups:
+  - {id: A, label: A집단}
+  - {id: B, label: B집단}
+  - {id: C, label: C집단}
+  - {id: D, label: D집단}
+  - {id: E, label: E집단}
+  - {id: F, label: F집단}
+minor_categories:
+  - {code: learn, name: 온라인 학습, major: 교육, description: "강의 듣기, 학습 콘텐츠 찾아보기"}
+  - {code: language, name: 외국어 학습, major: 교육, description: "단어 외우기, 회화 연습하기"}
+  - {code: video, name: 동영상, major: 엔터테인먼트, description: "짧은 영상부터 영화와 시리즈까지"}
+  - {code: music, name: 음악 감상, major: 엔터테인먼트, description: "음악이나 플레이리스트 듣기"}
+  - {code: fitness, name: 운동·건강, major: 스포츠/여가, description: "운동 기록, 건강 정보 살펴보기"}
+  - {code: travel, name: 여행·나들이, major: 스포츠/여가, description: "갈 곳 찾아보기, 여행 계획 세우기"}
+  - {code: shopping, name: 온라인 쇼핑, major: 쇼핑, description: "상품 검색, 가격 비교, 구매하기"}
+  - {code: secondhand, name: 중고 거래, major: 쇼핑, description: "중고 물품을 구경하거나 거래하기"}
+  - {code: message, name: 메신저, major: 온라인커뮤니케이션, description: "가족, 친구, 동료와 대화하기"}
+  - {code: community, name: 커뮤니티, major: 온라인커뮤니케이션, description: "관심사에 관한 글을 읽고 나누기"}
+  - {code: news, name: 뉴스 읽기, major: 뉴스/정보, description: "사회, 경제, 생활 소식 살펴보기"}
+  - {code: knowledge, name: 생활 정보, major: 뉴스/정보, description: "날씨, 요리, 생활에 필요한 정보 찾기"}
+metrics:
+  # 가상 데이터의 분모만 이용자로 정의한다. 실제 데이터는 확인 전까지 기본 설정 off.
+  avg_days_denominator: users
+  weighted_reference_days_enabled: true
+  daily_time:
+    enabled: true
+    source_unit: 분
+    definition: 사용하는 날의 하루 평균 이용시간
+    denominator: active_user_day
+    survey_definition_matches: true
