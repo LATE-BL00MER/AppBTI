@@ -1,5 +1,50 @@
 # 코드 리뷰 기록
 
+## 라운드 4 — 리뷰 대상: 13bd400..d64a01a (2026-10-27)
+
+### 요약
+R3 낮음 항목을 반영한 커밋 1개(d64a01a)를 리뷰했다. 도메인 규칙(3장) 위반은 없다.
+- 설정 검증: 활성 설정은 record의 compact 생성자에서 검증한다. Loader가 `RuntimeException`을 파일 경로가 포함된 `IOException`으로 감싸 기동을 중단하므로, 설정 오류가 더 이상 400(사용자 입력 오류)으로 내려가지 않는다.
+  계산기에서 빠진 검증(방식·정책·가중치)은 모두 생성자로 옮겨졌다. 비활성 설정은 계산 전에 `unavailable`로 반환되므로 검증하지 않은 값이 계산에 쓰이지 않는다.
+- 빈 `weights:`, 빈 YAML, `null`·음수·`.inf` 가중치, `minimum_categories` 누락·0을 테스트로 확인했다.
+- 0일 정책 문구: `zeroDaysPolicy`가 meta·questions에 내려가고, Survey와 AboutData가 exclude·include·미확정(null) 세 경우로 분기한다. 무응답은 정책과 관계없이 제외된다고 안내한다(3-3).
+- `include` 정책에서도 사용자 값과 집단 값의 차이를 `Math.min(1, …)`로 자르므로, 0일이 집단 범위 밖이어도 점수가 0~100 밖으로 나가지 않는다.
+- 결과 제목은 "내 응답 패턴은 ○○ 통계와 가장 닮았어요"로 바뀌었다. 조사 문제가 없어졌고, 개인 기록 분석으로 읽힐 여지도 줄었다(3-6).
+
+높음·중간은 없다.
+
+### 지적 사항
+LGTM — 수정 사항 없음 (낮음 2개는 선택 반영)
+
+- **R4-1 [낮음]** `backend/src/main/java/kr/ac/hansung/appbti/similarity/SimilaritySettings.java:21-33` — 활성 설정 검증이 코드북과 대조하지 않는다.
+  - 왜: (1) `weights`의 키가 코드북에 없는 중분류 코드(오타 등)여도 통과한다. 그러면 계산기 `getOrDefault(code, 1.0)`가 해당 중분류에 기본 가중치 1.0을 조용히 적용한다. (2) `minimum_categories`가 전체 중분류 수보다 커도 통과한다. 이 경우 모든 요청이 항상 "비교 불가"가 된다. 실제 설정을 채울 때 생기기 쉬운 실수인데 오류 없이 결과만 달라진다(3-7 교체 가능성). 현재 목업 설정은 `weights: {}`, `minimum_categories: 4`라서 영향이 없다.
+  - 제안: 설정과 Profile 메타가 모두 적재된 뒤 한 번 검사한다(예: Repository 적재 후 `@PostConstruct` 또는 별도 검증 Bean). 모르는 가중치 키와 `minimum_categories > minorCategories.size()`를 기동 오류나 최소한 경고 로그로 알린다.
+  - [반영 안 함: 현재 목업은 빈 가중치와 최소 4개/전체 12개로 유효하며 동작 영향이 없다. 실제 코드북과 비교 설정을 활성화하는 단계에서 분류 코드·개수 교차검증을 보강하는 후속 항목으로 남긴다.]
+- **R4-2 [낮음]** `backend/src/test/java/kr/ac/hansung/appbti/profile/ApiControllerTests.java:147-148` — 비활성 설정의 `zeroDaysPolicy: null`은 `/api/survey/questions`에서만 검증하고 `/api/meta`에서는 검증하지 않는다. 또 `jsonPath(...).isEmpty()`는 키가 `null`인 경우와 빈 문자열을 구분하지 않는다.
+  - 제안: `/api/meta`도 같은 단언에 넣는다. 키 존재와 null 값을 함께 확인하려면 `jsonPath("$.zeroDaysPolicy").value(org.hamcrest.Matchers.nullValue())`를 쓴다. 프론트는 키가 없어도(undefined) 미확정 문구로 떨어지므로 동작에는 문제가 없다.
+  - [반영 안 함: 현재 exclude·include 정책은 두 API에서 검증되고, 미확정 설정은 comparisons 비활성 상태로 안전하게 안내된다. 이번 LGTM 라운드는 종료하고 meta의 명시적 null 검증 강화는 후속 테스트 보강 항목으로 남긴다.]
+
+### 구현 담당 최종 확인
+
+- 이번 작업에서 Claude 리뷰를 2회(라운드 3·4) 받았고 최종 판정은 VERDICT: LGTM이다.
+- R3-1·4·5·6은 반영 후 재확인됐고, R3-2·3의 실제 형식 확인 보류는 리뷰어가 타당하다고 종결했다.
+- Python 17개, 백엔드 JUnit 17개 테스트 및 프론트 빌드가 통과했다. HTTP 검증 26개와 브라우저의 변경 문구도 확인했다.
+- R4-1·2는 낮음 선택 항목으로 위 사유를 기록했다. 기존 사용자 수정분인 scripts/review.ps1은 변경하거나 커밋하지 않았다.
+
+### 이전 라운드 미해결 항목
+- R3-1: [반영됨] 확인 완료. 빈 가중치 정규화, 적재 시 검증, 설정 오류 시 기동 중단이 테스트와 함께 구현됐다. **종결**.
+- R3-2: [반영 안 함] 시간 단위 열이 누락되면 시간 지표를 끄는 보수적 처리 유지 → 값이 틀리지 않고 안전하게 꺼지는 방향이다. 실제 코드북 수령 전에 보충 규칙을 추정하지 않겠다는 판단도 AGENTS.md의 "미확정 사항 임의 확정 금지"와 맞는다. **종결**. 실제 데이터 교체 라운드에서 단위 위치를 다시 확인한다.
+- R3-3: [반영 안 함] 기준월 `YYYY-MM` 엄격 검사 유지 → 형식이 다르면 수용 검사에서 멈추고 잘못된 계산으로 이어지지 않는다. 사유가 타당하다. **종결**. 실제 XLSX 수령 시 날짜 셀 여부를 확인해야 한다.
+- R3-4: [반영됨] 세 정책 상태별 문구와 API 테스트를 확인했다. **종결**.
+- R3-5: [반영됨] 제목 문구 변경을 확인했다. **종결**.
+- R3-6: [반영됨] 작업 트리에 잘못 생성된 임시 폴더가 없다(`git status --ignored` 확인). 남은 변경은 사용자 수정분인 `scripts/review.ps1`뿐이다. **종결**.
+
+### 테스트 결과
+`scripts/review.ps1`이 미리 실행한 결과를 옮긴다(리뷰어는 직접 실행하지 않음).
+- pipeline `.venv\Scripts\python.exe -m pytest -q`: **PASSED** — 17 passed (4.10s)
+- backend `gradlew.bat test --console=plain`: **PASSED** — BUILD SUCCESSFUL. `:test`가 UP-TO-DATE였다. 이번 커밋에서 바뀐 테스트 소스(`SimilaritySettingsTests`, `ApiControllerTests`)를 포함한 성공 결과가 이미 캐시돼 있었다는 뜻이다.
+- frontend `npm.cmd run build`: **PASSED** — `tsc --noEmit`와 vite 빌드 성공(603 modules)
+
 ## 라운드 3 — 리뷰 대상: d43a262..13bd400 (2026-10-27)
 
 ### 요약
