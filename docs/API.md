@@ -5,7 +5,7 @@
 
 | 메서드·경로 | 입력 | 응답 |
 |---|---|---|
-| GET `/meta` | dataset | 기간, 집단·분류 목록, 지표 가용 여부, isMock, source, availableDatasets |
+| GET `/meta` | dataset | 기간, 집단·분류 목록, 지표 가용 여부, comparisonEnabled, isMock, source, availableDatasets |
 | GET `/profiles` | month 생략 시 최신월 | month, profiles (Python 산출물 행) |
 | GET `/profiles/trend` | minor 필수 | minorCode, profiles, continuityBreaks |
 | GET `/survey/questions` | dataset | month, questions, maxDays, timeAvailable, minimumCategories |

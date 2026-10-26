@@ -28,6 +28,7 @@ public class ApiController {
         Map<String, Object> result = mapper.convertValue(meta, new TypeReference<LinkedHashMap<String, Object>>() {});
         result.put("availableDatasets", repository.availableDatasets());
         result.put("dataset", dataset);
+        result.put("comparisonEnabled", settings.forData(meta.isMock()).enabled());
         return result;
     }
 

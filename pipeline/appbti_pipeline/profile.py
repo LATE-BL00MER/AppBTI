@@ -13,7 +13,7 @@ def build_profiles(frame: pd.DataFrame, codebook: dict, report: dict) -> dict:
     metrics = codebook["metrics"]
     time = metrics["daily_time"]
     units = {"초": 1 / 60, "분": 1, "시간": 60, "seconds": 1 / 60, "minutes": 1, "hours": 60}
-    time_enabled = bool(time["enabled"] and time.get("definition") and time.get("denominator") and time.get("source_unit"))
+    time_enabled = bool(time["enabled"] and time.get("definition") and time.get("denominator") and time.get("source_unit") in units)
     frame["avg_daily_time"] = frame["avg_daily_time"] * frame["time_unit"].map(units) if time_enabled else float("nan")
     time_available = bool(frame["avg_daily_time"].notna().any())
     months = [str(m) for m in pd.period_range(codebook["period"]["start"], codebook["period"]["end"], freq="M")]

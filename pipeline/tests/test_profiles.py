@@ -63,7 +63,7 @@ def test_time_is_optional_and_units_are_converted(frame, book):
     assert build(frame, book)["meta"]["metrics"]["dailyTime"] is False
     timed = read_source(ROOT / "data/mock/with_time", book)
     original = float(timed.loc[0, "avg_daily_time"])
-    timed.loc[0, "time_unit"] = "秒未定義"
+    timed.loc[0, "time_unit"] = "미지원"
     assert validate(timed, book)["warnings"]
     assert build(timed, book)["profiles"][0]["avgDailyTime"] is None
     timed.loc[0, "time_unit"] = "초"
@@ -91,9 +91,9 @@ def test_duplicate_is_fatal(frame, book):
 
 def test_xlsx_and_name_mapping_without_codes(frame, book, tmp_path):
     renamed = deepcopy(book)
-    renamed["columns"]["別の基準月"] = renamed["columns"].pop("기준월")
+    renamed["columns"]["다른 기준월"] = renamed["columns"].pop("기준월")
     source = pd.read_csv(ROOT / "data/mock/basic/mock_usage.csv", encoding="utf-8-sig")
-    source = source.drop(columns="중분류 코드").rename(columns={"기준월": "別の基準月"})
+    source = source.drop(columns="중분류 코드").rename(columns={"기준월": "다른 기준월"})
     source.to_excel(tmp_path / "mock_test.xlsx", index=False)
     loaded = read_source(tmp_path, renamed)
     assert loaded["minor_code"].tolist() == frame["minor_code"].tolist()

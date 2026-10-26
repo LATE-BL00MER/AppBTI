@@ -29,7 +29,7 @@ class ApiControllerTests {
     }
 
     @Test void metadataAndQuestionsDescribeAvailableData() throws Exception {
-        mvc.perform(get("/api/meta")).andExpect(status().isOk()).andExpect(jsonPath("$.isMock").value(true)).andExpect(jsonPath("$.metrics.dailyTime").value(false));
+        mvc.perform(get("/api/meta")).andExpect(status().isOk()).andExpect(jsonPath("$.isMock").value(true)).andExpect(jsonPath("$.metrics.dailyTime").value(false)).andExpect(jsonPath("$.comparisonEnabled").value(true));
         mvc.perform(get("/api/survey/questions")).andExpect(status().isOk()).andExpect(jsonPath("$.questions.length()").value(6)).andExpect(jsonPath("$.timeAvailable").value(false));
     }
 
