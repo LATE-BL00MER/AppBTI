@@ -4,6 +4,9 @@ spring:
 server:
   port: 8080
 appbti:
-  # 4단계에서 적재한다. 경로는 backend 작업 디렉터리를 기준으로 한다.
+  # 경로는 backend 작업 디렉터리를 기준으로 한다. 실제 산출물 우선, 없으면 가상 산출물.
   profiles-path: ${APPBTI_PROFILES_PATH:../data/processed/profiles.json}
-  mock-profiles-path: ${APPBTI_MOCK_PROFILES_PATH:../data/mock/mock_profiles.json}
+  mock-profiles-path: ${APPBTI_MOCK_PROFILES_PATH:../data/processed/mock/profiles.json}
+  mock-time-profiles-path: ${APPBTI_MOCK_TIME_PROFILES_PATH:../data/processed/mock-time/profiles.json}
+  similarity-path: ${APPBTI_SIMILARITY_PATH:../config/similarity.yaml}
+  mock-similarity-path: ${APPBTI_MOCK_SIMILARITY_PATH:../config/similarity.mock.yaml}
