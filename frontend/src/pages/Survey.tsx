@@ -41,7 +41,7 @@ export default function Survey() {
         </fieldset>;
       })}
       <div className="survey-navigation"><button className="button secondary" disabled={step === 0} onClick={() => setStep(step - 1)}>이전 분야</button>{step < groups.length - 1 ? <button className="button primary" onClick={() => setStep(step + 1)}>다음 분야 <span aria-hidden="true">→</span></button> : <button className="button primary" onClick={() => navigate('/result')}>내 패턴 확인하기</button>}</div>
-      <div className="survey-tip"><strong>모든 문항에 답하지 않아도 괜찮아요.</strong><p>‘사용 안 함’과 무응답은 구분됩니다. 이용자 기준 평균과 직접 비교할 수 없는 0일 응답, 제공되지 않은 항목은 제외해요. 최소 {data.minimumCategories}개 항목이 비교 가능해야 결과를 볼 수 있습니다.</p></div>
+      <div className="survey-tip"><strong>모든 문항에 답하지 않아도 괜찮아요.</strong><p>‘사용 안 함’과 무응답은 구분됩니다. {data.zeroDaysPolicy === 'exclude' ? '현재 비교 설정에서는 0일 응답을 제외해요.' : data.zeroDaysPolicy === 'include' ? '현재 비교 설정에서는 0일 응답도 비교에 포함해요.' : '0일 응답의 처리 방식은 아직 미확정입니다.'} 무응답과 제공되지 않은 항목은 비교에서 제외해요. 최소 {data.minimumCategories}개 항목이 비교 가능해야 결과를 볼 수 있습니다.</p></div>
     </section>
   </div>;
 }

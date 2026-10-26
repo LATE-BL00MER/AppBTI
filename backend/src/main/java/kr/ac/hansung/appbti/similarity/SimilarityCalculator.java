@@ -42,9 +42,6 @@ public final class SimilarityCalculator {
         int answered = (int) answers.values().stream().filter(a -> a.days() != null).count();
         int minimum = settings.minimum_categories() == null ? minors.size() : settings.minimum_categories();
         if (!settings.enabled()) return unavailable(data, month, minimum, answered, List.of(), "비교 방식이 아직 확정되지 않았습니다. 집단별 탐색을 이용해 주세요.");
-        if (!"weighted_absolute_distance".equals(settings.method()) || !"min_max".equals(settings.normalization())
-                || !"joint".equals(settings.tie_policy()) || !Set.of("exclude", "include").contains(settings.zero_days_policy())
-                || minimum < 1) throw new IllegalArgumentException("지원하지 않는 유사도 설정입니다.");
         Map<String, Map<String, ProfileData.Row>> byCategory = new HashMap<>();
         data.profiles().stream().filter(r -> r.month().equals(month)).forEach(r ->
                 byCategory.computeIfAbsent(r.minorCode(), key -> new HashMap<>()).put(r.ageGroup(), r));
@@ -72,7 +69,6 @@ public final class SimilarityCalculator {
                     && meta.ageGroups().stream().allMatch(a -> group.get(a.id()).avgDailyTime() != null);
             double timeRange = compareTime ? range(group.values().stream().map(ProfileData.Row::avgDailyTime).toList()) : 0;
             Double weight = settings.weights().getOrDefault(minor.code(), 1.0);
-            if (weight == null || !Double.isFinite(weight) || weight < 0) throw new IllegalArgumentException("유사도 가중치가 올바르지 않습니다.");
             if ((dayRange == 0 && timeRange == 0) || weight == 0) {
                 excluded.add(new Excluded(minor.code(), minor.name(), "집단 차이가 없거나 가중치가 0인 항목"));
                 continue;

@@ -39,6 +39,17 @@ class ApiControllerTests {
         mvc.perform(get("/api/profiles/trend?minor=unknown")).andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").exists());
     }
 
+    @Test void zeroDaysPolicyIsExposedForBothPoliciesAndUndecidedSettings() throws Exception {
+        for (String policy : java.util.List.of("exclude", "include")) {
+            when(settings.forData(true)).thenReturn(new SimilaritySettings(true, "weighted_absolute_distance", "min_max",
+                    java.util.Map.of(), 4, "joint", policy, java.util.List.of()));
+            mvc.perform(get("/api/meta")).andExpect(status().isOk()).andExpect(jsonPath("$.zeroDaysPolicy").value(policy));
+            mvc.perform(get("/api/survey/questions")).andExpect(status().isOk()).andExpect(jsonPath("$.zeroDaysPolicy").value(policy));
+        }
+        when(settings.forData(true)).thenReturn(new SimilaritySettings(false, null, null, null, null, null, null, null));
+        mvc.perform(get("/api/survey/questions")).andExpect(status().isOk()).andExpect(jsonPath("$.zeroDaysPolicy").isEmpty());
+    }
+
     @Test void insufficientAndInvalidAnswersHaveDifferentResponses() throws Exception {
         mvc.perform(post("/api/survey/result").contentType("application/json").content("{\"answers\":[]}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("insufficient")).andExpect(jsonPath("$.scores").isEmpty());

@@ -5,10 +5,10 @@
 
 | 메서드·경로 | 입력 | 응답 |
 |---|---|---|
-| GET `/meta` | dataset | 기간, 집단·분류 목록, 지표 가용 여부, comparisonEnabled, isMock, source, availableDatasets |
+| GET `/meta` | dataset | 기간, 집단·분류 목록, 지표 가용 여부, comparisonEnabled, zeroDaysPolicy, isMock, source, availableDatasets |
 | GET `/profiles` | month 생략 시 최신월 | month, profiles (Python 산출물 행) |
 | GET `/profiles/trend` | minor 필수 | minorCode, profiles, continuityBreaks |
-| GET `/survey/questions` | dataset | month, questions, maxDays, timeAvailable, minimumCategories |
+| GET `/survey/questions` | dataset | month, questions, maxDays, timeAvailable, minimumCategories, zeroDaysPolicy |
 | POST `/survey/result` | 아래 본문 | status, reason, matches, scores, closest, farthest, excluded, comparedCategories, source |
 
 ```json
@@ -29,6 +29,9 @@ days=null은 무응답, days=0은 사용 안 함이다. 음수, 해당 월 일�
 같은 중분류의 일수·시간 차이를 평균한 뒤 설정 가중치로 합친다.
 패턴 유사도는 `100 × (1 - 가중 평균 거리)`이고 소수점 한 자리로 표시한다. 확률·정확도·실제 연령 추정이 아니다.
 0일은 시연 설정상 이용자 기준 평균과 직접 비교하지 않는다. 최소 4개 중분류가 필요하다.
+zeroDaysPolicy는 exclude(제외), include(비교 포함), null(미확정)이며 화면 설명은 서버 설정을 따른다.
+가중치가 빈 YAML 값이면 기본 가중치 설정인 빈 Map으로 정규화한다. 활성 설정의 미지원 방식·정책·잘못된 가중치는
+서버 기동 시 설정 파일 경로와 함께 실패시켜 사용자 입력 오류(400)와 구분한다.
 가까운 3개와 먼 3개는 중복 없이 선택한다. 공통 항목이 6개 미만이면 먼 항목 개수는 줄어든다.
 기준 변경 전후 시계열은 profiles의 segment로 분리하며, 빠진 달과 null은 선으로 잇지 않는다.
 

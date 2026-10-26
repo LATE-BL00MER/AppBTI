@@ -29,6 +29,7 @@ public class ApiController {
         result.put("availableDatasets", repository.availableDatasets());
         result.put("dataset", dataset);
         result.put("comparisonEnabled", settings.forData(meta.isMock()).enabled());
+        result.put("zeroDaysPolicy", settings.forData(meta.isMock()).zero_days_policy());
         return result;
     }
 
@@ -51,10 +52,12 @@ public class ApiController {
     public Map<String, Object> questions(@RequestParam(defaultValue = "basic") String dataset) {
         var data = repository.get(dataset);
         var config = settings.forData(data.meta().isMock());
-        return Map.of("month", data.meta().latestMonth(), "questions", data.meta().minorCategories(),
+        Map<String, Object> result = new LinkedHashMap<>(Map.of("month", data.meta().latestMonth(), "questions", data.meta().minorCategories(),
                 "maxDays", YearMonth.parse(data.meta().latestMonth()).lengthOfMonth(),
                 "timeAvailable", data.meta().metrics().timeComparable(),
-                "minimumCategories", config.minimum_categories() == null ? data.meta().minorCategories().size() : config.minimum_categories());
+                "minimumCategories", config.minimum_categories() == null ? data.meta().minorCategories().size() : config.minimum_categories()));
+        result.put("zeroDaysPolicy", config.zero_days_policy());
+        return result;
     }
 
     @PostMapping("/survey/result")
