@@ -1,0 +1,49 @@
+# 희망 제공 컬럼 기준의 초기 틀. 실제 코드북 수령 후 정의를 채운다.
+schema_version: 1
+columns:
+  기준월: month
+  연령대(6구간): age_group
+  대분류명: major
+  중분류 코드: minor_code
+  중분류명: minor_name
+  월간 유니크 이용자수: uu
+  월간 평균 이용일수: avg_days
+  일평균 이용시간: avg_daily_time
+  시간 단위: time_unit
+  데이터 상태: status
+  비고: note
+
+period:
+  start: "2025-01"
+  end: "2025-06"
+
+# TODO(확인 필요): 제공처의 기존 6구간 ID·구간명·경계와 중분류 정의
+age_groups: []
+minor_categories: []
+major_categories:
+  - 교육
+  - 엔터테인먼트
+  - 스포츠/여가
+  - 쇼핑
+  - 온라인커뮤니케이션
+  - 뉴스/정보
+
+statuses:
+  정상: normal
+  비공개: suppressed
+  결측: missing
+
+metrics:
+  # TODO(확인 필요): 평균 이용일수 분모
+  avg_days_denominator: null
+  weighted_reference_days_enabled: false
+  daily_time:
+    enabled: false
+    # TODO(확인 필요): 일평균 이용시간의 단위·정의·분모
+    source_unit: null
+    definition: null
+    denominator: null
+    target_unit: minutes
+
+# TODO(확인 필요): 분류·집계 기준이 변경되는 월
+continuity_breaks: []

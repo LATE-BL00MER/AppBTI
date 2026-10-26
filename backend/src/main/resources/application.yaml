@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: appbti-backend
+server:
+  port: 8080
+appbti:
+  # 4단계에서 적재한다. 경로는 backend 작업 디렉터리를 기준으로 한다.
+  profiles-path: ${APPBTI_PROFILES_PATH:../data/processed/profiles.json}
+  mock-profiles-path: ${APPBTI_MOCK_PROFILES_PATH:../data/mock/mock_profiles.json}

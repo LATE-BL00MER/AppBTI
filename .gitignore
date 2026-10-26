@@ -1,0 +1,35 @@
+# 실제 원본 및 파생 데이터는 공개 저장소에 포함하지 않는다.
+/data/raw/
+/data/processed/
+
+# 저장소 안에서 준비한 로컬 도구 및 캐시
+/.tools/
+/.cache/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Java / Gradle
+.gradle/
+build/
+out/
+*.class
+*.log
+
+# Node / Vite
+node_modules/
+dist/
+*.tsbuildinfo
+
+# 개인 환경 및 편집기
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

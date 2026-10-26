@@ -1,0 +1,17 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #17223b;
+  background: #f5f7fb;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.app-shell { max-width: 880px; margin: auto; padding: 24px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-weight: 700; }
+header span { font-size: 0.8rem; padding: 4px 12px; border-radius: 20px; background: #e4eafa; }
+main { margin: 48px 0; padding: clamp(20px, 5vw, 48px); background: white; border-radius: 20px; }
+h1 { font-size: clamp(2rem, 8vw, 3.5rem); margin: 8px 0 24px; line-height: 1.2; }
+.eyebrow { color: #3958a8; font-weight: 600; }
+footer { font-size: 0.85rem; color: #526078; }
