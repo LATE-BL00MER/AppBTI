@@ -1,5 +1,40 @@
 # 코드 리뷰 기록
 
+## 라운드 2 — 리뷰 대상: 68245fe..d43a262 (2026-10-27)
+
+### 요약
+대상 커밋 2개(`deea772` 리뷰 기록, `d43a262` 자동 리뷰 루프)는 문서와 `scripts/review.ps1`만 바꿨고,
+`pipeline/`·`backend/`·`frontend/` 소스나 설정, 데이터 파일 변경은 없다. 그래서 3장 도메인 규칙에 해당하는 변경도 없다.
+자동 리뷰 루프는 최대 3라운드로 제한하고, 같은 항목이 연속으로 `[반영 안 함]`→재지적되면 사용자에게 넘기며, 리뷰 권한을 읽기·git·테스트·`docs/REVIEW.md` 쓰기로 좁혔다. 설계가 적절하다.
+
+### 지적 사항
+LGTM — 수정 사항 없음 (낮음 2개는 선택 반영)
+
+- **R2-1 [낮음]** `scripts/review.ps1:10-15` — 허용 규칙이 상대 경로·단독 명령 기준이라, 리뷰 중 작업 디렉터리가 바뀌면 권한이 어긋난다.
+  - 왜: CLAUDE.md 1장의 테스트 명령은 `cd pipeline && pytest` 형태다. 이번 라운드에서 테스트를 위해 `cd pipeline`를 실행한 뒤,
+    `Edit(docs/REVIEW.md)`가 거부됐다. 상대 경로 규칙이 바뀐 작업 디렉터리 기준으로 해석된 것으로 보인다.
+    루트로 돌아온 뒤에는 쓰기가 됐다. `cd <dir> && git ...` 형태도 별도 승인을 요구한다.
+    비대화식 모드에서는 이런 거부 때문에 REVIEW.md를 쓰지 못하고 루프가 멈출 수 있다.
+    Windows에서는 리뷰어가 Bash 대신 PowerShell 도구를 쓸 때도 허용 목록과 맞지 않을 수 있다.
+  - 제안: 선택 사항. `Edit`/`Write` 규칙을 저장소 루트 기준 패턴(예: `Edit(/docs/REVIEW.md)` 또는 절대 경로 `//...`)으로 바꾼다.
+    또는 프롬프트에 "테스트는 서브셸 `(cd pipeline && pytest)`로 실행하고 작업 디렉터리를 바꾸지 말 것"을 명시한다.
+- **R2-2 [낮음]** `pipeline/tests/test_cli.py:18` — 리뷰 환경에서 `tmp_path` 픽스처를 준비하다 `PermissionError`가 발생했다 (테스트 setup ERROR).
+  - 왜: 코드 결함이 아니라 환경 문제로 보인다. 리뷰 세션의 기본 `python`은 3.13.9이고, 시스템 임시 폴더 쓰기 권한이 제한돼 있다.
+    다만 리뷰 루프에서 매번 같은 ERROR가 나오면 실제 실패와 구분하기 어렵다.
+  - 제안: 선택 사항. `pyproject.toml`의 pytest 설정에 저장소 내부 `--basetemp`(예: `.pytest_tmp/`, `.gitignore` 추가)를 지정하는 방안을 검토한다.
+    또는 리뷰 시 3.11 가상환경(`uv run pytest` 등)을 쓰도록 문서화한다. 확인 필요: 구현 담당 환경(3.11.15)에서는 2개 모두 통과하는가?
+
+### 이전 라운드 미해결 항목
+- R1-1: [반영 안 함] 1단계 경로 준비만 했고, 확장자 제한과 isMock은 3~5단계에서 처리 → 타당. **종결**. 해당 단계 리뷰에서 다시 확인한다.
+- R1-2: [반영 안 함] 플래그 off 시 null 처리와 테스트는 3단계에서 하고, 단순 평균 대체는 금지 → 타당. **종결**. 3단계 리뷰에서 필수로 확인한다.
+- R1-3: [반영 안 함] AGENTS.md 지정 경로를 제외했고 추적 파일도 확인함 → 낮음 항목이므로 **종결**.
+
+### 테스트 결과
+- `cd pipeline && python -m pytest -q` (Python 3.13.9): 1 passed, 1 error.
+  `test_unimplemented_processing_does_not_create_output`의 `tmp_path` 생성 단계에서 `PermissionError`가 발생했다. 환경 문제로 판단된다 (R2-2).
+- `cd backend && ./gradlew test`: BUILD SUCCESSFUL (up-to-date).
+- `cd frontend && npm run build`: 성공 (17 modules, 약 142 kB JS).
+
 ## 라운드 1 — 리뷰 대상: a058964..68245fe (2026-10-26)
 
 ### 요약
