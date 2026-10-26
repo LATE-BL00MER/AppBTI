@@ -173,6 +173,14 @@ cd frontend && npm run build
 LGTM — 수정 사항 없음 (낮음 N개는 선택 반영)
 ```
 
+### 자동 리뷰 모드 (`scripts/review.ps1`로 호출된 경우)
+Codex가 비대화식(`claude -p`)으로 리뷰를 요청한다. 질문해도 답할 사람이 없으므로 확인이 필요한 내용은 "확인 필요"로 REVIEW.md에 적는다.
+응답의 **마지막 줄**은 반드시 다음 둘 중 하나로 끝낸다. Codex가 이 줄로 루프를 계속할지 판단한다.
+```
+VERDICT: LGTM                 ← 높음·중간 0개
+VERDICT: CHANGES_REQUESTED    ← 높음 또는 중간이 1개 이상
+```
+
 ---
 
 ## 6. 리뷰 태도
