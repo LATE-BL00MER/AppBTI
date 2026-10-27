@@ -1,5 +1,36 @@
 # 코드 리뷰 기록
 
+## 라운드 6 — 리뷰 대상: 483b76f..6604bf3 (2026-10-27)
+
+### 요약
+R5 반영 커밋 1개(6604bf3)를 리뷰했다. 변경 파일은 `frontend/src/pages/Explore.tsx`(선 패턴과 점 표시), `frontend/index.html`(글꼴 preload 제거), `docs/UI_DESIGN.md`·`docs/REVIEW.md`(기록)뿐이다. pipeline·backend 계산 로직은 바뀌지 않았다. 3장 도메인 규칙 위반은 없다.
+- R5-1: `dot={{ r: 2, strokeDasharray: 'none' }}`로 점이 복원됐다. 앞뒤가 `null`인 한 달짜리 값과 `continuity_breaks` 이후의 단일 월 구간도 이제 차트에 보인다. `connectNulls={false}`가 유지되어 결측과 집계 기준 경계를 넘는 선은 여전히 연결하지 않는다(3-1, 3-4). 점에 `strokeDasharray: 'none'`을 준 덕분에 원이 선 패턴을 물려받아 끊겨 보이는 문제도 없다.
+- R5-2: preload가 제거됐다. `font-display: swap`과 로컬 배포가 유지되어 오프라인 시연에는 영향이 없다.
+- R5-3: 패턴이 실선·`8 4`·`2 4`·`10 3 2 3`·`16 6`·`1 3 1 3 1 7`로 서로 확실히 구분된다. 범례 SVG(`Explore.tsx:50`)와 시리즈(`Explore.tsx:37`)가 같은 `index`로 `colors`·`linePatterns`를 고르므로 범례와 실제 선이 일치한다.
+
+### 지적 사항
+LGTM — 수정 사항 없음 (낮음 0개)
+
+### 이전 라운드 미해결 항목
+- R5-1 [중간]: [반영됨] → 코드 확인 결과 점 복원·선 미연결 유지 모두 제안대로 반영. `UI_DESIGN.md`에 "단일 월 구간 표시" 점검 항목도 추가됨. **종결**.
+- R5-2 [낮음]: [반영됨] → preload 제거 확인. **종결**.
+- R5-3 [낮음]: [반영됨] → 패턴 차이 확대, 범례·선 설정 공유 확인. **종결**.
+- R4-1, R4-2: R5에서 종결. 실제 코드북·`similarity.yaml` 활성화 라운드에서 R4-1 교차검증을 다시 확인한다.
+
+### 테스트 결과
+`scripts/review.ps1`이 미리 실행한 결과를 옮긴다(리뷰어는 직접 실행하지 않음).
+- pipeline `.venv\Scripts\python.exe -m pytest -q`: **PASSED** — 17 passed (6.07s). `.pytest_cache` 쓰기 권한 경고 1건(`WinError 5`)은 테스트 결과와 무관하다.
+- backend `gradlew.bat test --console=plain`: **PASSED** — BUILD SUCCESSFUL. 이번 범위에 backend 변경이 없어 `:test`가 UP-TO-DATE였다.
+- frontend `npm.cmd run build`: **PASSED** — `tsc --noEmit`와 vite 빌드 성공(603 modules, Explore 청크 382KB).
+- 프론트에는 자동 UI 테스트가 없다. 단일 월·앞뒤 결측 표시는 커밋 기록상 브라우저 회귀 검증 12개로 확인됐고, 리뷰어는 코드로 확인했다.
+
+### 구현 담당 최종 확인
+
+- 이번 화면 개선에서 Claude 리뷰 2회(라운드 5·6)를 진행했고 최종 판정은 **VERDICT: LGTM**이다.
+- R5-1·2·3 모두 반영됐고 미반영 지적은 없다.
+- 프론트 빌드, 기존 브라우저 동작 검증 73개, 추가 추이 회귀 검증 12개, HTTP 검사 26개가 통과했다. 소개·설문·탐색·데이터 안내를 1440·768·390px에서 검사했고 필수 시각 오류는 없다. 허용한 검사 오탐과 보조 글씨·문서 길이 경고 사유는 `docs/UI_DESIGN.md`에 기록했다.
+- 변경·커밋하지 않은 기존 사용자 수정분은 `scripts/review.ps1`이다.
+
 ## 라운드 5 — 리뷰 대상: d64a01a..483b76f (2026-10-27)
 
 ### 요약
