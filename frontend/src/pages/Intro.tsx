@@ -2,26 +2,30 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { request, useData } from '../api/client';
 import type { Profile } from '../api/types';
-import { Source } from '../components/Common';
+import { ErrorNotice, formatNumber, monthLabel, Source } from '../components/Common';
 import { useApp } from '../state';
 
 export default function Intro() {
   const { meta, draft, setAnswers } = useApp();
   const navigate = useNavigate();
+  const [selectedAge, setSelectedAge] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { data } = useData<{ profiles: Profile[] }>('/profiles', draft.dataset);
+  const { data, error: previewError, reload } = useData<{ profiles: Profile[] }>('/profiles', draft.dataset);
   if (!meta) return null;
-  const sampleAge = meta.ageGroups[2];
-  const preview = meta.minorCategories.filter((_, index) => index % 2 === 0).slice(0, 6);
+  const sampleAge = meta.ageGroups.find(age => age.id === selectedAge) || meta.ageGroups[2] || meta.ageGroups[0];
+  const month = meta.months.at(-1)!;
+  const maxDays = new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate();
+  // 분야별 첫 중분류를 보여준다. 서로 다른 중분류의 값은 합산하지 않는다.
+  const preview = meta.majorCategories.flatMap(major => meta.minorCategories.filter(minor => minor.major === major).slice(0, 1));
   const demo = async () => {
+    if (!sampleAge) return;
     setBusy(true); setError(null);
     try {
       const rows = data || await request<{ profiles: Profile[] }>('/profiles', draft.dataset);
       const answers = meta.minorCategories.map(minor => {
         const row = rows.profiles.find(r => r.ageGroup === sampleAge.id && r.minorCode === minor.code);
-        const maxDays = new Date(Number(meta.months.at(-1)!.slice(0, 4)), Number(meta.months.at(-1)!.slice(5)), 0).getDate();
-        // 예시 사용자도 설문의 구간 선택지를 고른 것으로 구성한다.
+        // 예시 응답도 실제 설문의 대표 일수 중 하나로 구성한다.
         const bins = [2, 7, 15, 24, maxDays];
         const days = row?.avgDays === undefined || row.avgDays === null ? null : bins.reduce((best, candidate) => Math.abs(candidate - row.avgDays!) < Math.abs(best - row.avgDays!) ? candidate : best);
         return { minorCode: minor.code, days, minutes: meta.metrics.timeComparable ? row?.avgDailyTime ?? null : null };
@@ -30,27 +34,28 @@ export default function Intro() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : '예시 결과를 불러오지 못했습니다.'); }
     finally { setBusy(false); }
   };
-  return <>
-    <section className="container hero" aria-labelledby="intro-title">
-      <div className="hero-copy"><p className="eyebrow">나의 일상을 읽는 또 하나의 방법</p>
-        <h1 id="intro-title">내 디지털 습관과<br /><span>닮은 세대 찾기.</span></h1>
-        <p className="hero-description">영상을 보고, 음악을 듣고, 소식을 나누는 하루.<br />익숙한 습관을 따라 나와 닮은 이용패턴을 만나보세요.</p>
-        <div className="hero-actions"><Link to={meta.comparisonEnabled ? '/survey' : '/explore'} className="button primary large">{meta.comparisonEnabled ? '내 패턴 알아보기' : '세대별 패턴 둘러보기'} <span aria-hidden="true">↗</span></Link>{meta.comparisonEnabled && <button className="text-link" disabled={busy} onClick={demo}>{busy ? '결과 준비 중…' : '예시 결과 먼저 보기'}</button>}</div>
-        <p className="hero-note">{meta.comparisonEnabled ? `약 3분 · ${meta.minorCategories.length}개 문항 · 로그인 없이` : '비교 설정을 준비하는 동안 집단별 통계를 살펴보세요.'}</p>
-        {error && <p className="inline-error" role="alert">{error}</p>}
-      </div>
-      <div className="hero-report"><div className="report-heading"><span>일상 패턴 관찰 노트</span><span>AppBTI</span></div>
-        <div className="report-title"><span>서로 다른 습관이<br />하나의 패턴으로.</span><span className="report-monogram" aria-hidden="true">a<span>b</span></span></div>
-        <div className="report-chart" aria-label={`${sampleAge.label} 예시 월평균 이용일수`}>
-          {preview.map(minor => {
-            const value = data?.profiles.find(r => r.ageGroup === sampleAge.id && r.minorCode === minor.code)?.avgDays;
-            return <div className="report-row" key={minor.code}><span>{minor.name}</span><div className="dot-track" aria-hidden="true">{Array.from({ length: 15 }, (_, i) => <i key={i} className={value !== undefined && value !== null && i < value / 2 ? 'filled' : ''} />)}</div><strong>{value === undefined || value === null ? '·' : `${value}일`}</strong></div>;
-          })}
-        </div><div className="report-foot"><span>{sampleAge.label} · {meta.months.at(-1)} 예시</span><span>월평균 이용일수</span></div><Source />
-      </div>
+  return <div className="home-page">
+    <section className="container home-intro" aria-labelledby="intro-title">
+      <div className="home-title"><h1 id="intro-title">나의 한 달,<br />어떤 패턴일까?</h1><p>매일의 디지털 습관을 돌아보고,<br className="desktop-break" /> 응답 패턴과 닮은 집단의 통계를 만나보세요.</p></div>
+      <div className="home-start"><Link to={meta.comparisonEnabled ? '/survey' : '/explore'} className="button primary large">{meta.comparisonEnabled ? '내 패턴 알아보기' : '세대별 탐색하기'} <span aria-hidden="true">↗</span></Link><p>{meta.comparisonEnabled ? `${meta.minorCategories.length}개 문항 · 로그인 없이 참여` : '현재는 집단별 통계를 살펴볼 수 있어요.'}</p></div>
     </section>
-    <div className="scope-band"><div className="container scope-inner"><p>개인의 기록 대신,<br /><strong>집단의 패턴을 살펴봅니다.</strong></p><div><strong>{meta.months[0].replace('-', '.')}–{meta.months.at(-1)!.slice(5)}</strong><span>살펴보는 기간</span></div><div><strong>{meta.ageGroups.length}개 집단</strong><span>{meta.isMock ? '가상 A~F 구간' : '제공처 기준 연령 구간'}</span></div><div><strong>{meta.majorCategories.length}개 분야</strong><span>일상 속 디지털 활동</span></div></div></div>
-    <section className="container editorial-section"><div><p className="eyebrow">결과를 이해하는 방법</p><h2>어떤 집단인지보다,<br />왜 닮았는지가 중요하니까.</h2><p className="section-description">AppBTI는 응답과 집단의 통계가 만나는 지점을 보여줍니다. 실제 나이와 개인의 이용 기록을 분석하지 않습니다.</p><Link to="/explore" className="text-link">설문 없이 세대별 패턴 둘러보기 ↗</Link></div><div className="feature-list"><div><span className="feature-symbol" aria-hidden="true">≋</span><div><h3>한 달의 습관을 돌아보고</h3><p>분야마다 얼마나 자주 이용하는지 알려주세요.<br />이용하지 않는 활동은 ‘사용 안 함’을 선택해요.</p></div></div><div><span className="feature-symbol" aria-hidden="true">≈</span><div><h3>비슷한 패턴과 그 근거를 발견하고</h3><p>닮은 항목과 차이가 있는 항목을 함께 비교해요.<br />응답 일수와 집단 평균을 나란히 볼 수 있어요.</p></div></div><div><span className="feature-symbol" aria-hidden="true">↗</span><div><h3>다른 집단의 일상까지 넓혀보고</h3><p>집단별 이용일수, 이용자 연령 구성비와<br />월별 변화를 직접 살펴보세요.</p></div></div></div></section>
-    <section className="container bottom-invitation"><p>같은 앱을 쓰는 우리,<br /><strong>사용하는 방식도 닮았을까요?</strong></p><Link to="/survey" className="button primary">나의 습관으로 시작하기</Link></section>
-  </>;
+
+    <section className="container pattern-workspace" aria-labelledby="pattern-title">
+      <div className="pattern-context"><div><h2 id="pattern-title">같은 하루, 다른 사용 습관.</h2><p>집단을 바꾸며 어떤 활동을 얼마나 자주 이용하는지 살펴보세요.</p></div><span className="snapshot-period">{monthLabel(month)}{meta.isMock ? ' · 예시' : ''}</span></div>
+      <div className="pattern-layout">
+        <div className="pattern-selector"><p>비교해 볼 집단</p><div className="group-picker" role="group" aria-label="미리 볼 집단">{meta.ageGroups.map(age => <button key={age.id} aria-pressed={sampleAge?.id === age.id} onClick={() => setSelectedAge(age.id)}>{age.label}<span aria-hidden="true">↗</span></button>)}</div><p className="pattern-caption">{meta.isMock ? 'A~F는 시연용 가상 집단입니다.' : '제공처 기준 연령 구간입니다.'}</p><Link className="text-link" to="/explore">모든 중분류 살펴보기 ↗</Link></div>
+        <div className="pattern-data" aria-busy={!data && !previewError}>
+          <div className="pattern-chart-title"><h3>{sampleAge?.label || '집단'}의 월평균 이용일수</h3><span>단위: 일 / 월</span></div>
+          {previewError ? <ErrorNotice message={previewError} retry={reload} /> : <><div className="pattern-rows">{preview.map(minor => {
+            const value = data?.profiles.find(row => row.ageGroup === sampleAge?.id && row.minorCode === minor.code)?.avgDays;
+            return <div className="pattern-row" key={minor.code}><Link to={`/explore?minor=${encodeURIComponent(minor.code)}`}><span>{minor.major}</span>{minor.name}</Link><div className="pattern-track" aria-hidden="true">{value !== undefined && value !== null && <i style={{ width: `${value / maxDays * 100}%` }} />}</div><strong>{!data ? '불러오는 중' : formatNumber(value ?? null, '일')}</strong></div>;
+          })}</div><div className="pattern-scale" aria-hidden="true"><span>0일</span><span>{maxDays}일</span></div><Source month={month} /></>}
+        </div>
+      </div>
+      <div className="pattern-bottom"><p>나의 응답은 어떤 집단과 닮았을까요?</p>{meta.comparisonEnabled && <button className="text-link" disabled={busy || !sampleAge} onClick={demo}>{busy ? '결과 준비 중…' : '예시 응답으로 결과 체험하기 ↗'}</button>}{error && <p className="inline-error" role="alert">{error}</p>}</div>
+    </section>
+
+    <section className="container home-guide" aria-labelledby="guide-title"><div><h2 id="guide-title">결과보다, <br />그 이유까지.</h2><p>실제 나이를 추정하거나 개인의 이용 기록을 분석하지 않습니다. 내가 답한 습관과 집단 통계의 유사성을 비교합니다.</p><Link to="/data" className="text-link">데이터와 비교 기준 알아보기 ↗</Link></div><ol className="journey-list"><li><h3>한 달의 습관을 떠올려요.</h3><p>활동마다 이용한 일수에 가장 가까운 구간을 선택합니다.</p></li><li><h3>닮은 점과 다른 점을 확인해요.</h3><p>응답 일수와 집단 평균을 나란히 보며 비교 근거를 읽습니다.</p></li><li><h3>다른 집단의 패턴도 살펴봐요.</h3><p>분야별 이용일수, 이용자 연령 구성비, 월별 변화를 탐색합니다.</p></li></ol></section>
+    <section className="container scope-summary" aria-label="데이터 범위"><p>{meta.months[0]} — {month}</p><p>전국 · {meta.ageGroups.length}개 집단 · {meta.majorCategories.length}개 분야</p><Link to="/data">출처와 범위 확인 ↗</Link></section>
+  </div>;
 }
