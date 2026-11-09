@@ -21,6 +21,104 @@ days=null은 무응답, days=0은 사용 안 함이다. 음수, 해당 월 일�
 집단 수치의 결측은 null이며 0으로 대체하지 않는다. 미제공 데이터 버전은 404, 산출물이 없으면 503이다.
 오류 응답은 message 문자열을 포함한다. 잘못된 JSON 본문은 Spring 기본 HTTP 400이다.
 
+## POST `/survey/result` — 확장 응답 초안 (11/11 회의 확정 전)
+
+이 절은 신진용이 11/10 팀원 전원과 심유진에게 공유하는 **문서 초안**이다. 현재 서버는 아래의 기존 필드만 반환하며, 추가 필드는 구현하지 않았다. 기존 필드의 이름·타입·의미는 유지한다. 요청 형식과 HTTP 상태 규칙도 위 계약을 따른다.
+
+- [비교 가능 예시](examples/survey_result.json): `status=comparable`, 6개 연령대, 공동 1위, 닮은 항목 3개·다른 항목 3개.
+- [비교 부족 예시](examples/survey_result_insufficient.json): `status=insufficient`, 비교 항목 2개·최소 4개, 빈 순위와 탐색 안내.
+
+두 JSON의 모든 측정값·점수는 직접 만든 **예시(가상) 값**이다. 원본·정제 데이터에서 가져오지 않았다. `example_age_*`, `example_minor_*`와 중분류 이름은 설명용 가상 식별자·이름이며 실제 코드북이나 확정 설문을 뜻하지 않는다. 연령대 라벨만 제공 6구간을 사용했다. 현재 목업 A~F 식별자를 실제 연령대에 매핑한 예시도 아니다. 실제 응답에서는 연령대·중분류 식별자와 라벨을 `/meta` 및 코드북에 맞춘다. `_comment`는 예시 파일의 설명용 필드이며 API 필드로 추가하지 않는다.
+
+비교 가능 예시는 일수만 비교하고 항목 가중치를 모두 1로 가정했다. 근거의 6개 항목을 코드 순으로 놓으면 내 응답은 모두 10일, 첫 집단 값은 10~15일이다. 나머지 집단 값은 첫 집단 값에 순서대로 0·1·2·3·10일을 더한 가상 값이며, 항목별 집단 범위는 10일이다. 따라서 정규화 차이는 0~0.5, 최상위 점수는 75.0으로 일관된다. 마지막 집단의 0.0점은 계산 결과이며 결측 대체값이 아니다. 두 예시는 가상 8개 문항 중 0일 응답 1개를 제외하므로 응답 수가 비교 수보다 1개 많다.
+
+### 현재 구현 필드 (그대로 유지)
+
+`SimilarityCalculator.Result`, `Evidence`, `Score`, `Excluded`와 `ProfileData.AgeGroup`을 기준으로 정리했다. “기존”은 현재 구현에 있다는 뜻이며 실제 데이터용 비교 설정이 확정됐다는 뜻은 아니다. 모든 배열은 `null` 대신 빈 배열을 허용한다.
+
+| 이름 | JSON 타입 | null 가능 | 의미 | 확정 여부 |
+|---|---|---|---|---|
+| `status` | string | 아니요 | `comparable` 또는 `insufficient` | 기존 |
+| `reason` | string | 예 | 비교 가능 시 `null`, 비교 불가 시 이유. 설정 비활성도 `insufficient` | 기존 |
+| `month` | string | 아니요 | 비교 기준월 `YYYY-MM`. 요청 생략 시 적재 데이터 최신월 | 기존 |
+| `comparedCategories` | integer | 아니요 | 실제 비교에 포함된 공통 중분류 수. 설정 비활성 시 0 | 기존 |
+| `minimumCategories` | integer | 아니요 | 설정 최소 비교 수. 설정이 `null`이면 메타 중분류 전체 개수 | 기존 |
+| `answeredCount` | integer | 아니요 | `days != null` 응답 수. 0일·비교 제외 항목도 포함하며 비교 수와 다름 | 기존 |
+| `matches` | object[] | 아니요 | 최상위 공동 집단들. `insufficient`이면 `[]` | 기존 |
+| `matches[].id`, `matches[].label` | string | 아니요 | 메타의 연령집단 ID와 표시 라벨 | 기존 |
+| `scores` | object[] | 아니요 | 비교 집단 전체의 점수 목록. 현재 메타 집단 수에 따름. `insufficient`이면 `[]` | 기존 |
+| `scores[].ageGroup`, `scores[].label` | string | 아니요 | 집단 ID, 표시 라벨 | 기존 |
+| `scores[].score` | number | 아니요 | 패턴 유사도 0~100, 소수 1자리 반올림 | 기존 |
+| `closest`, `farthest` | object[] | 아니요 | 현재 최상위 집단 하나에 대한 닮은 항목·다른 항목, 각각 최대 3개 | 기존 |
+| `closest[].minorCode`, `farthest[].minorCode` | string | 아니요 | 중분류 코드 | 기존 |
+| `closest[].name`, `farthest[].name` | string | 아니요 | 중분류 이름 | 기존 |
+| `closest[].major`, `farthest[].major` | string | 아니요 | 대분류 이름 | 기존 |
+| `closest[].userDays`, `farthest[].userDays` | number | 아니요 | 내 설문 응답 일수. 개인의 실제 기록을 뜻하지 않음 | 기존 |
+| `closest[].groupDays`, `farthest[].groupDays` | number | 아니요 | 같은 기준월·중분류의 비교 집단 평균 이용일수 | 기존 |
+| `closest[].userMinutes`, `farthest[].userMinutes` | number | 예 | 시간 비교에 사용한 응답 분. 시간 차원을 사용하지 않으면 `null` | 기존 |
+| `closest[].groupMinutes`, `farthest[].groupMinutes` | number | 예 | 시간 비교에 사용한 집단 값(분). 시간 차원을 사용하지 않으면 `null` | 기존 |
+| `closest[].differenceDays`, `farthest[].differenceDays` | number | 아니요 | 응답 일수와 집단 평균 이용일수 차이의 절댓값 | 기존 |
+| `closest[].normalizedDistance`, `farthest[].normalizedDistance` | number | 아니요 | 0~1 정규화 차이. 작을수록 비슷함. 시간 비교 시 유효 일수·시간 차원 차이의 평균 | 기존 |
+| `excluded` | object[] | 아니요 | 비교 제외 항목. 설정 비활성 시 검사 전 반환하므로 `[]` | 기존 |
+| `excluded[].minorCode`, `excluded[].name`, `excluded[].reason` | string | 아니요 | 제외 중분류 코드·이름·사유 | 기존 |
+| `isMock` | boolean | 아니요 | 적재 메타의 가상 데이터 여부. 예시는 `true`, 화면에 “예시 데이터” 표시 | 기존 |
+| `source` | string | 예 | 적재 메타의 출처 문자열을 그대로 반환. 현재 Java 타입은 비어 있음을 막지 않음 | 기존 |
+
+현재 `scores`는 **반올림 전 거리 오름차순 → 집단 ID 순**이며, `matches`는 최저 거리와의 차이가 `1e-9` 미만인 집단이다. 근거는 그중 첫 집단(최저 거리, 같으면 ID 순)을 사용한다. 표시 점수가 같더라도 `matches`가 아닐 수 있다. 이 동작을 새 필드 때문에 바꾸지 않는다.
+
+### 추가 필드 제안
+
+아래 필드는 모두 **초안·미구현**이다. `rankings`, `majorScores` 등은 새 필드이며 기존 `scores`, `closest`, `farthest`를 삭제하거나 이름을 바꾸지 않는다.
+
+| 이름 | JSON 타입 | null 가능 | 의미 | 확정 여부 |
+|---|---|---|---|---|
+| `rankings` | object[] | 아니요 | 비교 가능 시 제공 6개 연령대 전체 순위. 비교 불가 시 `[]` | 초안 |
+| `rankings[].ageGroup`, `rankings[].label` | string | 아니요 | `scores`와 같은 연령대 ID·라벨 | 초안 |
+| `rankings[].score` | number | 아니요 | `scores`에서 받은 0~100 패턴 유사도, 소수 1자리 | 초안 |
+| `rankings[].rank` | integer | 아니요 | 1부터 시작하는 공동 순위 | 초안 |
+| `rankings[].isTied` | boolean | 아니요 | 같은 순위에 집단이 둘 이상이면 `true` | 초안 |
+| `evidenceGroup` | object | 예 | 기존 `closest`·`farthest`가 비교한 단일 집단. 비교 불가 시 `null` | 초안 |
+| `evidenceGroup.id`, `evidenceGroup.label` | string | 아니요 | 기존 계산기가 근거를 선택한 집단 ID·라벨 | 초안 |
+| `majorScores` | object[] | 아니요 | 레이더용 대분류 배열. 설문 대상 대분류만 포함, 비교 불가 시 `[]` | 초안 |
+| `majorScores[].major` | string | 아니요 | 코드북의 대분류 이름 | 초안 |
+| `majorScores[].userScore`, `majorScores[].groupScore` | number | 예 | 응답 측·`evidenceGroup` 측 대분류 점수. 산식 미확정 동안 모두 `null` | 초안·우서현 산식 대기 |
+| `majorScores[].formulaStatus` | string | 아니요 | 현재 초안은 `pending`만 사용(산식 미확정). 확정 후 상태값 별도 합의 | 초안 |
+| `resultType` | object | 아니요 | 통계 비교 결과에 붙일 문구 자리 | 초안 |
+| `resultType.name`, `resultType.description` | string | 예 | 유형 이름·한 줄 설명. 우서현 제공 전과 비교 불가 시 `null` | 초안·우서현 문구 대기 |
+| `resultType.definitionStatus` | string | 아니요 | 현재 초안은 `pending`만 사용(유형 정의 미확정) | 초안 |
+| `nextAction` | object | 예 | 비교 불가 시 세대별 탐색 화면 안내. 비교 가능 시 `null` | 초안 |
+| `nextAction.type` | string | 아니요 | `explore` (화면 목적 식별자) | 초안 |
+| `nextAction.path` | string | 아니요 | 현재 프론트 경로 `/explore`. API 호출 경로가 아님 | 초안 |
+| `nextAction.label` | string | 아니요 | “세대별 탐색 보기” 버튼 문구 | 초안 |
+| `nextAction.message` | string | 아니요 | 비교 불가 상태에서 집단 통계를 탐색하도록 안내 | 초안 |
+| `sourceScope` | object | 아니요 | 출처·범위를 구조화. `source` 문자열은 유지 | 초안 |
+| `sourceScope.provider` | string | 예 | 실제 제공자. 가상 예시는 `null`로 두어 LG U+ 실측값으로 오인하지 않게 함 | 초안 |
+| `sourceScope.periodStart`, `sourceScope.periodEnd` | string | 예 | 적재 데이터 제공 범위의 시작·종료월 `YYYY-MM`, 미상 시 `null` | 초안 |
+| `sourceScope.region` | string | 예 | 집계 지역, 미상 시 `null` | 초안 |
+| `sourceScope.ageGroupLabels` | string[] | 아니요 | 데이터가 제공하는 연령 구간, 미상 시 `[]` | 초안 |
+| `sourceScope.label` | string | 아니요 | 통계 옆에 보일 출처·범위 문구. 예시에서는 가상임을 명시 | 초안 |
+
+### 정렬·근거·결측·화면 사용 규칙
+
+1. 새 `rankings` 초안은 소수 1자리 **표시 점수 내림차순 → 연령대 ID 문자열 오름차순**으로 정렬한다. 같은 표시 점수는 공동 순위로 하고 경쟁 순위 방식(`1, 1, 3, 4, 5, 6`)을 제안한다. 공동 최상위 집단 모두를 UI에서 표시하며 ID 순서는 대표 연령 판정이 아니다. 기존 `scores`의 반올림 전 정렬·`matches`의 동점 허용오차와 차이가 있으므로 화면에서 어느 필드를 기준으로 쓸지는 회의에서 정한다.
+2. 기존 `closest`·`farthest`에 필요한 코드·이름·대분류·내 응답·집단 값·정규화 차이가 이미 있다. 같은 의미의 새 근거 배열은 추가하지 않는다. `evidenceGroup`으로 비교 집단을 명시하며 공동 1위에서도 기존 계산기가 선택한 집단 하나의 근거임을 표시한다. 근거 UI는 `matches` 전체의 평균이나 공통 특징으로 해석하지 않는다.
+3. `closest`는 정규화 차이 오름차순 → 중분류 코드 순으로 최대 3개, `farthest`는 `closest`를 제외한 뒤 정규화 차이 내림차순 → 코드 순으로 최대 3개다. 서로 중복하지 않는다. 공통 항목 수를 n이라 하면 개수는 각각 `min(3, n)`, `min(3, max(0, n - 3))`이다. 공통 항목 수가 4개면 3개+1개, 5개면 3개+2개, 6개 이상이면 3개+3개다. 최소 비교 수는 실제 설정을 따르며 부족하면 두 배열 모두 비운다.
+4. `majorScores`의 점수 범위·산식·결측 처리 기준은 우서현이 문서화한 뒤 정한다. 확정 전에는 양쪽 점수가 `null`, `formulaStatus=pending`이며 레이더 축에 0점으로 그리지 않는다. 서로 다른 중분류의 UU 합산, 평균 이용일수의 단순 평균·합산은 산식 후보로도 사용하지 않는다. 집단 지표는 Python 산출물을 사용하며 Spring·React에서 재계산하지 않는다.
+5. `resultType`은 집단 통계와의 비교를 설명할 자리다. 성격 유형이나 MBTI식 해석을 만들지 않는다. 문구 확정 전에는 `null`을 유지하고 UI에서 임의 유형 이름을 생성하지 않는다.
+6. `insufficient`이면 기존 `matches`, `scores`, `closest`, `farthest`와 새 `rankings`, `majorScores`는 `[]`, `evidenceGroup`은 `null`이다. `reason`, `comparedCategories`, `minimumCategories`, `answeredCount`, `excluded`로 원인을 설명하고 `nextAction`으로 탐색을 안내한다. 비교 설정 비활성일 때도 같은 상태지만 `reason`은 설정 미확정 사유이며 비교 수는 0이다. 부족한 항목이나 순위 점수를 0으로 채우지 않는다.
+7. 실제 데이터 연결 시 출처 문구 예시는 “LG U+ 제공 연령대·기간(2025년 1~6월) 집계”다. `month`는 결과 비교월이고 `sourceScope`의 기간은 전체 제공 범위이므로 결과가 6개월 평균이라는 뜻이 아니다. 가상 예시는 `source`·`sourceScope.label`에 가상임을 명시하고 `isMock=true`를 유지한다. 실제 연결 시 `isMock`·출처·기간은 적재 메타에서 가져온다.
+
+### TODO(확인 필요) — 11/11 회의 및 후속 전달
+
+- TODO(확인 필요): `rankings`와 기존 `scores` 중 프론트가 사용할 기준 필드, 중복 정보의 동기화 방법. 기존 필드는 유지하며 현재 서버에 새 필드가 있다고 가정하지 않는다.
+- TODO(확인 필요): 반올림 후 점수 동점과 기존 반올림 전 거리·`1e-9` 동점 기준의 차이, 경쟁 순위(`1,1,3`) 채택 여부. `matches`와 `rankings`의 공동 최상위 표시가 달라질 때의 화면 정책. 기존 필드 의미를 바꾸는 안은 이번 초안에 포함하지 않는다.
+- TODO(확인 필요): 공동 최상위 시 `evidenceGroup` 하나만 보여줄지, 후속 확장으로 집단별 근거를 제공할지. 기존 `closest`·`farthest`는 현재 대표 집단 기준 그대로 유지한다.
+- TODO(확인 필요): 실제 12~20개 설문 중분류·코드·가중치·정규화·최소 비교 수·0일 정책. 예시 최소 4개는 시연값이며 실제 확정값이 아니다. 평균 이용일수 분모 및 시간 정의·단위 확인 전에는 시간 비교를 켜지 않는다.
+- TODO(확인 필요): 우서현의 대분류 산식, 사용자 측/집단 측 점수 의미·척도·적용 대분류·결측 처리·산식 상태값(11/12 전달). 확정 전 `null`·`pending` 유지.
+- TODO(확인 필요): 우서현의 유형 이름·한 줄 설명·부여 기준·정의 상태값(11/12 전달). 확정 전 `null`·`pending` 유지.
+- TODO(확인 필요): `nextAction` 필드명·프론트 경로 소유 주체와 심유진의 비교 불가 안내 문구. `reason`·비교 항목 수는 기존 필드 사용.
+- TODO(확인 필요): 기존 `source`와 추가 `sourceScope.label` 중 출처 표시 기준, provider·기간·지역 메타 확장과 null 처리. `isMock`은 기존 필드를 기준으로 한다.
+
 ## 시연용 비교 정의
 
 `config/similarity.mock.yaml`만 시연용으로 활성화한다. 실제 데이터의 `config/similarity.yaml`은 미확정 상태로 비활성화한다.

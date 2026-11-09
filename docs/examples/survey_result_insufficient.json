@@ -1,0 +1,76 @@
+{
+  "_comment": "11/11 회의 확정 전 확장 응답 초안. 모든 측정값과 점수는 예시(가상) 값이며 example_* 식별자와 중분류 이름도 가상이다. _comment는 예시 설명용이며 API 필드가 아니다.",
+  "status": "insufficient",
+  "reason": "비교 가능한 항목이 2개입니다. 4개 이상 필요합니다.",
+  "month": "2025-06",
+  "comparedCategories": 2,
+  "minimumCategories": 4,
+  "answeredCount": 3,
+  "matches": [],
+  "scores": [],
+  "closest": [],
+  "farthest": [],
+  "excluded": [
+    {
+      "minorCode": "example_minor_03",
+      "name": "예시 쇼핑 A",
+      "reason": "사용 안 함: 이용자 기준 평균과 직접 비교하지 않음"
+    },
+    {
+      "minorCode": "example_minor_04",
+      "name": "예시 쇼핑 B",
+      "reason": "무응답"
+    },
+    {
+      "minorCode": "example_minor_05",
+      "name": "예시 교육 A",
+      "reason": "무응답"
+    },
+    {
+      "minorCode": "example_minor_06",
+      "name": "예시 교육 B",
+      "reason": "무응답"
+    },
+    {
+      "minorCode": "example_minor_07",
+      "name": "예시 교육 C",
+      "reason": "무응답"
+    },
+    {
+      "minorCode": "example_minor_08",
+      "name": "예시 교육 D",
+      "reason": "무응답"
+    }
+  ],
+  "isMock": true,
+  "source": "예시(가상) 값으로 만든 문서용 집단 통계. 실제 LG U+ 수치 미사용.",
+  "rankings": [],
+  "evidenceGroup": null,
+  "majorScores": [],
+  "resultType": {
+    "name": null,
+    "description": null,
+    "definitionStatus": "pending"
+  },
+  "nextAction": {
+    "type": "explore",
+    "path": "/explore",
+    "label": "세대별 탐색 보기",
+    "message": "비교 가능한 응답 항목이 부족합니다. 세대별 탐색에서 연령집단의 통계를 확인해 보세요."
+  },
+  "sourceScope": {
+    "provider": null,
+    "periodStart": "2025-01",
+    "periodEnd": "2025-06",
+    "region": "전국",
+    "ageGroupLabels": [
+      "20대 미만",
+      "20대",
+      "30대",
+      "40대",
+      "50대",
+      "60대 이상"
+    ],
+    "label": "예시 데이터: 가상 연령집단·기간(2025년 1~6월) 집계, 실제 제공 수치 아님"
+  }
+}
