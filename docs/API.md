@@ -119,6 +119,75 @@ days=null은 무응답, days=0은 사용 안 함이다. 음수, 해당 월 일�
 - TODO(확인 필요): `nextAction` 필드명·프론트 경로 소유 주체와 심유진의 비교 불가 안내 문구. `reason`·비교 항목 수는 기존 필드 사용.
 - TODO(확인 필요): 기존 `source`와 추가 `sourceScope.label` 중 출처 표시 기준, provider·기간·지역 메타 확장과 null 처리. `isMock`은 기존 필드를 기준으로 한다.
 
+## 조회·세대별 탐색 API — 실제 데이터 초안 (11/11 회의 확정 전)
+
+이 절은 임기범이 11/10 팀원 전원과 심유진에게 공유하는 **문서 초안**이다. `/meta`, `/profiles`, `/profiles/trend`는 응답 형태를 바꾸지 않는다. `/explore/ranking`은 **미구현**이다.
+
+- [메타 예시](examples/meta.json): 실제 산출물을 적재했을 때의 구조. 제공 6구간·14개 대분류, `isMock=false`, `availableDatasets=["basic"]`.
+- [탐색 랭킹 예시](examples/explore_ranking.json): `status=available`, 공동 순위, 결측 제외.
+- [탐색 랭킹 제공 불가 예시](examples/explore_ranking_unavailable.json): 기준일수를 만들 수 없을 때.
+
+세 JSON의 모든 측정값은 직접 만든 **예시(가상) 값**이다. `example_*` 중분류 식별자와 이름은 가상이며, 실제 중분류 코드는 차현우의 코드북을 따른다. 연령대 ID(`under20`, `20s`, `30s`, `40s`, `50s`, `60plus`)·라벨과 대분류 이름은 정제 데이터 구조를 따랐다.
+
+### 기존 조회 API — 실제 데이터에서 달라지는 점
+
+| 경로 | 실제 데이터에서 |
+|---|---|
+| GET `/meta` | `ageGroups` 6개(제공 6구간), `majorCategories` 14개, `minorCategories` 104개(안전민감 제외 시). `isMock=false`, `availableDatasets=["basic"]`(가상 시간 데이터를 섞지 않음) |
+| GET `/profiles?month=` | 한 달 응답 = 6개 연령대 × 중분류 수. 없는 조합도 `status=missing`, 값 `null`인 행으로 내려간다 |
+| GET `/profiles/trend?minor=` | 6개월 × 6개 연령대. 빠진 달은 `null`이며 선으로 잇지 않는다. `segment`가 다르면 잇지 않는다 |
+
+- `metrics.weightedReference`는 "평균 이용일수 분모 = 이용자(UU)"가 확인돼 코드북 플래그가 켜진 뒤에만 `true`다. **`false`이면 Python 산출물의 `referenceDays`·`relativeFrequency`가 모두 `null`이다.**
+- `metrics.dailyTime`은 이용시간 단위·정의가 코드북에 확정된 뒤에만 `true`다. `false`이면 `avgDailyTime`은 모두 `null`이고 화면은 시간 지표를 끈다.
+
+### (신규) GET `/explore/ranking` — 연령대별 중분류 랭킹
+
+| 입력 | 필수 | 의미 |
+|---|---|---|
+| `ageGroup` | 예 | `/meta`의 연령대 ID |
+| `month` | 아니요 | 생략 시 최신월 |
+| `major` | 아니요 | 이 대분류의 중분류만 |
+| `limit` | 아니요 | 상위 N개. 생략 시 전체 |
+| `dataset` | 아니요 | 기본 `basic` |
+
+| 이름 | JSON 타입 | null 가능 | 의미 |
+|---|---|---|---|
+| `status` | string | 아니요 | `available` 또는 `unavailable` |
+| `reason` | string | 예 | `unavailable`일 때 이유 |
+| `month` | string | 아니요 | 기준월 `YYYY-MM` |
+| `ageGroup.id`, `ageGroup.label` | string | 아니요 | 연령대 ID·라벨 |
+| `major` | string | 예 | 요청한 대분류. 없으면 `null` |
+| `basis` | string | 아니요 | 정렬 기준. 현재 `relativeFrequency`만 |
+| `isMock`, `source` | boolean, string | 아니요 | 적재 메타 그대로 |
+| `items[].rank` | integer | 아니요 | 1부터 시작하는 경쟁 순위(`1, 2, 2, 4`) |
+| `items[].minorCode`, `name`, `major` | string | 아니요 | 중분류 코드·이름·대분류 |
+| `items[].avgDays` | number | 아니요 | 해당 연령대 평균 이용일수 |
+| `items[].referenceDays` | number | 아니요 | 기준일수(UU 가중 평균, Python 산출물) |
+| `items[].relativeFrequency` | number | 아니요 | 상대 빈도 = `avgDays ÷ referenceDays` (Python 산출물) |
+| `items[].ageShare` | number | 예 | 이 중분류 이용자 중 해당 연령대 비중 |
+| `excluded[]` | object[] | 아니요 | `relativeFrequency`가 `null`이라 순위에서 뺀 중분류와 사유(`status` 값) |
+
+규칙
+1. **"기준일수 대비 차이"는 `relativeFrequency`(배수)로 표현한다.** 예: "20대의 평균 이용일수는 기준일수의 1.5배". Java에서 새 차이 값을 계산하지 않는다.
+2. 정렬은 `relativeFrequency` 내림차순 → `minorCode` 오름차순으로 고정한다. 값이 같으면 같은 순위다. 같은 입력이면 항상 같은 결과다.
+3. `relativeFrequency`가 `null`인 중분류는 0으로 두지 않고 `excluded`에 넣는다.
+4. `metrics.weightedReference=false`이면 HTTP 200, `status=unavailable`, 빈 `items`를 반환한다.
+5. 없는 `ageGroup`·`month`·`major`, 잘못된 `limit`은 400, 미제공 데이터 버전은 404, 산출물이 없으면 503이다.
+6. 화면 문구: "○○대가 가장 많이 쓰는", "이용률", "인기"는 쓰지 않는다. → "○○대에서 기준보다 자주 이용하는 분류"
+7. 두 연령대 비교는 새 API 없이 `/profiles?month=` 응답에서 두 연령대 행을 골라 쓴다.
+
+### 실제 산출물 연결 시 백엔드 변경 메모
+
+- `ProfileData`는 Python `build_profiles` 출력과 필드가 1:1이라 바꾸지 않는다. Java 코드에는 목업 A~F가 하드코딩돼 있지 않다(테스트 fixture에만 있음).
+- `appbti.profiles-path` 기본값은 `../data/processed/profiles.json`이다. 실제 산출물은 `../data/processed/real/profiles.json`이므로 `APPBTI_PROFILES_PATH`로 넘기거나 기본값을 바꾼다. 지금은 실제 파일이 없으면 **경고 없이 목업으로 떨어지므로**, 기동 로그에 어떤 파일을 적재했는지 남긴다.
+- `ApiControllerTests` fixture를 실제 구조(제공 6구간 라벨, 대분류 여러 개, 일부 `null`, `weightedReference` true/false)로 갱신한다. 테스트에는 가상 값만 쓴다.
+
+### TODO(확인 필요) — 11/11 회의
+
+- TODO(확인 필요): 랭킹 정렬을 Java에서 할지(정렬·필터만, 지표 재계산 없음), Python 산출물에 순위 필드를 추가할지. 추천: Java 정렬. 순위는 요청(대분류 필터·limit)마다 바뀌므로 산출물에 고정하기 어렵다.
+- TODO(확인 필요): LG U+ 분모 답변 전 탐색 화면 처리. 선택지 ① `unavailable` 안내(추천) ② `avgDays` 순위만 표시(연령대 간 비교 아님을 명시). 중간발표(11/18) 전에 답이 없으면 ①이면 탐색 랭킹이 비게 된다.
+- 다른 담당 확인 필요: 원본에 status 컬럼이 없는데 현재 `adapter.py`는 status를 필수 컬럼으로 요구한다(차현우). `/survey/questions`가 `minorCategories` 전체를 문항으로 내보내므로 실제 데이터에서는 확정 문항 목록을 따로 읽어야 한다(신진용).
+
 ## 시연용 비교 정의
 
 `config/similarity.mock.yaml`만 시연용으로 활성화한다. 실제 데이터의 `config/similarity.yaml`은 미확정 상태로 비활성화한다.
