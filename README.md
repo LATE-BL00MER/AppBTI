@@ -150,6 +150,14 @@ pipeline/.venv/bin/python scripts/check_demo.py
 
 검증 후 두 서버는 각각 실행한 터미널에서 `Ctrl+C`로 종료한다.
 
+자동 테스트와 빌드는 저장소 루트에서 각각 실행한다.
+
+```bash
+(cd pipeline && .venv/bin/python -m pytest)
+(cd backend && ./gradlew test)
+(cd frontend && npm run build)
+```
+
 ## 실제 데이터 교체와 설정
 
 실제 코드북의 연령 구간·중분류·분모·시간 정의를 확인한 후 Python 3.11 환경에서 실행한다.
