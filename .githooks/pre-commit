@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+cd "$(git rev-parse --show-toplevel)" || exit 1
+if command -v python3 >/dev/null 2>&1; then
+    exec python3 scripts/check_no_real_data.py --staged
+elif command -v python >/dev/null 2>&1; then
+    exec python scripts/check_no_real_data.py --staged
+else
+    echo "커밋 차단: 실제 데이터 검사를 실행할 Python이 없습니다. Python 3.9 이상을 설치하고 python3 또는 python을 PATH에 추가하세요." >&2
+    exit 1
+fi

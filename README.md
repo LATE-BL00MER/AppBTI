@@ -158,6 +158,23 @@ pipeline/.venv/bin/python scripts/check_demo.py
 (cd frontend && npm run build)
 ```
 
+## 실제 데이터 받는 법
+
+실제 CSV는 `data/raw/real/`에 **하나만** 둔다. 이 폴더는 gitignore 대상이다.
+Orca 작업 트리를 쓰면 저장소 밖 `~/appbti-data/raw/real/`에 보관하고
+설정 스크립트로 복사한다. symlink는 쓰지 않는다.
+
+- `git add -f`로 실제 데이터를 강제로 추가하지 않는다.
+- 실제 수치가 찍힌 노트북 출력·스크린샷·표를 커밋하지 않는다.
+- 이 저장소나 노션 내용을 `.md`로 옮겨 커밋하지 않는다.
+- 테스트에는 가상 샘플만 쓴다. 실제 데이터 일부를 쓰지 않는다.
+- LG U+ 사용 조건 확인 전 외부 AI·서비스에 CSV를 업로드하지 않는다.
+
+처음 한 번 `git config core.hooksPath .githooks`를 실행하면 커밋 전에 자동 검사한다.
+PR에서는 GitHub Actions가 같은 검사를 한다.
+차단되면 `git rm --cached -- <파일>`로 추적을 해제하고 실제 데이터는 위 경로로 옮긴다.
+노트북은 모든 출력을 지워 다시 스테이징하고, 가상 목업 파일에는 `mock_` 접두어를 붙인다.
+
 ## 실제 데이터 교체와 설정
 
 실제 코드북의 연령 구간·중분류·분모·시간 정의를 확인한 후 Python 3.11 환경에서 실행한다.
