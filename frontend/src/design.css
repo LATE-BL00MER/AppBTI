@@ -4,16 +4,23 @@
 :root {
   font-family: 'AppBTI Sans', 'Malgun Gothic', sans-serif;
   color: #191c20;
-  background: #f3f5f7;
+  background: #F6F9FF;
   font-synthesis: none;
   font-weight: 400;
   line-height: 1.6;
-  --ink: #191c20;
+  --brand: #006C48;
+  --brand-light: #33A474;
+  --brand-soft: #E8F5EE;
+  --page: #F6F9FF;
+  --card-radius: 32px;
+  --pill-radius: 9999px;
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  --ink: #151C22;
   --muted: #5c6470;
   --blue: #1d5fbf;
-  --line: #e2e5e9;
+  --line: #E2E9F1;
   --paper: #fff;
-  --surface: #edf0f3;
+  --surface: #EDF4FD;
   --radius: 6px;
 }
 @font-face { font-family: 'AppBTI Sans'; src: url('/fonts/PretendardVariable.woff2') format('woff2'); font-style: normal; font-weight: 100 900; font-display: swap; }
@@ -475,4 +482,79 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* 회의 전 설문 기능 배치. Figma 토큰은 화면 참조를 받은 뒤 적용한다. */
+.survey-top-progress { grid-column: 1 / -1; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
+.survey-top-progress > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; }
+.survey-top-progress span { color: var(--muted); }
+.survey-section-heading { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.days-input { display: block; margin-top: 16px; font-size: 14px; }
+.days-input > span { color: var(--muted); }
+.days-input > div { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.days-input input { width: 110px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
+
+/* Figma「AppBTI 최종 통합 · 설문 검사」의 PNG와 내보낸 CSS 기준.
+   고정 높이 대신 콘텐츠 높이를 사용하고 390px에서도 입력 순서를 유지한다. */
+.site-header { background: rgb(246 249 255 / 95%); box-shadow: 0 1px 8px rgb(0 0 0 / 4%); }
+.header-inner { min-height: 80px; }
+.wordmark, .footer-brand { color: var(--brand); }
+.site-header nav a { border-radius: var(--pill-radius); }
+.site-header nav a.active { color: white; background: var(--brand); }
+.site-header nav a:hover { color: var(--brand); background: var(--brand-soft); }
+.header-start { flex-shrink: 0; }
+.button { border-radius: var(--pill-radius); }
+.button.primary { background: var(--brand); box-shadow: var(--card-shadow); }
+.button.primary:hover { background: #00583B; }
+.button.primary:disabled { background: var(--line); color: var(--muted); }
+.button.secondary { background: var(--surface); border-color: transparent; }
+.site-footer { background: var(--surface); box-shadow: 0 1px 8px rgb(0 0 0 / 4%); border-top: 0; }
+.survey-page { width: min(896px, calc(100% - 48px)); grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 16px 64px; }
+.survey-top-progress { padding: 16px 24px; background: var(--page); border: 0; border-radius: 0; }
+.survey-top-progress strong { color: var(--brand); }
+.survey-page progress, .survey-page progress::-webkit-progress-bar { background: var(--line); border-radius: var(--pill-radius); }
+.survey-page progress::-webkit-progress-value { background: linear-gradient(90deg, var(--brand-light), var(--brand)); border-radius: var(--pill-radius); }
+.survey-page progress::-moz-progress-bar { background: var(--brand); border-radius: var(--pill-radius); }
+.survey-aside { position: static; padding-inline: 4px; }
+.survey-aside h1 { font-size: 24px; }
+.survey-aside h1 br, .survey-aside > p br { display: none; }
+.survey-aside .back-link { margin-bottom: 0; }
+.survey-aside > .context-label, .survey-aside .survey-progress { display: none; }
+.step-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.step-nav button { width: auto; gap: 12px; background: var(--surface); border-radius: var(--pill-radius); }
+.step-nav button.active { color: var(--brand); background: var(--brand-soft); }
+.survey-group-select { display: none; }
+.survey-main { display: flex; flex-direction: column; gap: 32px; padding: 0; background: transparent; }
+.survey-section-heading { margin: 0; padding: 32px; border: 0; border-radius: var(--card-radius); background: radial-gradient(ellipse at right bottom, rgb(0 108 72 / 5%), transparent 65%), var(--paper); box-shadow: var(--card-shadow); }
+.survey-section-heading .context-label { color: #755087; font-weight: 650; }
+.survey-section-heading h2 { font-size: 26px; }
+.question { border: 0; padding: 32px; border-radius: var(--card-radius); background: var(--paper); box-shadow: var(--card-shadow); }
+.question-number { display: block; width: fit-content; margin-bottom: 12px; padding: 2px 12px; border-radius: var(--pill-radius); background: #F4F6FB; font-size: 12px; }
+.answer-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.answer-option { min-height: 64px; padding: 12px 20px; border-color: var(--line); border-radius: var(--pill-radius); }
+.answer-option:hover { border-color: var(--brand-light); }
+.answer-option.selected { border-color: var(--brand); background: rgb(237 244 253 / 35%); box-shadow: 0 4px 16px rgb(0 108 72 / 10%); }
+.answer-option.selected strong { color: var(--brand); }
+.answer-option .radio-mark { margin-left: auto; order: 1; border-color: var(--line); background: var(--line); }
+.answer-option.selected .radio-mark { border-color: var(--brand); background: var(--brand); }
+.survey-page input[type=radio] { accent-color: var(--brand); }
+.survey-page :focus-visible, .survey-page .answer-option:has(input:focus-visible) { outline-color: var(--brand); }
+.days-input input { border-color: #BAC8BE; border-radius: 12px; }
+.time-input { background: var(--surface); border-radius: 16px; }
+.survey-navigation { margin-top: 0; }
+.survey-tip { margin-top: 0; padding: 24px; border: 0; border-radius: 24px; background: var(--surface); }
+@media (max-width: 1100px) { .header-start { display: none; } }
+@media (max-width: 768px) {
+  .survey-page { width: calc(100% - 32px); gap: 24px; }
+  .survey-main { padding: 0; }
+  .step-nav { display: none; }
+  .survey-group-select { display: flex; }
+}
+@media (max-width: 600px) {
+  .survey-top-progress { padding: 12px 0; }
+  .survey-main { margin-inline: 0; gap: 24px; }
+  .survey-section-heading, .question { padding: 24px 20px; border-radius: 24px; }
+  .survey-section-heading h2 { font-size: 22px; }
+  .answer-option { padding: 12px 16px; }
+  .question-footer { gap: 8px; }
 }
