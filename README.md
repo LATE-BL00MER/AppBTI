@@ -101,26 +101,61 @@ Vite는 `/api` 요청을 `http://127.0.0.1:8080`으로 전달한다.
 
 ## macOS / Linux 실행
 
+저장소 루트에서 Python 3.11 가상환경을 한 번 준비한다.
+
 ```bash
 python3.11 -m venv pipeline/.venv
 pipeline/.venv/bin/python -m pip install -r pipeline/requirements-dev.txt
-cd pipeline
-.venv/bin/python -m appbti_pipeline --input ../data/mock/basic --out ../data/processed/mock --codebook ../config/codebook.mock.yaml
-.venv/bin/python -m appbti_pipeline --input ../data/mock/with_time --out ../data/processed/mock-time --codebook ../config/codebook.mock.yaml
-.venv/bin/python -m pytest
+```
+
+다음 한 줄로 가상 원본 두 종류, 산출물, 실행용 백엔드 JAR과 프론트엔드 의존성을 준비한다.
+스크립트는 어느 디렉터리에서 실행해도 자신의 위치를 기준으로 저장소를 찾는다.
+
+```bash
+./scripts/prepare-demo.sh
+```
+
+실제 데이터 파이프라인까지 추가로 실행하려면 `--real`을 붙인다.
+실제 데이터는 저장소 밖 `~/appbti-data/raw/real/`에 두고 Orca 설정 스크립트로
+`data/raw/real/`에 복사한다(AGENTS.md 12장). 원본·산출물은 커밋하지 않는다.
+실제 코드북이 미완성이면 해당 수용 검사 단계에서 실패하며 종료 코드 1을 반환한다.
+
+```bash
+./scripts/prepare-demo.sh --real
 ```
 
 별도 터미널에서 각각 실행한다.
 
 ```bash
 cd backend
-./gradlew bootRun
+java -jar build/libs/appbti-backend-0.1.0-SNAPSHOT.jar
 ```
 
 ```bash
 cd frontend
-npm ci
 npm run dev
+```
+
+브라우저에서 `http://127.0.0.1:5173`을 연다. 백엔드는 8080 포트를 사용한다.
+`--real` 산출물을 사용하려면 백엔드 실행 시
+`APPBTI_PROFILES_PATH=../data/processed/real/profiles.json java -jar build/libs/appbti-backend-0.1.0-SNAPSHOT.jar`로 지정한다.
+
+두 서버가 목업 데이터로 실행 중일 때 저장소 루트의 세 번째 터미널에서 다음 검증을 실행한다.
+두 목업 버전의 설문·결과·결측 처리와 Vite 프록시를 실제 HTTP 요청 26개로 확인한다.
+실제 데이터용 검증은 아니므로 실제 산출물을 사용하는 서버에서는 실행하지 않는다.
+
+```bash
+pipeline/.venv/bin/python scripts/check_demo.py
+```
+
+검증 후 두 서버는 각각 실행한 터미널에서 `Ctrl+C`로 종료한다.
+
+자동 테스트와 빌드는 저장소 루트에서 각각 실행한다.
+
+```bash
+(cd pipeline && .venv/bin/python -m pytest)
+(cd backend && ./gradlew test)
+(cd frontend && npm run build)
 ```
 
 ## 실제 데이터 교체와 설정
