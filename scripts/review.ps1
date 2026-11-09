@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
-$prompt = "Follow the review procedure in CLAUDE.md. Review all commits since the last review round, then add a new round at the top of docs/REVIEW.md. Do not modify any other file. End your reply with exactly one line: VERDICT: LGTM or VERDICT: CHANGES_REQUESTED"
+$prompt = "Follow the review procedure in docs/REVIEW_GUIDE.md. Review all commits since the last review round, then add a new round at the top of docs/REVIEW.md. Do not modify any other file. End your reply with exactly one line: VERDICT: LGTM or VERDICT: CHANGES_REQUESTED"
 
 claude -p $prompt `
   --permission-mode default `

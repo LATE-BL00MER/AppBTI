@@ -28,7 +28,9 @@ backend/                      Spring Boot 3 · Java 21 · Gradle Wrapper
 frontend/src/pages/           화면
 frontend/src/components/      공통 UI
 frontend/src/api/             API 연결 위치
-docs/REVIEW.md                Claude Code가 리뷰 시 생성
+docs/team/                    팀원별 할 일
+docs/REVIEW_GUIDE.md          리뷰 절차·체크리스트
+docs/REVIEW.md                리뷰 기록
 ```
 
 `data/raw/`와 `data/processed/`는 전체가 Git에서 제외되므로 새로 복제하면 없다.
@@ -165,5 +167,6 @@ frontend: npm run build
 로컬 서버 둘을 실행한 상태에서 `python scripts/check_demo.py`로 Vite 프록시와 두 목업 버전의
 실제 HTTP 응답 26개를 확인할 수 있다. 외부 서비스나 Claude는 호출하지 않는다.
 
-리뷰는 Claude Code가 `docs/REVIEW.md`에 작성한다. Codex는 작업 전 해당 파일이
-있으면 먼저 읽고 리뷰 항목을 심각도 순서대로 반영한다.
+AI 에이전트 작업 지침은 `AGENTS.md`(공통 기준)와 `CLAUDE.md`(Claude Code 진입점)에 있다.
+Claude Code, Codex 어느 쪽으로도 구현·리뷰를 할 수 있으며, 역할은 `AGENTS.md`의 작업 모드가 정한다.
+팀원별 할 일은 `docs/team/`, 리뷰 절차는 `docs/REVIEW_GUIDE.md`, 리뷰 기록은 `docs/REVIEW.md`에 있다.
