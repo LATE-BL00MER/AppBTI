@@ -1,0 +1,32 @@
+{
+  "_comment": "11/11 회의 확정 전 GET /api/meta 실제 데이터 구조 초안. 대분류 14개와 연령대 ID·라벨은 정제 데이터 구조를 따르고, example_* 중분류 식별자·이름과 quality 수치는 가상이다. 중분류는 3개만 예시로 적었다. 실제 산출물을 적재했을 때의 구조를 보이려고 isMock=false로 두었으며 실제 수치는 없다. _comment는 예시 설명용이며 API 필드가 아니다.",
+  "schemaVersion": 1,
+  "isMock": false,
+  "source": "예시: 실제 적재 시 LG U+ 제공 연령대·기간(2025년 1~6월) 집계",
+  "months": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06"],
+  "ageGroups": [
+    {"id": "under20", "label": "20대 미만"},
+    {"id": "20s", "label": "20대"},
+    {"id": "30s", "label": "30대"},
+    {"id": "40s", "label": "40대"},
+    {"id": "50s", "label": "50대"},
+    {"id": "60plus", "label": "60대 이상"}
+  ],
+  "minorCategories": [
+    {"code": "example_minor_01", "name": "예시 뉴스 A", "major": "뉴스/정보", "description": null},
+    {"code": "example_minor_02", "name": "예시 쇼핑 A", "major": "쇼핑", "description": null},
+    {"code": "example_minor_03", "name": "예시 엔터 A", "major": "엔터테인먼트", "description": null}
+  ],
+  "majorCategories": [
+    "가족", "건강", "교육", "금융/재테크", "뉴스/정보", "쇼핑", "스포츠/여가",
+    "식품", "엔터테인먼트", "여행", "온라인서비스", "의류/패션", "자동차", "주거/홈케어"
+  ],
+  "metrics": {"dailyTime": false, "timeComparable": false, "weightedReference": false},
+  "avgDaysDenominator": null,
+  "continuityBreaks": [],
+  "quality": {"rowCount": 100, "warningCount": 0},
+  "availableDatasets": ["basic"],
+  "dataset": "basic",
+  "comparisonEnabled": false,
+  "zeroDaysPolicy": null
+}
