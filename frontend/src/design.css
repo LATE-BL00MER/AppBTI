@@ -476,3 +476,13 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* 회의 전 설문 기능 배치. Figma 토큰은 화면 참조를 받은 뒤 적용한다. */
+.survey-top-progress { grid-column: 1 / -1; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); }
+.survey-top-progress > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; }
+.survey-top-progress span { color: var(--muted); }
+.survey-section-heading { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.days-input { display: block; margin-top: 16px; font-size: 14px; }
+.days-input > span { color: var(--muted); }
+.days-input > div { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.days-input input { width: 110px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); }
