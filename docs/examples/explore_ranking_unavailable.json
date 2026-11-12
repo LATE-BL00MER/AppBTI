@@ -1,13 +1,16 @@
 {
-  "_comment": "11/11 회의 확정 전 GET /api/explore/ranking 초안. 평균 이용일수 분모가 확인되지 않아 기준일수(UU 가중 평균)를 만들 수 없는 경우(meta.metrics.weightedReference=false)의 응답이다. 연령대 ID·라벨은 정제 데이터 구조를 따른다. _comment는 예시 설명용이며 API 필드가 아니다.",
+  "_comment": "API v1 basis=relativeFrequency인데 metrics.weightedReference=false일 때. _comment는 API 필드가 아니다.",
   "status": "unavailable",
-  "reason": "평균 이용일수의 분모가 확인되지 않아 기준일수 대비 비교를 제공하지 않습니다.",
+  "reason": "평균 이용일수의 분모가 확인되지 않아 기준값 대비 비교를 제공하지 않습니다. basis=ageShare로 볼 수 있어요.",
   "month": "2025-06",
-  "ageGroup": {"id": "20s", "label": "20대"},
+  "ageGroup": {
+    "id": "20s",
+    "label": "20대"
+  },
   "major": null,
   "basis": "relativeFrequency",
   "isMock": true,
-  "source": "예시 데이터: 가상 연령집단·기간(2025년 1~6월) 집계, 실제 제공 수치 아님",
+  "source": "예시 데이터: 가상 값, 실제 제공 수치 아님",
   "items": [],
   "excluded": []
 }
