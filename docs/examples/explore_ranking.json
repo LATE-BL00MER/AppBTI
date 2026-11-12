@@ -1,24 +1,67 @@
 {
-  "_comment": "11/11 회의 확정 전 GET /api/explore/ranking?ageGroup=20s&month=2025-06 초안. 모든 측정값은 예시(가상) 값이며 example_* 중분류 식별자와 이름도 가상이다. 연령대 ID·라벨만 정제 데이터 구조를 따른다. relativeFrequency는 avgDays ÷ referenceDays와 일관되게 맞췄다. _comment는 예시 설명용이며 API 필드가 아니다.",
+  "_comment": "API v1 GET /api/explore/ranking?ageGroup=20s&month=2025-06 (basis 생략 → ageShare) 예시. 모든 값과 example_* 중분류는 가상이다. weightedReference=false 상태를 가정해 referenceDays·relativeFrequency는 null이다. _comment는 API 필드가 아니다.",
   "status": "available",
   "reason": null,
   "month": "2025-06",
-  "ageGroup": {"id": "20s", "label": "20대"},
+  "ageGroup": {
+    "id": "20s",
+    "label": "20대"
+  },
   "major": null,
-  "basis": "relativeFrequency",
+  "basis": "ageShare",
   "isMock": true,
-  "source": "예시 데이터: 가상 연령집단·기간(2025년 1~6월) 집계, 실제 제공 수치 아님",
+  "source": "예시 데이터: 가상 값, 실제 제공 수치 아님",
   "items": [
-    {"rank": 1, "minorCode": "example_minor_03", "name": "예시 엔터 A", "major": "엔터테인먼트",
-     "avgDays": 15.0, "referenceDays": 10.0, "relativeFrequency": 1.5, "ageShare": 0.25},
-    {"rank": 2, "minorCode": "example_minor_04", "name": "예시 금융 A", "major": "금융/재테크",
-     "avgDays": 12.0, "referenceDays": 10.0, "relativeFrequency": 1.2, "ageShare": 0.2},
-    {"rank": 2, "minorCode": "example_minor_05", "name": "예시 여행 A", "major": "여행",
-     "avgDays": 6.0, "referenceDays": 5.0, "relativeFrequency": 1.2, "ageShare": 0.15},
-    {"rank": 4, "minorCode": "example_minor_01", "name": "예시 뉴스 A", "major": "뉴스/정보",
-     "avgDays": 8.0, "referenceDays": 10.0, "relativeFrequency": 0.8, "ageShare": 0.1}
+    {
+      "rank": 1,
+      "minorCode": "example_minor_03",
+      "name": "예시 엔터 A",
+      "major": "엔터테인먼트",
+      "value": 0.31,
+      "ageShare": 0.31,
+      "avgDays": 15.0,
+      "referenceDays": null,
+      "relativeFrequency": null
+    },
+    {
+      "rank": 2,
+      "minorCode": "example_minor_04",
+      "name": "예시 금융 A",
+      "major": "금융/재테크",
+      "value": 0.24,
+      "ageShare": 0.24,
+      "avgDays": 12.0,
+      "referenceDays": null,
+      "relativeFrequency": null
+    },
+    {
+      "rank": 2,
+      "minorCode": "example_minor_05",
+      "name": "예시 여행 A",
+      "major": "여행",
+      "value": 0.24,
+      "ageShare": 0.24,
+      "avgDays": 6.0,
+      "referenceDays": null,
+      "relativeFrequency": null
+    },
+    {
+      "rank": 4,
+      "minorCode": "example_minor_01",
+      "name": "예시 뉴스 A",
+      "major": "뉴스/정보",
+      "value": 0.12,
+      "ageShare": 0.12,
+      "avgDays": 8.0,
+      "referenceDays": null,
+      "relativeFrequency": null
+    }
   ],
   "excluded": [
-    {"minorCode": "example_minor_02", "name": "예시 쇼핑 A", "reason": "missing"}
+    {
+      "minorCode": "example_minor_02",
+      "name": "예시 쇼핑 A",
+      "reason": "missing"
+    }
   ]
 }

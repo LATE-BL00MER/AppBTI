@@ -1,224 +1,151 @@
 {
-  "_comment": "11/11 회의 확정 전 확장 응답 초안. 모든 측정값과 점수는 예시(가상) 값이며 example_* 식별자와 중분류 이름도 가상이다. _comment는 예시 설명용이며 API 필드가 아니다.",
+  "_comment": "API v1 POST /api/survey/result 비교 가능 예시. 모든 응답·집단 값은 직접 만든 가상 값이며 실제 제공 수치가 아니다(문항 코드만 회의안 기준). 12문항 중 10개 answered(0회 1개 포함), 건너뛰기 1·모르겠음 1 → 비교 9개. 점수는 docs/API.md 4-2 코사인 식으로 이 가상 값에서 계산했다. 코사인 특성상 점수가 높게 몰린다. _comment는 API 필드가 아니다.",
   "status": "comparable",
+  "reasonCode": null,
   "reason": null,
   "month": "2025-06",
-  "comparedCategories": 6,
-  "minimumCategories": 4,
-  "answeredCount": 7,
-  "matches": [
-    {
-      "id": "example_age_20",
-      "label": "20대"
-    },
-    {
-      "id": "example_age_30",
-      "label": "30대"
-    }
-  ],
-  "scores": [
-    {
-      "ageGroup": "example_age_20",
-      "label": "20대",
-      "score": 75.0
-    },
-    {
-      "ageGroup": "example_age_30",
-      "label": "30대",
-      "score": 75.0
-    },
-    {
-      "ageGroup": "example_age_40",
-      "label": "40대",
-      "score": 65.0
-    },
-    {
-      "ageGroup": "example_age_50",
-      "label": "50대",
-      "score": 55.0
-    },
-    {
-      "ageGroup": "example_age_60plus",
-      "label": "60대 이상",
-      "score": 45.0
-    },
-    {
-      "ageGroup": "example_age_under20",
-      "label": "20대 미만",
-      "score": 0.0
-    }
-  ],
-  "closest": [
-    {
-      "minorCode": "example_minor_01",
-      "name": "예시 뉴스 A",
-      "major": "뉴스/정보",
-      "userDays": 10.0,
-      "groupDays": 10.0,
-      "userMinutes": null,
-      "groupMinutes": null,
-      "differenceDays": 0.0,
-      "normalizedDistance": 0.0
-    },
-    {
-      "minorCode": "example_minor_02",
-      "name": "예시 뉴스 B",
-      "major": "뉴스/정보",
-      "userDays": 10.0,
-      "groupDays": 11.0,
-      "userMinutes": null,
-      "groupMinutes": null,
-      "differenceDays": 1.0,
-      "normalizedDistance": 0.1
-    },
-    {
-      "minorCode": "example_minor_03",
-      "name": "예시 쇼핑 A",
-      "major": "쇼핑",
-      "userDays": 10.0,
-      "groupDays": 12.0,
-      "userMinutes": null,
-      "groupMinutes": null,
-      "differenceDays": 2.0,
-      "normalizedDistance": 0.2
-    }
-  ],
-  "farthest": [
-    {
-      "minorCode": "example_minor_06",
-      "name": "예시 교육 B",
-      "major": "교육",
-      "userDays": 10.0,
-      "groupDays": 15.0,
-      "userMinutes": null,
-      "groupMinutes": null,
-      "differenceDays": 5.0,
-      "normalizedDistance": 0.5
-    },
-    {
-      "minorCode": "example_minor_05",
-      "name": "예시 교육 A",
-      "major": "교육",
-      "userDays": 10.0,
-      "groupDays": 14.0,
-      "userMinutes": null,
-      "groupMinutes": null,
-      "differenceDays": 4.0,
-      "normalizedDistance": 0.4
-    },
-    {
-      "minorCode": "example_minor_04",
-      "name": "예시 쇼핑 B",
-      "major": "쇼핑",
-      "userDays": 10.0,
-      "groupDays": 13.0,
-      "userMinutes": null,
-      "groupMinutes": null,
-      "differenceDays": 3.0,
-      "normalizedDistance": 0.3
-    }
-  ],
-  "excluded": [
-    {
-      "minorCode": "example_minor_07",
-      "name": "예시 교육 C",
-      "reason": "사용 안 함: 이용자 기준 평균과 직접 비교하지 않음"
-    },
-    {
-      "minorCode": "example_minor_08",
-      "name": "예시 교육 D",
-      "reason": "무응답"
-    }
-  ],
-  "isMock": true,
-  "source": "예시(가상) 값으로 만든 문서용 집단 통계. 실제 LG U+ 수치 미사용.",
+  "method": "cosine",
+  "answeredCount": 10,
+  "comparedCategories": 9,
+  "minimumCategories": 6,
   "rankings": [
     {
-      "ageGroup": "example_age_20",
+      "ageGroup": "20s",
       "label": "20대",
-      "score": 75.0,
+      "score": 99.8,
       "rank": 1,
-      "isTied": true
+      "isTied": false
     },
     {
-      "ageGroup": "example_age_30",
+      "ageGroup": "under20",
+      "label": "20대 미만",
+      "score": 99.2,
+      "rank": 2,
+      "isTied": false
+    },
+    {
+      "ageGroup": "30s",
       "label": "30대",
-      "score": 75.0,
-      "rank": 1,
-      "isTied": true
-    },
-    {
-      "ageGroup": "example_age_40",
-      "label": "40대",
-      "score": 65.0,
+      "score": 99.0,
       "rank": 3,
       "isTied": false
     },
     {
-      "ageGroup": "example_age_50",
-      "label": "50대",
-      "score": 55.0,
+      "ageGroup": "40s",
+      "label": "40대",
+      "score": 96.7,
       "rank": 4,
       "isTied": false
     },
     {
-      "ageGroup": "example_age_60plus",
-      "label": "60대 이상",
-      "score": 45.0,
+      "ageGroup": "50s",
+      "label": "50대",
+      "score": 95.2,
       "rank": 5,
       "isTied": false
     },
     {
-      "ageGroup": "example_age_under20",
-      "label": "20대 미만",
-      "score": 0.0,
+      "ageGroup": "60plus",
+      "label": "60대 이상",
+      "score": 92.5,
       "rank": 6,
       "isTied": false
     }
   ],
+  "matches": [
+    {
+      "id": "20s",
+      "label": "20대"
+    }
+  ],
   "evidenceGroup": {
-    "id": "example_age_20",
+    "id": "20s",
     "label": "20대"
   },
-  "majorScores": [
+  "closest": [
     {
-      "major": "뉴스/정보",
-      "userScore": null,
-      "groupScore": null,
-      "formulaStatus": "pending"
-    },
-    {
+      "questionId": "q01",
+      "minorCode": "general_mall",
+      "name": "종합쇼핑몰",
       "major": "쇼핑",
-      "userScore": null,
-      "groupScore": null,
-      "formulaStatus": "pending"
+      "userCount": 30,
+      "groupValue": 30.0,
+      "normalizedDifference": 0.0
     },
     {
-      "major": "교육",
-      "userScore": null,
-      "groupScore": null,
-      "formulaStatus": "pending"
+      "questionId": "q09",
+      "minorCode": "music",
+      "name": "음악",
+      "major": "엔터테인먼트",
+      "userCount": 30,
+      "groupValue": 30.0,
+      "normalizedDifference": 0.0
+    },
+    {
+      "questionId": "q10",
+      "minorCode": "ott",
+      "name": "OTT",
+      "major": "엔터테인먼트",
+      "userCount": 20,
+      "groupValue": 20.0,
+      "normalizedDifference": 0.0
+    }
+  ],
+  "farthest": [
+    {
+      "questionId": "q07",
+      "minorCode": "webtoon",
+      "name": "웹툰",
+      "major": "엔터테인먼트",
+      "userCount": 45,
+      "groupValue": 40.0,
+      "normalizedDifference": 0.119
+    },
+    {
+      "questionId": "q04",
+      "minorCode": "online_news",
+      "name": "온라인 뉴스",
+      "major": "뉴스/정보",
+      "userCount": 10,
+      "groupValue": 12.0,
+      "normalizedDifference": 0.1
+    },
+    {
+      "questionId": "q03",
+      "minorCode": "weather",
+      "name": "날씨",
+      "major": "뉴스/정보",
+      "userCount": 10,
+      "groupValue": 9.0,
+      "normalizedDifference": 0.062
+    }
+  ],
+  "excluded": [
+    {
+      "questionId": "q02",
+      "minorCode": "food_delivery",
+      "name": "배달식품",
+      "reason": "zero_count"
+    },
+    {
+      "questionId": "q08",
+      "minorCode": "game",
+      "name": "게임",
+      "reason": "skipped"
+    },
+    {
+      "questionId": "q11",
+      "minorCode": "radio",
+      "name": "라디오",
+      "reason": "unknown"
     }
   ],
   "resultType": {
     "name": null,
     "description": null,
-    "definitionStatus": "pending"
+    "status": "pending"
   },
   "nextAction": null,
-  "sourceScope": {
-    "provider": null,
-    "periodStart": "2025-01",
-    "periodEnd": "2025-06",
-    "region": "전국",
-    "ageGroupLabels": [
-      "20대 미만",
-      "20대",
-      "30대",
-      "40대",
-      "50대",
-      "60대 이상"
-    ],
-    "label": "예시 데이터: 가상 연령집단·기간(2025년 1~6월) 집계, 실제 제공 수치 아님"
-  }
+  "isMock": true,
+  "source": "예시 데이터: 가상 값, 실제 제공 수치 아님"
 }

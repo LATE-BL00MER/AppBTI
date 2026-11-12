@@ -1,76 +1,78 @@
 {
-  "_comment": "11/11 회의 확정 전 확장 응답 초안. 모든 측정값과 점수는 예시(가상) 값이며 example_* 식별자와 중분류 이름도 가상이다. _comment는 예시 설명용이며 API 필드가 아니다.",
+  "_comment": "API v1 비교 불가 예시. 가상 응답: 12문항 중 answered 5개(0회 1개 포함), 나머지 건너뛰기·모르겠음 → 비교 4개 < 최소 6개. _comment는 API 필드가 아니다.",
   "status": "insufficient",
-  "reason": "비교 가능한 항목이 2개입니다. 4개 이상 필요합니다.",
+  "reasonCode": "too_few_categories",
+  "reason": "비교할 수 있는 응답이 4개라 최소 6개에 못 미칩니다. 몇 회인지 떠오르는 항목을 더 답하면 비교할 수 있어요.",
   "month": "2025-06",
-  "comparedCategories": 2,
-  "minimumCategories": 4,
-  "answeredCount": 3,
+  "method": "cosine",
+  "answeredCount": 5,
+  "comparedCategories": 4,
+  "minimumCategories": 6,
+  "rankings": [],
   "matches": [],
-  "scores": [],
+  "evidenceGroup": null,
   "closest": [],
   "farthest": [],
   "excluded": [
     {
-      "minorCode": "example_minor_03",
-      "name": "예시 쇼핑 A",
-      "reason": "사용 안 함: 이용자 기준 평균과 직접 비교하지 않음"
+      "questionId": "q02",
+      "minorCode": "food_delivery",
+      "name": "배달식품",
+      "reason": "zero_count"
     },
     {
-      "minorCode": "example_minor_04",
-      "name": "예시 쇼핑 B",
-      "reason": "무응답"
+      "questionId": "q03",
+      "minorCode": "weather",
+      "name": "날씨",
+      "reason": "unknown"
     },
     {
-      "minorCode": "example_minor_05",
-      "name": "예시 교육 A",
-      "reason": "무응답"
+      "questionId": "q04",
+      "minorCode": "online_news",
+      "name": "온라인 뉴스",
+      "reason": "skipped"
     },
     {
-      "minorCode": "example_minor_06",
-      "name": "예시 교육 B",
-      "reason": "무응답"
+      "questionId": "q07",
+      "minorCode": "webtoon",
+      "name": "웹툰",
+      "reason": "skipped"
     },
     {
-      "minorCode": "example_minor_07",
-      "name": "예시 교육 C",
-      "reason": "무응답"
+      "questionId": "q08",
+      "minorCode": "game",
+      "name": "게임",
+      "reason": "skipped"
     },
     {
-      "minorCode": "example_minor_08",
-      "name": "예시 교육 D",
-      "reason": "무응답"
+      "questionId": "q09",
+      "minorCode": "music",
+      "name": "음악",
+      "reason": "skipped"
+    },
+    {
+      "questionId": "q11",
+      "minorCode": "radio",
+      "name": "라디오",
+      "reason": "unknown"
+    },
+    {
+      "questionId": "q12",
+      "minorCode": "sports",
+      "name": "스포츠",
+      "reason": "skipped"
     }
   ],
-  "isMock": true,
-  "source": "예시(가상) 값으로 만든 문서용 집단 통계. 실제 LG U+ 수치 미사용.",
-  "rankings": [],
-  "evidenceGroup": null,
-  "majorScores": [],
   "resultType": {
     "name": null,
     "description": null,
-    "definitionStatus": "pending"
+    "status": "pending"
   },
   "nextAction": {
-    "type": "explore",
     "path": "/explore",
     "label": "세대별 탐색 보기",
-    "message": "비교 가능한 응답 항목이 부족합니다. 세대별 탐색에서 연령집단의 통계를 확인해 보세요."
+    "message": "연령대별 통계는 세대별 탐색에서 바로 볼 수 있어요."
   },
-  "sourceScope": {
-    "provider": null,
-    "periodStart": "2025-01",
-    "periodEnd": "2025-06",
-    "region": "전국",
-    "ageGroupLabels": [
-      "20대 미만",
-      "20대",
-      "30대",
-      "40대",
-      "50대",
-      "60대 이상"
-    ],
-    "label": "예시 데이터: 가상 연령집단·기간(2025년 1~6월) 집계, 실제 제공 수치 아님"
-  }
+  "isMock": true,
+  "source": "예시 데이터: 가상 값, 실제 제공 수치 아님"
 }

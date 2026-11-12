@@ -1,0 +1,126 @@
+{
+  "_comment": "API v1 GET /api/survey/questions 예시. 문항 문구·코드는 우서현 회의안(엑셀 「설문문항」 A안)을 따랐고 수치는 없다. 중분류 코드는 codebook.yaml과 맞춰야 한다. _comment는 API 필드가 아니다.",
+  "month": "2025-06",
+  "period": "monthly",
+  "questions": [
+    {
+      "id": "q01",
+      "minorCode": "general_mall",
+      "name": "종합쇼핑몰",
+      "major": "쇼핑",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 종합쇼핑몰 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "구매 완료뿐 아니라 검색·둘러보기를 시작한 접속도 포함하는 초안이다."
+    },
+    {
+      "id": "q02",
+      "minorCode": "food_delivery",
+      "name": "배달식품",
+      "major": "식품",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 음식 배달 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "주문 횟수가 아니라 메뉴 검색 등을 위해 이용을 시작한 접속을 묻는다."
+    },
+    {
+      "id": "q03",
+      "minorCode": "weather",
+      "name": "날씨",
+      "major": "뉴스/정보",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 날씨 앱이나 날씨 정보 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "자동 위젯 표시와 직접 접속을 구별해야 한다. 포함 기준은 제공처 정의와 대조한다."
+    },
+    {
+      "id": "q04",
+      "minorCode": "online_news",
+      "name": "온라인 뉴스",
+      "major": "뉴스/정보",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 온라인 뉴스 앱이나 뉴스 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "SNS에서 우연히 제목을 본 경우와 뉴스 서비스를 직접 이용한 경우를 구별한다."
+    },
+    {
+      "id": "q05",
+      "minorCode": "sns",
+      "name": "소셜네트워킹",
+      "major": "온라인서비스",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 SNS 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "글 작성뿐 아니라 피드·소식 읽기를 위한 접속을 포함하는 초안이다."
+    },
+    {
+      "id": "q06",
+      "minorCode": "messenger",
+      "name": "인스턴트 메신저",
+      "major": "온라인서비스",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 메신저 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "메시지 확인을 위해 직접 이용한 접속과 알림 수신만 한 경우를 구별한다."
+    },
+    {
+      "id": "q07",
+      "minorCode": "webtoon",
+      "name": "웹툰",
+      "major": "엔터테인먼트",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 웹툰 서비스 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "웹소설·종이 만화를 묶지 않는다. 작품 수나 회차 수가 아니라 접속 횟수다."
+    },
+    {
+      "id": "q08",
+      "minorCode": "game",
+      "name": "게임",
+      "major": "엔터테인먼트",
+      "role": "conditional",
+      "text": "지난달 1일부터 말일까지 게임 앱이나 게임 서비스 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "게임 방송 시청·오프라인 게임·PC 게임 포함 범위는 제공처 정의와 대조한다."
+    },
+    {
+      "id": "q09",
+      "minorCode": "music",
+      "name": "음악",
+      "major": "엔터테인먼트",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 음악 서비스 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "곡 수·청취 시간과 구분한다. 백그라운드 재생을 새 접속으로 셀지는 정의 확인이 필요하다."
+    },
+    {
+      "id": "q10",
+      "minorCode": "ott",
+      "name": "OTT",
+      "major": "엔터테인먼트",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 OTT 영상 서비스 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "영상 편수·시청 시간이 아니라 서비스 이용을 시작한 접속 횟수다."
+    },
+    {
+      "id": "q11",
+      "minorCode": "radio",
+      "name": "라디오",
+      "major": "엔터테인먼트",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 온라인 라디오 앱이나 사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "차량·가정용 수신기 청취와 온라인 서비스 접속을 구별한다."
+    },
+    {
+      "id": "q12",
+      "minorCode": "sports",
+      "name": "스포츠",
+      "major": "스포츠/여가",
+      "role": "primary",
+      "text": "지난달 1일부터 말일까지 스포츠 정보나 콘텐츠 앱·사이트에 접속해 이용을 시작한 것은 대략 몇 회인가요?",
+      "guide": "운동한 횟수·경기 관람 횟수가 아니다. 스포츠 서비스 접속을 묻는다."
+    }
+  ],
+  "answerFormat": {
+    "type": "count",
+    "min": 0,
+    "max": null,
+    "allowUnknown": true,
+    "allowSkip": true
+  },
+  "minimumCategories": 6,
+  "zeroCountPolicy": "exclude_pending_denominator",
+  "comparisonEnabled": true,
+  "timeAvailable": false
+}
