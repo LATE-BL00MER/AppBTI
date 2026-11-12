@@ -2,6 +2,14 @@
 extends: codebook.yaml
 is_mock: true
 source: "가상 통계 · 2025년 1~6월 · 전국 설정 · A~F 가상 6집단"
+# 실제 코드북의 대분류 목록이 목업 시연으로 상속되지 않게 고정한다.
+major_categories:
+  - 교육
+  - 엔터테인먼트
+  - 스포츠/여가
+  - 쇼핑
+  - 온라인커뮤니케이션
+  - 뉴스/정보
 age_groups:
   - {id: A, label: A집단}
   - {id: B, label: B집단}
