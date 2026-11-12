@@ -1,12 +1,140 @@
-# 미확정 설정을 임의로 확정하지 않는다. 4단계에서 읽고 검증한다.
+# 우서현 요청: AppBTI_123_요약에 따른 월간 접속 횟수·패턴 비교 초안.
+# 현재 Java는 weighted_absolute_distance + min_max + 일수만 지원한다.
+# TODO(확인 필요): 횟수 응답·고정 기준 최대값·가중 코사인 구현 및 사전 검증 후 활성화.
 enabled: false
-# TODO(확인 필요): 유사도 방식·정규화·가중치·최소 비교 개수·동점 처리
-method: null
-normalization: null
-weights: {}
-minimum_categories: null
-tie_policy: null
-# TODO(확인 필요): 평균 이용일수 분모 확인 후 0일 응답 처리
-zero_days_policy: null
-# TODO(확인 필요): 유형 개수와 명칭
+
+# 4. Cosine Similarity: 전체 이용량의 양수 배율보다 항목별 패턴 방향을 비교한다.
+# '개인 나이를 정확히 찾아낸다'는 뜻이 아니며 집단 통계와의 패턴 유사도다.
+method: cosine
+
+# 1. 비음수에서 MaxAbs와 같은 x/reference_max. 기준월은 codebook.yaml의 survey_contract.
+# 기준월 6연령 최댓값을 항목별로 고정하고 사용자 응답에도 같은 분모를 쓴다.
+# 사용자 응답으로 재적합하거나 1로 잘라내지 않는다. Min-Max와 혼동하지 않는다.
+normalization: reference_max
+
+# PRIMARY 12개만 1.0. 보완·미선정·제외 항목은 모두 0.0으로 명시한다.
+# 현행 계산기의 미기재 코드 기본 가중치가 1이므로 전체 코드의 기본값을 0으로 적는다.
+# 게임은 조건부 우선이며, 교체 시 코드북의 survey_selection과 함께 수정한다.
+weights:
+  adult: 0.0  # 성인컨텐츠
+  air_quality: 0.0  # 공기질
+  ar: 0.0  # AR컨텐츠
+  bank: 0.0  # 은행
+  bitcoin: 0.0  # 비트코인
+  books: 0.0  # 도서/잡지
+  brand_fashion: 0.0  # 브랜드패션
+  car_accessory: 0.0  # 자동차 악세서리
+  car_etc: 0.0  # 자동차 - 기타
+  car_news: 0.0  # 자동차 뉴스
+  car_purchase: 0.0  # 자동차 구매
+  car_tuning: 0.0  # 튜닝/고성능차량
+  card: 0.0  # 카드
+  chat: 0.0  # 채팅
+  cleaning: 0.0  # 클리닝
+  crypto: 0.0  # 가상화폐
+  currency_exchange: 0.0  # 환전
+  curriculum: 0.0  # 교육과정
+  diet: 0.0  # 다이어트
+  e_payment: 0.0  # 전자결제/전자화폐
+  edu_etc: 0.0  # 교육 - 기타
+  ent_etc: 0.0  # 엔터테인먼트 - 기타
+  ent_news: 0.0  # 연예뉴스
+  extracurricular: 0.0  # 과정외 교육
+  family_etc: 0.0  # 가족 - 기타
+  fashion_etc: 0.0  # 의류/패션 - 기타
+  fashion_other: 0.0  # 기타패션
+  finance_etc: 0.0  # 금융 - 기타
+  fitness: 0.0  # 헬스
+  flight: 0.0  # 항공
+  food_delivery: 1.0  # 배달식품
+  food_etc: 0.0  # 식품 - 기타
+  game: 1.0  # 게임
+  general_food: 0.0  # 일반식품
+  general_mall: 1.0  # 종합쇼핑몰
+  health_etc: 0.0  # 건강관리 - 기타
+  health_food: 0.0  # 건강식품
+  health_info: 0.0  # 건강 정보
+  home_care: 0.0  # 종합홈케어
+  home_etc: 0.0  # 주거/홈케어 - 기타
+  humor: 0.0  # 유머
+  idol: 0.0  # 아이돌
+  insurance: 0.0  # 보험
+  interior: 0.0  # 인테리어
+  invest_advisory: 0.0  # 투자자문
+  land_transport: 0.0  # 육상
+  language: 0.0  # 외국어
+  laundry: 0.0  # 세탁
+  leisure_other: 0.0  # 기타 여가활동
+  live_stream: 0.0  # 개인방송
+  lodging: 0.0  # 숙박업체
+  massage: 0.0  # 안마
+  medicine: 0.0  # 의약품
+  mens_fashion: 0.0  # 남성패션
+  messenger: 1.0  # 인스턴트 메신저
+  mobile_bank: 0.0  # 모바일 은행
+  mobile_pay: 0.0  # 모바일결제
+  movie: 0.0  # 영화
+  moving: 0.0  # 이사
+  multimedia: 0.0  # 멀티미디어
+  music: 1.0  # 음악
+  news_etc: 0.0  # 뉴스/정보 - 기타
+  newspaper: 0.0  # 신문
+  online_etc: 0.0  # 온라인 서비스-기타
+  online_news: 1.0  # 온라인 뉴스
+  online_pay: 0.0  # 온라인결제
+  online_stock: 0.0  # 온라인 증권거래
+  organic: 0.0  # 유기농제품
+  ott: 1.0  # OTT
+  outdoor: 0.0  # 아웃도어
+  parent_service: 0.0  # 학부모용 서비스
+  parenting: 0.0  # 육아
+  pension: 0.0  # 연금
+  performance: 0.0  # 공연
+  personal_finance: 0.0  # 개인금융
+  pet: 0.0  # 반려동물
+  portal: 0.0  # 포털사이트
+  pregnancy: 0.0  # 임신/출산
+  productivity: 0.0  # 생산성
+  professional_edu: 0.0  # 전문교육
+  radio: 1.0  # 라디오
+  rental: 0.0  # 렌탈
+  sea_transport: 0.0  # 해상
+  security: 0.0  # 보안/경비
+  senior_care: 0.0  # 시니어 케어
+  shopping_etc: 0.0  # 쇼핑 - 기타
+  sns: 1.0  # 소셜네트워킹
+  special_food: 0.0  # 특수식품
+  specialty_mall: 0.0  # 전문쇼핑몰
+  sports: 1.0  # 스포츠
+  sports_etc: 0.0  # 스포츠/여가 - 기타
+  store_food: 0.0  # 매장식품
+  tax: 0.0  # 세금
+  tech_news: 0.0  # 하이테크 뉴스/정보
+  theme_park: 0.0  # 놀이공원
+  tour: 0.0  # 투어/활동
+  travel_agency: 0.0  # 여행사
+  travel_etc: 0.0  # 여행 - 기타
+  travel_info: 0.0  # 여행정보
+  vr: 0.0  # VR컨텐츠
+  weather: 1.0  # 날씨
+  webtoon: 1.0  # 웹툰
+  wedding: 0.0  # 결혼
+  womens_fashion: 0.0  # 여성패션
+
+# 공통 비교 항목 최소 수의 검토값. 결측·무응답·0회 제외 후 이보다 적으면 insufficient.
+minimum_categories: 6
+
+# 동점은 공동 순위. 정밀도·항목 근거 정렬은 codebook.yaml의 survey_contract를 참조한다.
+tie_policy: joint
+
+# 기존 Java가 읽는 이름을 유지했다. 새 설계에서의 의미는 '0회 응답 제외'다.
+# 0회와 null을 구분하여 보존하고 평균 분모 확인 전에는 0회만 비교에서 제외한다.
+zero_days_policy: exclude
+
+# TODO(확인 필요): 유형 이름 미확정. 실제 나이·성격 유형을 생성하지 않는다.
 types: []
+
+# Fisher·FCQ는 요청마다 실행하는 채점기가 아니라 Python의 사전 후보 검토 단계다.
+# 6개월 원값·월 제외·FCQ 조건은 codebook.yaml의 real_analysis.candidate_review에 있다.
+# 위 8개 최상위 키는 현행 SimilaritySettings record와 맞춘다.
+# response_unit·reference_month 등 추가 계약을 여기에 임의로 더하면 strict 로더가 실패한다.

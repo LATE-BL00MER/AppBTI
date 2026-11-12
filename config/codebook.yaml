@@ -1,5 +1,13 @@
-# 희망 제공 컬럼 기준의 초기 틀. 실제 코드북 수령 후 정의를 채운다.
+# 우서현 요청: AppBTI_123_요약의 분석·설문 비교 설계를 기록한 실제 데이터 코드북 초안.
+# 대상은 이미 정제된 clean.csv의 표준 컬럼이다. 제공처 원본은 먼저 별도 정제가 필요하다.
+# 접속 횟수 해석은 사용자 가정이며 제공처 확정 정의와 구분한다. 실제 측정값은 넣지 않는다.
+# TODO(확인 필요): 현우에게 분류·정제 계약, 진용에게 횟수 응답·코사인 계약을 인계한다.
+# 현재 Python의 일수 상한·안전민감 제외 처리와 Java의 응답/API 계약은 별도 구현이 필요하다.
 schema_version: 1
+is_mock: false
+source: "LG U+ 제공 연령대·기간 집계 / 접속 횟수 해석은 사용자 가정"
+
+# 기존 목업의 한글 컬럼 매핑도 유지한다. 실제 입력에는 영문 표준 컬럼을 쓴다.
 columns:
   기준월: month
   연령대(6구간): age_group
@@ -12,38 +20,319 @@ columns:
   시간 단위: time_unit
   데이터 상태: status
   비고: note
-
+  month: month
+  age_group: age_group
+  age_label: age_label
+  major: major
+  minor_code: minor_code
+  minor_name: minor_name
+  uu: uu
+  avg_days: avg_days
+  avg_daily_time: avg_daily_time
+  time_unit: time_unit
+  status: status
+  note: note
 period:
-  start: "2025-01"
-  end: "2025-06"
-
-# TODO(확인 필요): 제공처의 기존 6구간 ID·구간명·경계와 중분류 정의
-age_groups: []
-minor_categories: []
+  start: 2025-01
+  end: 2025-06
+age_groups:
+- id: under20
+  label: 20대 미만
+- id: 20s
+  label: 20대
+- id: 30s
+  label: 30대
+- id: 40s
+  label: 40대
+- id: 50s
+  label: 50대
+- id: 60plus
+  label: 60대 이상
 major_categories:
-  - 교육
-  - 엔터테인먼트
-  - 스포츠/여가
-  - 쇼핑
-  - 온라인커뮤니케이션
-  - 뉴스/정보
+- 가족
+- 건강
+- 교육
+- 금융/재테크
+- 뉴스/정보
+- 쇼핑
+- 스포츠/여가
+- 식품
+- 엔터테인먼트
+- 여행
+- 온라인서비스
+- 의류/패션
+- 자동차
+- 주거/홈케어
+# clean.csv의 코드·명칭·대분류만 옮겼다. 통계 수치와 순위는 이 목록에 넣지 않는다.
+minor_categories:
+  - {"code": "adult", "name": "성인컨텐츠", "major": "엔터테인먼트"}
+  - {"code": "air_quality", "name": "공기질", "major": "뉴스/정보"}
+  - {"code": "ar", "name": "AR컨텐츠", "major": "엔터테인먼트"}
+  - {"code": "bank", "name": "은행", "major": "금융/재테크"}
+  - {"code": "bitcoin", "name": "비트코인", "major": "금융/재테크"}
+  - {"code": "books", "name": "도서/잡지", "major": "엔터테인먼트"}
+  - {"code": "brand_fashion", "name": "브랜드패션", "major": "의류/패션"}
+  - {"code": "car_accessory", "name": "자동차 악세서리", "major": "자동차"}
+  - {"code": "car_etc", "name": "자동차 - 기타", "major": "자동차"}
+  - {"code": "car_news", "name": "자동차 뉴스", "major": "자동차"}
+  - {"code": "car_purchase", "name": "자동차 구매", "major": "자동차"}
+  - {"code": "car_tuning", "name": "튜닝/고성능차량", "major": "자동차"}
+  - {"code": "card", "name": "카드", "major": "금융/재테크"}
+  - {"code": "chat", "name": "채팅", "major": "온라인서비스"}
+  - {"code": "cleaning", "name": "클리닝", "major": "주거/홈케어"}
+  - {"code": "crypto", "name": "가상화폐", "major": "금융/재테크"}
+  - {"code": "currency_exchange", "name": "환전", "major": "여행"}
+  - {"code": "curriculum", "name": "교육과정", "major": "교육"}
+  - {"code": "diet", "name": "다이어트", "major": "건강"}
+  - {"code": "e_payment", "name": "전자결제/전자화폐", "major": "금융/재테크"}
+  - {"code": "edu_etc", "name": "교육 - 기타", "major": "교육"}
+  - {"code": "ent_etc", "name": "엔터테인먼트 - 기타", "major": "엔터테인먼트"}
+  - {"code": "ent_news", "name": "연예뉴스", "major": "엔터테인먼트"}
+  - {"code": "extracurricular", "name": "과정외 교육", "major": "교육"}
+  - {"code": "family_etc", "name": "가족 - 기타", "major": "가족"}
+  - {"code": "fashion_etc", "name": "의류/패션 - 기타", "major": "의류/패션"}
+  - {"code": "fashion_other", "name": "기타패션", "major": "의류/패션"}
+  - {"code": "finance_etc", "name": "금융 - 기타", "major": "금융/재테크"}
+  - {"code": "fitness", "name": "헬스", "major": "건강"}
+  - {"code": "flight", "name": "항공", "major": "여행"}
+  - {"code": "food_delivery", "name": "배달식품", "major": "식품"}
+  - {"code": "food_etc", "name": "식품 - 기타", "major": "식품"}
+  - {"code": "game", "name": "게임", "major": "엔터테인먼트"}
+  - {"code": "general_food", "name": "일반식품", "major": "식품"}
+  - {"code": "general_mall", "name": "종합쇼핑몰", "major": "쇼핑"}
+  - {"code": "health_etc", "name": "건강관리 - 기타", "major": "건강"}
+  - {"code": "health_food", "name": "건강식품", "major": "건강"}
+  - {"code": "health_info", "name": "건강 정보", "major": "건강"}
+  - {"code": "home_care", "name": "종합홈케어", "major": "주거/홈케어"}
+  - {"code": "home_etc", "name": "주거/홈케어 - 기타", "major": "주거/홈케어"}
+  - {"code": "humor", "name": "유머", "major": "엔터테인먼트"}
+  - {"code": "idol", "name": "아이돌", "major": "엔터테인먼트"}
+  - {"code": "insurance", "name": "보험", "major": "금융/재테크"}
+  - {"code": "interior", "name": "인테리어", "major": "주거/홈케어"}
+  - {"code": "invest_advisory", "name": "투자자문", "major": "금융/재테크"}
+  - {"code": "land_transport", "name": "육상", "major": "여행"}
+  - {"code": "language", "name": "외국어", "major": "교육"}
+  - {"code": "laundry", "name": "세탁", "major": "주거/홈케어"}
+  - {"code": "leisure_other", "name": "기타 여가활동", "major": "스포츠/여가"}
+  - {"code": "live_stream", "name": "개인방송", "major": "엔터테인먼트"}
+  - {"code": "lodging", "name": "숙박업체", "major": "여행"}
+  - {"code": "massage", "name": "안마", "major": "건강"}
+  - {"code": "medicine", "name": "의약품", "major": "건강"}
+  - {"code": "mens_fashion", "name": "남성패션", "major": "의류/패션"}
+  - {"code": "messenger", "name": "인스턴트 메신저", "major": "온라인서비스"}
+  - {"code": "mobile_bank", "name": "모바일 은행", "major": "금융/재테크"}
+  - {"code": "mobile_pay", "name": "모바일결제", "major": "금융/재테크"}
+  - {"code": "movie", "name": "영화", "major": "엔터테인먼트"}
+  - {"code": "moving", "name": "이사", "major": "주거/홈케어"}
+  - {"code": "multimedia", "name": "멀티미디어", "major": "엔터테인먼트"}
+  - {"code": "music", "name": "음악", "major": "엔터테인먼트"}
+  - {"code": "news_etc", "name": "뉴스/정보 - 기타", "major": "뉴스/정보"}
+  - {"code": "newspaper", "name": "신문", "major": "뉴스/정보"}
+  - {"code": "online_etc", "name": "온라인 서비스-기타", "major": "온라인서비스"}
+  - {"code": "online_news", "name": "온라인 뉴스", "major": "뉴스/정보"}
+  - {"code": "online_pay", "name": "온라인결제", "major": "금융/재테크"}
+  - {"code": "online_stock", "name": "온라인 증권거래", "major": "금융/재테크"}
+  - {"code": "organic", "name": "유기농제품", "major": "건강"}
+  - {"code": "ott", "name": "OTT", "major": "엔터테인먼트"}
+  - {"code": "outdoor", "name": "아웃도어", "major": "스포츠/여가"}
+  - {"code": "parent_service", "name": "학부모용 서비스", "major": "교육"}
+  - {"code": "parenting", "name": "육아", "major": "가족"}
+  - {"code": "pension", "name": "연금", "major": "금융/재테크"}
+  - {"code": "performance", "name": "공연", "major": "엔터테인먼트"}
+  - {"code": "personal_finance", "name": "개인금융", "major": "금융/재테크"}
+  - {"code": "pet", "name": "반려동물", "major": "가족"}
+  - {"code": "portal", "name": "포털사이트", "major": "온라인서비스"}
+  - {"code": "pregnancy", "name": "임신/출산", "major": "가족"}
+  - {"code": "productivity", "name": "생산성", "major": "온라인서비스"}
+  - {"code": "professional_edu", "name": "전문교육", "major": "교육"}
+  - {"code": "radio", "name": "라디오", "major": "엔터테인먼트"}
+  - {"code": "rental", "name": "렌탈", "major": "주거/홈케어"}
+  - {"code": "sea_transport", "name": "해상", "major": "여행"}
+  - {"code": "security", "name": "보안/경비", "major": "주거/홈케어"}
+  - {"code": "senior_care", "name": "시니어 케어", "major": "가족"}
+  - {"code": "shopping_etc", "name": "쇼핑 - 기타", "major": "쇼핑"}
+  - {"code": "sns", "name": "소셜네트워킹", "major": "온라인서비스"}
+  - {"code": "special_food", "name": "특수식품", "major": "식품"}
+  - {"code": "specialty_mall", "name": "전문쇼핑몰", "major": "쇼핑"}
+  - {"code": "sports", "name": "스포츠", "major": "스포츠/여가"}
+  - {"code": "sports_etc", "name": "스포츠/여가 - 기타", "major": "스포츠/여가"}
+  - {"code": "store_food", "name": "매장식품", "major": "식품"}
+  - {"code": "tax", "name": "세금", "major": "금융/재테크"}
+  - {"code": "tech_news", "name": "하이테크 뉴스/정보", "major": "뉴스/정보"}
+  - {"code": "theme_park", "name": "놀이공원", "major": "엔터테인먼트"}
+  - {"code": "tour", "name": "투어/활동", "major": "여행"}
+  - {"code": "travel_agency", "name": "여행사", "major": "여행"}
+  - {"code": "travel_etc", "name": "여행 - 기타", "major": "여행"}
+  - {"code": "travel_info", "name": "여행정보", "major": "여행"}
+  - {"code": "vr", "name": "VR컨텐츠", "major": "엔터테인먼트"}
+  - {"code": "weather", "name": "날씨", "major": "뉴스/정보"}
+  - {"code": "webtoon", "name": "웹툰", "major": "엔터테인먼트"}
+  - {"code": "wedding", "name": "결혼", "major": "가족"}
+  - {"code": "womens_fashion", "name": "여성패션", "major": "의류/패션"}
+
+# 제외 정책의 계약이다. 현행 공통 어댑터는 이 키를 적용하지 않으므로 구현 전 실제 실행 금지.
+exclude_minor_names:
+  - 안전민감
 
 statuses:
+  normal: normal
+  missing: missing
+  suppressed: suppressed
   정상: normal
-  비공개: suppressed
   결측: missing
+  비공개: suppressed
 
+# 기존 공통 파이프라인 호환 키. 미확정 UU 가중 기준값·시간 변환은 계속 끈다.
 metrics:
-  # TODO(확인 필요): 평균 이용일수 분모
-  avg_days_denominator: null
+  avg_days_denominator: null  # TODO(확인 필요): 평균의 대상 인원·분모
   weighted_reference_days_enabled: false
   daily_time:
-    enabled: false
-    # TODO(확인 필요): 일평균 이용시간의 단위·정의·분모
+    enabled: false  # avg_daily_time을 시간으로 환산하거나 시간 비교에 사용하지 않는다.
     source_unit: null
     definition: null
     denominator: null
-    target_unit: minutes
+    target_unit: minutes  # 기존 시간 경로의 호환 필드이며 위 enabled=false로 미사용
 
-# TODO(확인 필요): 분류·집계 기준이 변경되는 월
+# TODO(확인 필요): 분류·집계 기준 변경 월. 확인되지 않은 경계를 지어내지 않는다.
 continuity_breaks: []
+
+# 아래는 실제 분석·횟수 설문의 새 계약이다. 기존 실행기는 아직 이 블록을 읽지 않는다.
+# 목업은 일수·시간 시연이므로 이 블록을 적용하면 안 된다.
+real_analysis:
+  apply_only_when_is_mock_false: true
+  status: draft
+  runtime_ready: false
+  input:
+    format: clean_canonical
+    filename: clean.csv
+    month_format: YYYY-MM
+    duplicate_key: [month, age_group, minor_code]
+    missing_policy: null
+    uu_zero_policy: exclude_as_unavailable
+    exclude_names_from: exclude_minor_names
+  metric_definitions:
+    avg_days:
+      meaning: monthly_access_count
+      unit: count
+      definition_status: user_assumption
+      minimum: 0
+      maximum: null  # 횟수이므로 달의 일수로 상한을 제한하지 않는다.
+      role: primary
+    avg_daily_time:
+      meaning: daily_access_count
+      unit: count
+      definition_status: user_assumption
+      minimum: 0
+      maximum: null
+      role: supplementary_only
+    time_unit:
+      role: ignored
+
+  # 1. Maximum Absolute Scaling: 비음수에서는 x/max(x)와 같다.
+  # 비교표는 각 월·중분류 안의 6연령에 따로 적용한다. PDF의 대표 표만 6월이다.
+  exploration:
+    method: max_abs
+    metric: avg_days
+    group_by: [month, minor_code]
+    fit_axis: age_group
+    require_all_age_groups: true
+    zero_max_policy: null
+    clip: false
+    display_month: "2025-06"
+
+  # 2. Fisher Score: 연령 중심 간 차이 B / 같은 연령의 월별 변동 W.
+  # 6개월 원값을 쓰며, 위 최대값=1 표를 입력하거나 전월 대비 변동률을 계산하지 않는다.
+  # 개인 변별력·유의성이나 '가짜 데이터 제거'를 보장하지 않는 집단 수준 검토다.
+  candidate_review:
+    stage: offline_python
+    metric: avg_days
+    start_month: "2025-01"
+    end_month: "2025-06"
+    input_scale: raw
+    respect_continuity_breaks: true
+    fisher:
+      method: between_within_scatter_ratio
+      within_scatter: temporal_variation_within_age_group
+      require_complete_month_age_grid: true
+      zero_within_policy: explicit_status
+      p_values_enabled: false
+    leave_one_month_out:
+      enabled: true
+      recompute: [centers, between_scatter, within_scatter, fisher_rank, fcq_selection]
+      minimum_remaining_months: 2
+    # 3. FCQ: F-test Correlation Quotient 계열의 순차 근사 검토.
+    # 균형 자료에서 F 통계량과 일정 배수인 Fisher를 관련성으로 사용한다.
+    # epsilon은 0 나누기 보호값이다. FCQ만으로 최종 12문항을 자동 확정하지 않는다.
+    fcq:
+      method: greedy_fisher_correlation_quotient
+      relevance: fisher_score
+      redundancy: mean_absolute_pearson
+      correlation_floor: 0.000001
+      floor_sensitivity: [0.001, 0.01]
+      review_size: 12
+      role: redundancy_review_only
+      automatic_finalization: false
+    final_selection: statistics_and_question_review
+survey_selection:
+  primary_codes:
+  - general_mall
+  - food_delivery
+  - weather
+  - online_news
+  - sns
+  - messenger
+  - webtoon
+  - game
+  - music
+  - ott
+  - radio
+  - sports
+  conditional_primary_codes:
+  - game
+  reserve_codes:
+  - curriculum
+  - health_info
+
+# 서비스 구현 시 similarity.yaml과 함께 읽을 추가 계약. 현재는 문서화된 초안이다.
+survey_contract:
+  response_unit: count
+  response_period: previous_calendar_month
+  response_type: nonnegative_integer
+  response_maximum: null
+  unknown_policy: null
+  skipped_policy: null
+  zero_count_policy: exclude_pending_denominator
+  reference_metric: avg_days
+  reference_month: "2025-06"
+  normalization: reference_max
+  refit_with_user_answer: false
+  clip: false
+  require_all_age_groups: true
+  constant_category_policy: exclude
+  zero_norm_policy: insufficient
+  tie_tolerance: 0.000000001
+  daily_metric_enabled: false
+  weekly_comparison_enabled: false
+  evidence:
+    method: normalized_absolute_difference
+    closest_count: 3
+    farthest_count: 3
+    tie_breaker: minor_code
+  score:
+    formula: "100 * weighted_cosine_similarity"
+    interpretation: pattern_similarity_not_probability
+  # TODO(확인 필요): 접속 1회·재접속·기기 범위, 평균 분모, 문항 인지 면담·A/B 기간 검증
+  required_before_activation:
+    - confirm_count_definition_and_denominator
+    - implement_count_validation_without_calendar_day_cap
+    - implement_excluded_category_filter_and_null_policy
+    - implement_fixed_reference_max_and_weighted_cosine
+    - align_question_and_profile_api_units
+    - validate_monthly_questions_and_zero_count_policy
+
+# 방법 정의·적용 근거. 특정 12문항이나 개인 정확도를 보장하는 출처는 아니다.
+method_sources:
+  max_abs: https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
+  fisher: https://arxiv.org/pdf/1202.3725
+  fcq: https://doi.org/10.1186/s13040-018-0170-z
+  cosine: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.cosine_similarity.html
