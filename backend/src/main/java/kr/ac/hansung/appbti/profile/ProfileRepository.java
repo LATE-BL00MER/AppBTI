@@ -1,6 +1,8 @@
 package kr.ac.hansung.appbti.profile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -16,18 +18,22 @@ import java.util.Map;
 /** 파일은 기동 시 메모리에 적재한다. 실제 산출물이 없으면 별도 목업 산출물을 쓴다. */
 @Component
 public class ProfileRepository {
+    private static final Logger log = LoggerFactory.getLogger(ProfileRepository.class);
     private final Map<String, ProfileData> datasets = new LinkedHashMap<>();
 
     public ProfileRepository(ObjectMapper mapper,
             @Value("${appbti.profiles-path}") String primary,
             @Value("${appbti.mock-profiles-path}") String mock,
             @Value("${appbti.mock-time-profiles-path}") String timed) throws IOException {
-        Path selected = Files.isRegularFile(Path.of(primary)) ? Path.of(primary) : Path.of(mock);
-        load(mapper, "basic", selected);
+        boolean primaryExists = Files.isRegularFile(Path.of(primary));
+        // 시연 중 목업으로 조용히 넘어가지 않도록 대체 사실을 경고로 남긴다.
+        if (!primaryExists) log.warn("실제 산출물을 찾지 못해 목업 산출물을 사용합니다: {} 없음", Path.of(primary).toAbsolutePath().normalize());
+        load(mapper, "basic", primaryExists ? Path.of(primary) : Path.of(mock));
         // 실제 데이터 모드에서는 가상 시간 데이터를 섞거나 선택할 수 없게 한다.
         if (datasets.containsKey("basic") && datasets.get("basic").meta().isMock()) {
             load(mapper, "time", Path.of(timed));
         }
+        if (datasets.isEmpty()) log.warn("적재한 집단 통계가 없습니다. 조회 API는 503을 반환합니다.");
     }
 
     private void load(ObjectMapper mapper, String name, Path path) throws IOException {
@@ -37,6 +43,9 @@ public class ProfileRepository {
             throw new IOException("지원하지 않는 profiles.json 스키마: " + path);
         }
         datasets.put(name, data);
+        log.info("집단 통계 적재 [{}]: {} ({}, 연령대 {}개, 중분류 {}개, {}~{})", name, path.toAbsolutePath().normalize(),
+                data.meta().isMock() ? "목업" : "실제", data.meta().ageGroups().size(), data.meta().minorCategories().size(),
+                data.meta().months().getFirst(), data.meta().latestMonth());
     }
 
     public ProfileData get(String dataset) {

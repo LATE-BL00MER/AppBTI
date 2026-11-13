@@ -19,6 +19,7 @@ class ApiControllerTests {
     @Autowired MockMvc mvc;
     @MockitoBean ProfileRepository repository;
     @MockitoBean SimilaritySettings.Loader settings;
+    @MockitoBean SurveySummary survey;
 
     @BeforeEach void prepare() {
         var data = SimilarityCalculatorTests.fixture(false);

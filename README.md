@@ -181,7 +181,7 @@ PR에서는 GitHub Actions가 같은 검사를 한다.
 
 ```bash
 cd pipeline
-python -m appbti_pipeline --input ../data/raw --out ../data/processed --codebook ../config/codebook.yaml
+python -m appbti_pipeline --input ../data/raw/real --out ../data/processed/real --codebook ../config/codebook.yaml
 ```
 
 `config/codebook.yaml`은 희망 제공 컬럼 매핑을 담는다. 제공처의 연령대 6구간과
@@ -195,11 +195,14 @@ python -m appbti_pipeline --input ../data/raw --out ../data/processed --codebook
 
 | 설정 | 기본값 | 환경변수 |
 |---|---|---|
-| `appbti.profiles-path` | `../data/processed/profiles.json` | `APPBTI_PROFILES_PATH` |
+| `appbti.profiles-path` | `../data/processed/real/profiles.json` | `APPBTI_PROFILES_PATH` |
 | `appbti.mock-profiles-path` | `../data/processed/mock/profiles.json` | `APPBTI_MOCK_PROFILES_PATH` |
 | `appbti.mock-time-profiles-path` | `../data/processed/mock-time/profiles.json` | `APPBTI_MOCK_TIME_PROFILES_PATH` |
 | `appbti.similarity-path` | `../config/similarity.yaml` | `APPBTI_SIMILARITY_PATH` |
 | `appbti.mock-similarity-path` | `../config/similarity.mock.yaml` | `APPBTI_MOCK_SIMILARITY_PATH` |
+| `appbti.survey-questions-path` | `../config/survey_questions.yaml` | `APPBTI_SURVEY_QUESTIONS_PATH` |
+
+백엔드는 기동 시 적재한 산출물 경로와 실제/목업 여부를 로그에 남긴다. 실제 산출물을 찾지 못해 목업으로 대체하면 `WARN` 로그가 나온다.
 
 상대 경로는 `backend/` 작업 디렉터리 기준이다. 실제 산출물이 없으면 가상 산출물로 대체한다.
 실제 산출물 적재 시 시간 포함 가상 데이터 버전을 노출하지 않는다. 파일 교체 뒤에는 서버를 다시 시작한다.

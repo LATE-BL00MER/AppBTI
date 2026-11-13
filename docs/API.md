@@ -79,7 +79,7 @@
 | `dataset` | string | 아니요 | 이번 응답의 dataset |
 | `comparisonEnabled` | boolean | 아니요 | 설문 비교 켜짐 여부(`similarity.yaml`의 `enabled`) |
 | `zeroDaysPolicy` | string | 예 | **변경 없음(하위 호환).** 새 코드는 `survey.zeroCountPolicy`를 쓴다 |
-| `survey` | object | 아니요 | **신규.** `{questionCount, period, method}` 설문 요약. 홈 화면 소개 문구용 |
+| `survey` | object | 아니요 | **신규.** `{questionCount, period, method}` 설문 요약. 홈 화면 소개 문구용. 실제 데이터는 `config/survey_questions.yaml`의 `enabled: true` 문항 수와 `period`이며, 파일이 없으면 `questionCount`·`period`가 `null`이다(화면은 숫자를 지어내지 않는다). 목업은 중분류 수·`monthly`. `method`는 데이터별 `similarity*.yaml`의 `method` |
 
 ---
 
@@ -150,7 +150,7 @@
 | `items[].value` | number | 아니요 | `basis` 값(정렬에 쓴 값) |
 | `items[].ageShare` | number | 예 | 참고용 |
 | `items[].avgDays`, `referenceDays`, `relativeFrequency` | number | 예 | 참고용(산출물 그대로) |
-| `excluded[]` | {minorCode, name, reason} | 아니요 | `basis` 값이 `null`이라 뺀 중분류. `reason`은 행의 `status` 또는 `reference_unavailable` |
+| `excluded[]` | {minorCode, name, reason} | 아니요 | `basis` 값이 `null`이라 뺀 중분류(`minorCode` 순). `reason`은 행의 `status`(`missing`/`suppressed`), 행은 정상이지만 다른 연령대 결측 등으로 값이 없으면 `share_unavailable`(ageShare) 또는 `reference_unavailable`(relativeFrequency) |
 
 규칙
 1. 정렬: `value` 내림차순 → `minorCode` 오름차순. 동점 판정은 `ageShare`면 소수 3자리, `relativeFrequency`면 소수 2자리 반올림 값으로 한다.
@@ -334,10 +334,10 @@ questions:
 - [ ] 테스트: 코사인 값, 0회 제외, 최소 6개 미달, 공동 순위, 결측 집단, 같은 입력·같은 결과, `enabled=false`
 
 **임기범**
-- [ ] `ProfileRepository`가 `data/processed/real/profiles.json`을 읽고, 어떤 파일을 적재했는지 로그에 남김(지금은 아무 표시 없이 목업으로 넘어감)
-- [ ] `/explore/ranking`(`basis=ageShare` 기본)
-- [ ] `/meta.survey` 필드
-- [ ] `ApiControllerTests` fixture를 실제 구조로(6구간, 일부 `null`, `weightedReference` true/false). 값은 가상
+- [x] `ProfileRepository`가 `data/processed/real/profiles.json`을 읽고, 어떤 파일을 적재했는지 로그에 남김(목업 대체 시 WARN)
+- [x] `/explore/ranking`(`basis=ageShare` 기본)
+- [x] `/meta.survey` 필드
+- [x] 실제 구조 fixture(6구간, 일부 `null`, `weightedReference` true/false, 가상 값) — `RealShapeFixture`, `ExploreRankingTests`, `ProfileApiRealShapeTests`. 설문 API용 `ApiControllerTests`는 신진용 작업과 겹치지 않게 목업 fixture를 유지
 
 **심유진**
 - [ ] 설문: 횟수 입력(상한 없음, 기본값 없음) + 「모르겠음」「건너뛰기」 버튼, `guide` 표시
