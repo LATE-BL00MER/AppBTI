@@ -200,6 +200,15 @@ input[type=radio] { accent-color: var(--ink); }
 .example-note strong { font-weight: 600; }
 .example-note > span { color: var(--muted); }
 .example-note a { margin-left: auto; text-decoration: underline; text-underline-offset: 4px; }
+.report-intro {
+  margin-bottom: 16px;
+  padding: clamp(20px, 4vw, 36px);
+  border: 1px solid #e2e9f1;
+  border-radius: 24px;
+  background: linear-gradient(120deg, #fff 45%, #edf4fd);
+}
+.report-intro h1 { font-size: clamp(24px, 4vw, 36px); }
+.report-intro p { margin-top: 8px; color: var(--muted); }
 .result-hero { display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 40px; background: white; padding: 28px; border-radius: 8px; }
 .result-hero h1 { font-size: 30px; }
 .result-hero > div > p:not(.source) { margin-top: 12px; font-size: 14px; color: var(--muted); }
@@ -250,6 +259,36 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
 .excluded-list span { color: var(--muted); }
 .result-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 24px; }
 .result-actions > span { width: 100%; font-size: 12px; }
+
+.result-page .result-hero {
+  background: linear-gradient(115deg, #285840, #327451);
+  color: #fff;
+  border-radius: 24px;
+  overflow-wrap: anywhere;
+}
+.result-hero h2 { font-size: 16px; }
+.result-page .result-hero > div > p,
+.result-page .result-hero .source,
+.result-page .similarity-number > span { color: #eef8f2; }
+.result-page .result-hero > div > .matched-groups { color: #fff; font-weight: 700; }
+.result-page .similarity-number {
+  min-width: 0;
+  border: 1px solid #ffffff45;
+  border-radius: 20px;
+  padding: 16px;
+  background: #ffffff14;
+  text-align: center;
+}
+.result-page .result-evidence > div,
+.result-page .ranking-section {
+  border: 1px solid #e2e9f1;
+  border-radius: 24px;
+}
+.result-page .ranking-list > div > div,
+.result-page .ranking-list i,
+.result-page .comparison-bars > div > div,
+.result-page .comparison-bars i { border-radius: 999px; }
+.result-page .comparison-bars i.group-bar { background: #8070a1; }
 .empty-result { padding-block: 64px; max-width: 750px; }
 .empty-result p:not(.context-label) { margin-block: 20px; color: var(--muted); }
 .empty-result .text-link { margin-left: 20px; }
