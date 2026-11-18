@@ -304,10 +304,29 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
 .result-actions > span { width: 100%; font-size: 12px; }
 
 .result-page .result-hero {
+  position: relative;
+  isolation: isolate;
   background: linear-gradient(115deg, #285840, #327451);
   color: #fff;
   border-radius: 24px;
   overflow-wrap: anywhere;
+}
+.result-page .result-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 10% 0%, #00000018, transparent 62%),
+    radial-gradient(ellipse at 100% 100%, #00000040, transparent 76%);
+}
+.result-page .result-hero.light-result::before {
+  background:
+    radial-gradient(ellipse at 10% 0%, #ffffff40, transparent 62%),
+    radial-gradient(ellipse at 100% 100%, #ffffff65, transparent 76%);
+  mask-image: linear-gradient(transparent 8px, black 28px);
 }
 .result-hero h2 { font-size: 16px; }
 .result-page .result-hero > div > p,
