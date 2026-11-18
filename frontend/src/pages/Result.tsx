@@ -4,6 +4,7 @@ import { request } from '../api/client';
 import type { Evidence, SurveyResult } from '../api/types';
 import { EmptyResult, ErrorNotice, formatNumber, Loading, monthLabel, Source } from '../components/Common';
 import { useApp } from '../state';
+import { ageColor } from '../ageColors';
 
 function EvidenceList({ items, group }: { items: Evidence[]; group: string }) {
   return <div className="evidence-list">{items.map(item => <div className="evidence-row" key={item.minorCode}><div className="evidence-title"><div><span>{item.major}</span><Link to={`/explore?minor=${item.minorCode}`}>{item.name} <span aria-hidden="true">↗</span></Link></div><strong>{formatNumber(item.differenceDays, '일 차이')}</strong></div><div className="comparison-bars"><div><span>내 응답</span><div><i style={{ width: `${item.userDays / 31 * 100}%` }} /></div><strong>{formatNumber(item.userDays, '일')}</strong></div><div><span>{group}</span><div><i className="group-bar" style={{ width: `${item.groupDays / 31 * 100}%` }} /></div><strong>{formatNumber(item.groupDays, '일')}</strong></div></div>{item.userMinutes !== null && item.groupMinutes !== null && <p className="time-evidence">하루 평균 시간: 내 응답 {formatNumber(item.userMinutes, '분')} · {group} {formatNumber(item.groupMinutes, '분')}</p>}</div>)}</div>;
@@ -36,6 +37,10 @@ export default function Result() {
   if (result.status === 'insufficient') return <div className="container page insufficient"><p className="context-label">나의 패턴 리포트</p><div className="insufficient-symbol" aria-hidden="true">…</div><h1>비교할 단서가<br />조금 더 필요해요.</h1><p>{result.reason}</p><div className="insufficient-count"><strong>{result.comparedCategories}<span> / {result.minimumCategories}개</span></strong><span>비교 가능한 항목 / 최소 필요 항목</span></div><p>응답하지 않은 활동이나 비공개 데이터는 비교에서 제외해요.<br />설문을 더 작성하거나, 집단별 통계를 먼저 둘러볼 수 있어요.</p><div className="button-row"><Link className="button primary" to="/survey">응답 이어서 작성하기</Link><Link className="button secondary" to="/explore">세대별 탐색하기</Link></div><Exclusions items={result.excluded} /><Source month={result.month} /></div>;
   const group = result.matches[0].label;
   const matchLabels = result.matches.map(g => g.label).join(' · ');
+  const matchColors = result.matches.map(match => ageColor(meta.ageGroups.findIndex(age => age.id === match.id)));
+  const matchBackground = matchColors.length > 1
+    ? `linear-gradient(115deg, ${matchColors.join(', ')})`
+    : matchColors[0];
   const copy = async () => {
     const text = `AppBTI 패턴 리포트${draft.isExample ? ' (예시 응답)' : ''}\n응답 패턴이 ${matchLabels} 통계와 가장 비슷합니다.\n패턴 유사도 ${result.scores[0].score}점 · 공통 ${result.comparedCategories}개 항목\n닮은 항목: ${result.closest.map(e => e.name).join(', ')}\n${result.source}\n실제 연령 추정이나 개인 이용 기록 분석이 아닙니다.`;
     try { await navigator.clipboard.writeText(text); setCopied('리포트 요약을 복사했어요.'); }
@@ -48,7 +53,7 @@ export default function Result() {
       <h1>나의 디지털 습관 리포트</h1>
       <p>응답과 집단 통계를 비교한 결과예요.</p>
     </header>
-    <section className="result-hero" aria-labelledby="match-heading">
+    <section className="result-hero" aria-labelledby="match-heading" style={{ background: matchBackground }}>
       <div>
         <h2 id="match-heading">가장 비슷한 연령집단</h2>
         <p className="matched-groups">{matchLabels}</p>
