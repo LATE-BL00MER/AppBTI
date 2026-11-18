@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useData } from '../api/client';
-import type { Profile } from '../api/types';
+import type { ExploreRanking, Profile } from '../api/types';
 import { ErrorNotice, formatNumber, Loading, monthLabel, Source } from '../components/Common';
 import { useApp } from '../state';
 import { ageColor } from '../ageColors';
@@ -18,6 +18,7 @@ export default function Explore() {
   const [search, setSearch] = useState('');
   const [age, setAge] = useState('all');
   const [metric, setMetric] = useState<Metric>('avgDays');
+  const [rankingAge, setRankingAge] = useState('');
   const minorCode = params.get('minor') || meta?.minorCategories[0]?.code || '';
   const month = selectedMonth || meta?.months.at(-1) || '';
   const { data: current, error, reload } = useData<{ profiles: Profile[] }>(`/profiles?month=${month}`, draft.dataset);
@@ -48,5 +49,40 @@ export default function Explore() {
       <div className="metric-explanation"><strong>{title}</strong><p>{selectedMetric === 'ageShare' ? '이 분류 이용자 중 각 집단이 차지하는 비중입니다. 집단별 가입자 규모의 영향을 받습니다.' : selectedMetric === 'avgDailyTime' ? '이용하는 날의 하루 평균 시간입니다. 다른 중분류의 시간과 합산하지 않습니다.' : '이 분류 이용자가 한 달 동안 이용한 평균 일수입니다. 개인 응답의 평균이 아닌 집단 통계입니다.'}</p></div>
       {error ? <ErrorNotice message={error} retry={reload} /> : !current ? <Loading /> : <><section className="month-comparison"><div className="chart-heading"><h3>{monthLabel(month)} 집단별 비교</h3><span>단위: {unit}</span></div><div className="chart-wrap" role="img" aria-label={`${minor.name} ${title}, 아래 표에서 모든 수치 확인 가능`}><ResponsiveContainer width="100%" height={265}><BarChart data={bars} margin={{ top: 15, right: 12, left: -25, bottom: 0 }} barSize={38}><CartesianGrid vertical={false} stroke="#e8e8e2" /><XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: '#5c6470' }} /><YAxis ticks={selectedMetric === 'avgDays' ? [0, 10, 20, 30] : selectedMetric === 'ageShare' ? [0, 25, 50, 75, 100] : undefined} domain={selectedMetric === 'avgDays' ? [0, 31] : selectedMetric === 'ageShare' ? [0, 100] : [0, 'auto']} tickLine={false} axisLine={false} tick={{ fontSize: 12 }} /><Tooltip formatter={v => formatNumber(typeof v === 'number' ? v : null, unit)} cursor={{ fill: '#f1f2ed' }} /><Bar dataKey="value" name={title} radius={[3, 3, 0, 0]} isAnimationActive={false}>{bars.map((item, index) => <Cell key={item.age} fill={age === 'all' || age === item.age ? ageColor(index) : '#d1d7df'} />)}</Bar></BarChart></ResponsiveContainer></div><Source month={month} /><div className="stat-table-wrapper"><table className="stat-table"><caption className="sr-only">{minor.name} 집단별 {title}</caption><thead><tr><th scope="col">집단</th>{bars.map(b => <th scope="col" key={b.age}>{b.name}</th>)}</tr></thead><tbody><tr><th scope="row">{title}</th>{bars.map(b => <td key={b.age}>{formatNumber(b.value, unit)}</td>)}</tr></tbody></table></div>{bars.some(b => b.value === null) && <p className="missing-note">데이터 없음: 비공개·결측 또는 비교 집단 부족으로 계산하지 않은 값입니다. 0을 뜻하지 않아요.</p>}</section></>}
       <section className="trend-section"><div className="chart-heading"><h3>월별로 이어서 보면</h3><span>단위: {unit}</span></div><div className="age-filter" role="group" aria-label="추이를 강조할 집단"><button className={age === 'all' ? 'active' : ''} aria-pressed={age === 'all'} onClick={() => setAge('all')}>전체 집단</button>{meta.ageGroups.map((a, index) => <button className={age === a.id ? 'active' : ''} key={a.id} aria-pressed={age === a.id} onClick={() => setAge(a.id)}><svg width="24" height="8" viewBox="0 0 24 8" aria-hidden="true"><path d="M0 4H24" fill="none" stroke={ageColor(index)} strokeWidth="2" strokeDasharray={linePatterns[index % linePatterns.length]} /></svg>{a.label}</button>)}</div>{trendError ? <ErrorNotice message={trendError} retry={reloadTrend} /> : !trend ? <Loading /> : <><div className="chart-wrap"><ResponsiveContainer width="100%" height={260}><LineChart data={lineData} margin={{ top: 12, right: 15, left: -25, bottom: 0 }}><CartesianGrid vertical={false} stroke="#e8e8e2" /><XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} /><YAxis ticks={selectedMetric === 'avgDays' ? [0, 10, 20, 30] : selectedMetric === 'ageShare' ? [0, 25, 50, 75, 100] : undefined} domain={selectedMetric === 'avgDays' ? [0, 31] : selectedMetric === 'ageShare' ? [0, 100] : [0, 'auto']} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} /><Tooltip formatter={(v, name) => [formatNumber(typeof v === 'number' ? v : null, unit), name]} />{series.map(s => <Line key={s.key} type="linear" dataKey={s.key} name={s.label} stroke={s.color} strokeOpacity={age === 'all' || age === s.age ? 1 : 0.15} strokeWidth={age === s.age ? 3 : 2} strokeDasharray={s.pattern} dot={{ r: 2, strokeDasharray: 'none' }} connectNulls={false} isAnimationActive={false} />)}</LineChart></ResponsiveContainer></div><Source /><details className="method-note"><summary>월별 수치 표로 보기</summary><div className="stat-table-wrapper"><table className="stat-table"><thead><tr><th scope="col">월</th>{meta.ageGroups.map(a => <th key={a.id} scope="col">{a.label}</th>)}</tr></thead><tbody>{meta.months.map(m => <tr key={m}><th scope="row">{Number(m.slice(5))}월</th>{meta.ageGroups.map(a => <td key={a.id}>{formatNumber(value(trend.profiles.find(r => r.month === m && r.ageGroup === a.id)), unit)}</td>)}</tr>)}</tbody></table></div></details><p className="missing-note">값이 없거나 집계 기준이 바뀐 달은 선을 연결하지 않습니다.</p></>}</section>
-    </>}</section></div></div>;
+    </>}{meta.ageGroups.length > 0 && <RankingCard
+      dataset={draft.dataset}
+      month={month}
+      ages={meta.ageGroups}
+      ageGroup={meta.ageGroups.some(group => group.id === rankingAge) ? rankingAge : meta.ageGroups[0].id}
+      onAgeChange={setRankingAge}
+      onSelect={code => setParams({ minor: code })}
+    />}</section></div></div>;
+}
+
+function RankingCard({ dataset, month, ages, ageGroup, onAgeChange, onSelect }: {
+  dataset: string; month: string; ages: { id: string; label: string }[];
+  ageGroup: string; onAgeChange: (id: string) => void; onSelect: (code: string) => void;
+}) {
+  const query = new URLSearchParams({ ageGroup, month, basis: 'ageShare', limit: '10' });
+  const { data, error, reload } = useData<ExploreRanking>(`/explore/ranking?${query}`, dataset);
+  return <section className="month-comparison">
+    <div className="chart-heading">
+      <h3>집단별 이용자 구성비 순위</h3>
+      <label className="select-label">집단<select value={ageGroup} onChange={event => onAgeChange(event.target.value)}>
+        {ages.map(age => <option key={age.id} value={age.id}>{age.label}</option>)}
+      </select></label>
+    </div>
+    <p className="missing-note">같은 중분류의 이용자 중 선택한 집단이 차지하는 비중이에요.</p>
+    {error ? <ErrorNotice message={error} retry={reload} /> : !data ? <Loading /> :
+      data.status === 'unavailable' || !data.items.length ? <p>{data.reason ?? '표시할 순위가 없어요.'}</p> :
+        <div className="stat-table-wrapper"><table className="stat-table">
+          <thead><tr><th scope="col">순위</th><th scope="col">중분류</th><th scope="col">구성비</th></tr></thead>
+          <tbody>{data.items.map(item => <tr key={item.minorCode}>
+            <td>{item.rank}</td>
+            <th scope="row"><button className="text-link" onClick={() => onSelect(item.minorCode)}>{item.name}</button></th>
+            <td>{formatNumber(item.value * 100, '%')}</td>
+          </tr>)}</tbody>
+        </table></div>}
+    <Source month={month} />
+  </section>;
 }

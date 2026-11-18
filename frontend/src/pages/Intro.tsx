@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { request, useData } from '../api/client';
-import type { Profile } from '../api/types';
+import type { CountAnswer, CountQuestions, CountResult, Profile, Questions } from '../api/types';
 import { ErrorNotice, formatNumber, monthLabel, Source } from '../components/Common';
 import { useApp } from '../state';
 
@@ -22,7 +22,21 @@ export default function Intro() {
     if (!sampleAge) return;
     setBusy(true); setError(null);
     try {
-      const rows = data || await request<{ profiles: Profile[] }>('/profiles', draft.dataset);
+      const [rows, survey] = await Promise.all([
+        data ?? request<{ profiles: Profile[] }>('/profiles', draft.dataset),
+        request<Questions | CountQuestions>('/survey/questions', draft.dataset),
+      ]);
+      if ('answerFormat' in survey) {
+        const answers: CountAnswer[] = survey.questions.flatMap<CountAnswer>(question => {
+          const value = rows.profiles.find(row => row.ageGroup === sampleAge.id && row.minorCode === question.minorCode)?.avgDays;
+          return value == null ? [] : [{ questionId: question.id, status: 'answered', count: Math.round(value) }];
+        });
+        const result = await request<CountResult>('/survey/result', draft.dataset, {
+          method: 'POST', body: JSON.stringify({ month: survey.month, answers }),
+        });
+        navigate('/result', { state: { countResult: result, dataset: draft.dataset, isExample: true } });
+        return;
+      }
       const answers = meta.minorCategories.map(minor => {
         const row = rows.profiles.find(r => r.ageGroup === sampleAge.id && r.minorCode === minor.code);
         // 예시 응답도 실제 설문의 대표 일수 중 하나로 구성한다.
