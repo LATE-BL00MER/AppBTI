@@ -322,6 +322,14 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
   background: #ffffff14;
   text-align: center;
 }
+.result-page .result-hero.light-result,
+.result-page .result-hero.light-result > div > p,
+.result-page .result-hero.light-result .source,
+.result-page .light-result .similarity-number > span { color: #052418; }
+.result-page .light-result .similarity-number {
+  border-color: #05241840;
+  background: #ffffff38;
+}
 .result-page .result-evidence > div,
 .result-page .ranking-section {
   border: 1px solid #e2e9f1;
