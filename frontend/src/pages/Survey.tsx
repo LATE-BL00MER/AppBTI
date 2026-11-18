@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../api/client';
-import type { Answer, Questions } from '../api/types';
+import type { Answer, CountQuestions, Questions } from '../api/types';
 import { ErrorNotice, Loading, monthLabel } from '../components/Common';
 import { useApp } from '../state';
+import CountSurvey from './CountSurvey';
 
 export default function Survey() {
+  const { meta, draft } = useApp();
+  const { data, error, reload } = useData<Questions | CountQuestions>('/survey/questions', draft.dataset);
+  if (error) return <div className="container page"><ErrorNotice message={error} retry={reload} /></div>;
+  if (!data || !meta) return <div className="container"><Loading /></div>;
+  if ('answerFormat' in data) return <CountSurvey key={draft.dataset} data={data} />;
+  return <LegacySurvey key={draft.dataset} data={data} />;
+}
+
+function LegacySurvey({ data }: { data: Questions }) {
   const { meta, draft, setAnswers } = useApp();
-  const { data, error, reload } = useData<Questions>('/survey/questions', draft.dataset);
   const [step, setStep] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const navigate = useNavigate();
@@ -17,8 +26,7 @@ export default function Survey() {
   useEffect(() => { setStep(0); }, [draft.dataset]);
   // 예시 결과를 본 뒤 설문을 시작하면 예시 응답을 자신의 응답으로 남기지 않는다.
   useEffect(() => { if (draft.isExample) setAnswers([]); }, [draft.isExample, setAnswers]);
-  if (error) return <div className="container page"><ErrorNotice message={error} retry={reload} /></div>;
-  if (!data || !meta) return <div className="container"><Loading /></div>;
+  if (!meta) return <div className="container"><Loading /></div>;
   if (!data.questions.length) return <div className="container page"><div className="notice"><h1>설문 문항을 준비하고 있어요.</h1><Link className="button primary" to="/explore">세대별 탐색하기</Link></div></div>;
   if (!meta.comparisonEnabled) return <div className="container page"><div className="notice"><h1>비교 기준을 준비하고 있어요.</h1><p>집단 통계의 정의와 비교 방식을 확인 중입니다. 세대별 통계는 바로 살펴볼 수 있어요.</p><Link className="button primary" to="/explore">세대별 탐색하기</Link></div></div>;
   const active = groups[step];
