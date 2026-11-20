@@ -4,6 +4,8 @@ from itertools import product
 
 import pandas as pd
 
+from .reference import build_monthly_signals, build_survey_reference
+
 
 def build_profiles(frame: pd.DataFrame, codebook: dict, report: dict) -> dict:
     frame = frame.copy()
@@ -48,7 +50,7 @@ def build_profiles(frame: pd.DataFrame, codebook: dict, report: dict) -> dict:
                            "relativeFrequency": round(days / reference, 6) if days is not None and reference is not None and reference > 0 else None,
                            "avgDailyTime": number(row["avg_daily_time"]) if row is not None else None,
                            "segment": sum(1 for boundary in codebook["continuity_breaks"] if boundary <= month)})
-    return {"meta": {"schemaVersion": 1, "isMock": bool(codebook.get("is_mock", False)),
+    result = {"meta": {"schemaVersion": 1, "isMock": bool(codebook.get("is_mock", False)),
                      "source": codebook.get("source", "LG U+ 제공 기준 연령대·기간 집계"),
                      "months": months, "ageGroups": ages, "minorCategories": minors,
                      "majorCategories": codebook["major_categories"],
@@ -57,4 +59,10 @@ def build_profiles(frame: pd.DataFrame, codebook: dict, report: dict) -> dict:
                      "avgDaysDenominator": metrics["avg_days_denominator"],
                      "continuityBreaks": codebook["continuity_breaks"],
                      "quality": {"rowCount": report["rowCount"], "warningCount": len(report["warnings"])}},
-            "profiles": output}
+              "profiles": output}
+    # 설문 매칭 기준값과 특이 신호도 여기(Python)에서만 계산한다. Spring은 읽고 필터·정렬·중심화만 한다.
+    result["surveyReference"] = build_survey_reference(output, result["meta"])
+    signals = build_monthly_signals(output, result["meta"], codebook.get("monthly_signals"))
+    if signals is not None:
+        result["monthlySignals"] = signals
+    return result
