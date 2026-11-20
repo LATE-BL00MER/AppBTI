@@ -7,7 +7,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** 이 달의 특이 신호 필터·정렬(docs/API_v2_draft.md 6장). 신호 값은 직접 만든 가상 값이다. */
+/** 이 달의 특이 신호 필터·정렬(노션 API v2 초안 6장). 신호 값은 직접 만든 가상 값이다. */
 class ExploreSignalsTests {
     // 가상 신호가 들어 있는 산출물을 만든다.
     static ProfileData data(boolean dailyTime, boolean withSignals) {

@@ -11,7 +11,7 @@ import java.util.function.BiFunction;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** API v2 설문 매칭·또래 비교(docs/API_v2_draft.md 6장). 모든 값은 직접 만든 가상 값이고, 기대값은 Python으로 따로 계산했다. */
+/** API v2 설문 매칭·또래 비교(노션 API v2 초안 6장). 모든 값은 직접 만든 가상 값이고, 기대값은 Python으로 따로 계산했다. */
 public class ClrMatcherTests {
     static final List<String> AGES = List.of("under20", "20s", "30s", "40s", "50s", "60plus");
     static final String[][] QUESTIONS = {{"q01", "weather", "days"}, {"q02", "portal", "days"}, {"q03", "webtoon", "days"}, {"q04", "game", "days"},
