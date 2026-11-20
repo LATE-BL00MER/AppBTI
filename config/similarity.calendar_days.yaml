@@ -6,8 +6,8 @@ method: clr_nearest
 minimum_items: 6
 clr_scope: answered_items
 clr_blocks: joint
-# 5지선다 구간 대표 분(구간의 기하 중간값). 쓴 날 사용량 기준이라 경계를 10·30·60·120분으로 올렸다.
-time_choice_minutes: [5.5, 17.3, 42.4, 84.9, 169.7]
+# 5지선다 구간 대표 분(구간의 기하 중간값). 쓴 날 사용량 기준이라 경계를 15·30·45·90분으로 올렸다(바깥 구간 5분·180분).
+time_choice_minutes: [8.7, 21.2, 36.7, 63.6, 127.3]
 days_scale: 7
 near_tie_ratio: 0.05
 # TODO(확인 필요): 근거 항목의 similar 판정 기준값과 패턴 불명확 기준
