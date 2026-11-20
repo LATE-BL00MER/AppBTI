@@ -54,6 +54,18 @@ def test_missing_or_zero_month_makes_reference_null_not_zero():
     assert item(ref, "aaa", "days")["values"]["30s"] is not None
 
 
+def test_calendar_day_basis_converts_time_to_used_day_minutes():
+    rows = profiles(time={("aaa", "30s", m): 6.0 for m in MONTHS})
+    ref = build_survey_reference(rows, meta(), "calendar_days")
+    days = [12 * (1 + 0.01 * ((m + 2) % 3 - 1)) for m in range(6)]  # 30대 기본 이용일수
+    expected = sum(math.log(6.0 * calendar.monthrange(2025, m + 1)[1] / d) for m, d in enumerate(days)) / 6
+    assert ref["timeBasis"] == "calendar_days"
+    assert item(ref, "aaa", "time")["values"]["30s"]["logMean"] == pytest.approx(expected, abs=1e-6)
+    assert item(ref, "aaa", "days")["values"]["30s"] == build_survey_reference(rows, meta())["items"][0]["values"]["30s"]
+    with pytest.raises(ValueError):
+        build_survey_reference(rows, meta(), "weekly")
+
+
 def test_time_reference_is_skipped_when_time_metric_is_unavailable():
     ref = build_survey_reference(profiles(), meta(daily_time=False))
     assert {i["metric"] for i in ref["items"]} == {"days"}

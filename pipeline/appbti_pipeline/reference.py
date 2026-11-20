@@ -4,9 +4,11 @@ import calendar
 import math
 
 METRICS = ("days", "time")
+# 일평균 이용시간의 '하루' 기준. used_days: 이용한 날 평균(원본 그대로), calendar_days: 그달 전체 일수 평균(쓴 날 사용량으로 환산).
+DAY_BASES = ("used_days", "calendar_days")
 
 
-def _log_values(rows: list[dict], months: list[str], metric: str) -> list[float] | None:
+def _log_values(rows: list[dict], months: list[str], metric: str, time_basis: str = "used_days") -> list[float] | None:
     """월 순서대로 로그값. 한 달이라도 없거나 0 이하이면 None (0으로 채우지 않는다)."""
     by_month = {r["month"]: r for r in rows}
     values = []
@@ -14,11 +16,16 @@ def _log_values(rows: list[dict], months: list[str], metric: str) -> list[float]
         row = by_month.get(month)
         if row is None:
             return None
+        month_days = calendar.monthrange(int(month[:4]), int(month[5:]))[1]
         if metric == "days":
             value = row["avgDays"]
-            value = None if value is None else value / calendar.monthrange(int(month[:4]), int(month[5:]))[1]
+            value = None if value is None else value / month_days
         else:
             value = row["avgDailyTime"]
+            if time_basis == "calendar_days":
+                # 그달 전체 일수 평균이면 쓴 날 사용량 = 일평균 시간 × 그달 일수 ÷ 월 평균 이용일수
+                days = row["avgDays"]
+                value = None if value is None or days is None or days <= 0 else value * month_days / days
         if value is None or value <= 0:
             return None
         values.append(math.log(value))
@@ -32,8 +39,11 @@ def _groups(profiles: list[dict]) -> dict:
     return groups
 
 
-def build_survey_reference(profiles: list[dict], meta: dict) -> dict:
-    """분류 × 지표 × 연령대의 월별 로그값 평균. Spring은 응답한 문항으로 다시 중심화(CLR)만 한다."""
+def build_survey_reference(profiles: list[dict], meta: dict, time_basis: str = "used_days") -> dict:
+    """분류 × 지표 × 연령대의 월별 로그값 평균. Spring은 응답한 문항으로 다시 중심화(CLR)만 한다.
+    time_basis가 calendar_days면 시간 항목은 '쓴 날 사용량'(설문 "사용한 날, 하루에"와 같은 뜻)으로 환산한다."""
+    if time_basis not in DAY_BASES:
+        raise ValueError(f"daily_time.day_basis는 {DAY_BASES} 중 하나여야 합니다: {time_basis}")
     months, ages = meta["months"], [a["id"] for a in meta["ageGroups"]]
     metrics = ["days"] + (["time"] if meta["metrics"]["dailyTime"] else [])
     groups = _groups(profiles)
@@ -42,7 +52,7 @@ def build_survey_reference(profiles: list[dict], meta: dict) -> dict:
         for metric in metrics:
             values = {}
             for age in ages:
-                logs = _log_values(groups.get((minor["code"], age), []), months, metric)
+                logs = _log_values(groups.get((minor["code"], age), []), months, metric, time_basis)
                 if logs is None:
                     values[age] = None
                     continue
@@ -51,7 +61,7 @@ def build_survey_reference(profiles: list[dict], meta: dict) -> dict:
                 display = math.exp(log_mean) * (7 if metric == "days" else 1)
                 values[age] = {"logMean": round(log_mean, 6), "display": round(display, 4)}
             items.append({"minorCode": minor["code"], "metric": metric, "values": values})
-    return {"months": months, "items": items}
+    return {"months": months, "timeBasis": time_basis, "items": items}
 
 
 def build_monthly_signals(profiles: list[dict], meta: dict, rule: dict | None) -> dict | None:

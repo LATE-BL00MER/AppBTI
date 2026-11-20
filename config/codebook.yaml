@@ -202,6 +202,9 @@ metrics:
     definition: per_user_daily_average_minutes
     denominator: users
     target_unit: minutes
+    # '하루' 기준. used_days: 이용한 날 평균(원본 그대로 비교), calendar_days: 그달 전체 일수 평균(설문 기준값을 쓴 날 사용량으로 환산).
+    # 후자 버전 설정 묶음: codebook.calendar_days.yaml, similarity.calendar_days.yaml, survey_questions.calendar_days.yaml
+    day_basis: used_days
 
 # 이 달의 특이 신호(/api/explore/signals). 나머지 달 평균 대비 min_ratio 이상 변하고,
 # 평소 흔들림(나머지 달의 로그 표준편차, 하한 min_std)의 min_z배 이상이면 신호다.

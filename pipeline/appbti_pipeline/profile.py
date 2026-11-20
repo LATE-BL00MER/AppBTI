@@ -61,7 +61,7 @@ def build_profiles(frame: pd.DataFrame, codebook: dict, report: dict) -> dict:
                      "quality": {"rowCount": report["rowCount"], "warningCount": len(report["warnings"])}},
               "profiles": output}
     # 설문 매칭 기준값과 특이 신호도 여기(Python)에서만 계산한다. Spring은 읽고 필터·정렬·중심화만 한다.
-    result["surveyReference"] = build_survey_reference(output, result["meta"])
+    result["surveyReference"] = build_survey_reference(output, result["meta"], time.get("day_basis", "used_days"))
     signals = build_monthly_signals(output, result["meta"], codebook.get("monthly_signals"))
     if signals is not None:
         result["monthlySignals"] = signals

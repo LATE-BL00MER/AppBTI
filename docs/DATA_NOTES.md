@@ -39,5 +39,9 @@
 | `UNQ_USER_CNT` | 월간 유니크 이용자 수 | 연령 구성비(탐색 화면)만. 중분류 간 합산 금지 |
 
 ## 확인 중 (TODO)
-- 일평균 이용시간의 '하루' 기준(이용한 날 / 달력 일수): 시간 문항 문구에만 영향
+- 일평균 이용시간의 '하루' 기준(이용한 날 / 그달 전체 일수): LG U+ 재확인 중. 두 버전을 설정으로 고를 수 있다.
+  - 이용한 날 기준(기본): `config/codebook.yaml`, `similarity.yaml`, `survey_questions.yaml`
+  - 그달 전체 일수 기준(후자): `config/codebook.calendar_days.yaml`, `similarity.calendar_days.yaml`, `survey_questions.calendar_days.yaml`.
+    설문 기준값의 시간 항목을 쓴 날 사용량(일평균 시간 × 그달 일수 ÷ 월 평균 이용일수)으로 환산하고, 시간 선택지 경계를 10·30·60·120분으로 올린다.
+  - 후자로 실행: 파이프라인 `--codebook ../config/codebook.calendar_days.yaml`, 백엔드 `APPBTI_SIMILARITY_PATH=../config/similarity.calendar_days.yaml APPBTI_SURVEY_QUESTIONS_PATH=../config/survey_questions.calendar_days.yaml`
 - 이용자 수 0의 의미(소수 이용자 비공개 여부): 확정 전에도 `suppressed`로 두고 0으로 채우지 않는다

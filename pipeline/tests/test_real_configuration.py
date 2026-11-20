@@ -22,6 +22,19 @@ def test_v2_survey_questions_link_to_codebook_and_similarity_settings():
     assert len(survey['time_choices'])==len(similarity['time_choice_minutes'])==5
 
 
+def test_calendar_day_variant_differs_only_in_time_basis_and_choices():
+    base_q=yaml.safe_load((ROOT/'config/survey_questions.yaml').read_text(encoding='utf-8'))
+    cal_q=yaml.safe_load((ROOT/'config/survey_questions.calendar_days.yaml').read_text(encoding='utf-8'))
+    base_s=yaml.safe_load((ROOT/'config/similarity.yaml').read_text(encoding='utf-8'))
+    cal_s=yaml.safe_load((ROOT/'config/similarity.calendar_days.yaml').read_text(encoding='utf-8'))
+    assert cal_q['questions']==base_q['questions'] and cal_q['period']==base_q['period']
+    assert len(cal_q['time_choices'])==len(cal_s['time_choice_minutes'])==5
+    assert {k:v for k,v in cal_s.items() if k!='time_choice_minutes'}=={k:v for k,v in base_s.items() if k!='time_choice_minutes'}
+    assert cal_s['time_choice_minutes']==sorted(cal_s['time_choice_minutes']) and cal_s['time_choice_minutes'][0]>base_s['time_choice_minutes'][0]
+    assert load_codebook(ROOT/'config/codebook.calendar_days.yaml')['metrics']['daily_time']['day_basis']=='calendar_days'
+    assert load_codebook(ROOT/'config/codebook.yaml')['metrics']['daily_time']['day_basis']=='used_days'
+
+
 def test_v2_similarity_settings_match_java_clr_contract():
     similarity=yaml.safe_load((ROOT/'config/similarity.yaml').read_text(encoding='utf-8'))
     assert similarity['enabled'] is True and similarity['method']=='clr_nearest'

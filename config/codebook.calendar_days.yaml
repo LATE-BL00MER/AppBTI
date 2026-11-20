@@ -1,0 +1,7 @@
+# 후자 버전: 일평균 이용시간을 '그달 전체 일수로 나눈 평균'으로 볼 때의 실제 데이터 코드북.
+# 기본 codebook.yaml을 그대로 쓰고 시간의 '하루' 기준만 바꾼다. LG U+ 확인 결과에 따라 이 묶음을 쓴다.
+# 함께 쓰는 설정: similarity.calendar_days.yaml, survey_questions.calendar_days.yaml
+extends: codebook.yaml
+metrics:
+  daily_time:
+    day_basis: calendar_days
