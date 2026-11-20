@@ -24,7 +24,7 @@ public final class ExploreRanking {
         public static Basis parse(String value) {
             if (value == null) return ageShare;
             for (Basis basis : values()) if (basis.name().equals(value)) return basis;
-            throw new IllegalArgumentException("basis는 ageShare 또는 relativeFrequency여야 합니다.");
+            throw ApiException.badRequest("INVALID_BASIS", "basis는 ageShare 또는 relativeFrequency여야 합니다.");
         }
     }
 
@@ -37,9 +37,9 @@ public final class ExploreRanking {
     public static Result rank(ProfileData data, String ageGroupId, String month, Basis basis, String major, Integer limit) {
         var meta = data.meta();
         var ageGroup = meta.ageGroups().stream().filter(a -> a.id().equals(ageGroupId)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("제공하지 않는 연령대입니다."));
-        if (major != null && !meta.majorCategories().contains(major)) throw new IllegalArgumentException("제공하지 않는 대분류입니다.");
-        if (limit != null && limit < 1) throw new IllegalArgumentException("limit은 1 이상 정수여야 합니다.");
+                .orElseThrow(() -> ApiException.badRequest("INVALID_AGE_GROUP", "제공하지 않는 연령대입니다."));
+        if (major != null && !meta.majorCategories().contains(major)) throw ApiException.badRequest("INVALID_MAJOR", "제공하지 않는 대분류입니다.");
+        if (limit != null && limit < 1) throw ApiException.badRequest("INVALID_LIMIT", "limit은 1 이상 정수여야 합니다.");
         if (basis == Basis.relativeFrequency && !meta.metrics().weightedReference()) {
             return new Result("unavailable", "평균 이용일수의 분모가 확인되지 않아 기준값 대비 비교를 제공하지 않습니다. basis=ageShare로 볼 수 있어요.",
                     month, ageGroup, major, basis.name(), meta.isMock(), meta.source(), List.of(), List.of());

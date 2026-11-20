@@ -6,18 +6,18 @@
 차현우가 만든 실제 데이터 산출물을 백엔드에서 읽어, 세대별 탐색·결과 화면에 필요한 데이터를 API로 제공한다.
 
 ## 회의 전 (11/10까지, 단톡 공유)
-- [ ] 응답 JSON 초안 (실제 6개 연령대, 14개 대분류 기준 예시 값) → `docs/API.md` 갱신 + `docs/examples/`
+- [x] 응답 JSON 초안 (실제 6개 연령대, 14개 대분류 기준 예시 값) → `docs/API.md` 갱신 + `docs/examples/`
   - `GET /api/meta`: 기간, 연령대 목록, 대분류·중분류 목록, 시간 지표 가용 여부
   - `GET /api/profiles?month=`: 해당 월의 연령대×중분류 지표
   - `GET /api/profiles/trend?minor=`: 중분류의 1~6월 추이 (빠진 달은 null, 선으로 잇지 않음)
   - (신규) 세대별 탐색용: 연령대별 중분류 랭킹(상대 빈도 기준), 기준일수 대비 차이
-- [ ] `ProfileRepository`·`ProfileData` 구조를 파악하고, 목업(A~F) 대신 실제 산출물을 읽으려면 무엇을 바꿔야 하는지 정리
+- [x] `ProfileRepository`·`ProfileData` 구조를 파악하고, 목업(A~F) 대신 실제 산출물을 읽으려면 무엇을 바꿔야 하는지 정리
 
 ## 회의 후
-- [ ] 11/11~12 `ProfileRepository`가 실제 산출물(`data/processed/real/`)을 읽도록 수정. 연령대 ID·라벨은 산출물과 코드북을 따르고 하드코딩하지 않는다
-- [ ] 11/12 신규 탐색 API 구현. 랭킹·차이는 **Python 산출물 값을 그대로 쓰고** Java에서 다시 계산하지 않는다 (필요한 값이 없으면 차현우에게 산출물 추가 요청)
-- [ ] 시간 지표가 있을 때와 없을 때 모두 응답이 깨지지 않게 처리
-- [ ] `ApiControllerTests` 실제 데이터 구조로 갱신
+- [x] 11/11~12 `ProfileRepository`가 실제 산출물(`data/processed/real/`)을 읽도록 수정. 연령대 ID·라벨은 산출물과 코드북을 따르고 하드코딩하지 않는다
+- [x] 11/12 신규 탐색 API 구현. 랭킹·차이는 **Python 산출물 값을 그대로 쓰고** Java에서 다시 계산하지 않는다 (필요한 값이 없으면 차현우에게 산출물 추가 요청)
+- [x] 시간 지표가 있을 때와 없을 때 모두 응답이 깨지지 않게 처리
+- [x] `ApiControllerTests` 실제 데이터 구조로 갱신 (조회·탐색은 `ProfileApiRealShapeTests`·`ExploreRankingTests`, 설문은 기존 `ApiControllerTests`)
 
 ## 받는 것 / 주는 것
 - 받음: 차현우 → 실제 산출물 (11/11)

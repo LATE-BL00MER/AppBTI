@@ -9,31 +9,28 @@ from appbti_pipeline.adapter import load_codebook
 ROOT=Path(__file__).resolve().parents[2]
 
 
-def test_real_weights_cannot_activate_unselected_or_unknown_categories():
+def test_v2_survey_questions_link_to_codebook_and_similarity_settings():
     book=load_codebook(ROOT/'config/codebook.yaml')
+    survey=yaml.safe_load((ROOT/'config/survey_questions.yaml').read_text(encoding='utf-8'))
     similarity=yaml.safe_load((ROOT/'config/similarity.yaml').read_text(encoding='utf-8'))
-    categories={c['code']:c for c in book['minor_categories']}
-    selection=book['survey_selection']
-    weights=similarity['weights']
-    assert set(weights)==set(categories)
-    assert all(math.isfinite(w) and w>=0 for w in weights.values())
-    assert {c for c,w in weights.items() if w>0}==set(selection['primary_codes'])
-    assert len(selection['primary_codes'])==12
-    assert len(selection['reserve_codes'])==2
-    assert set(selection['conditional_primary_codes'])<=set(selection['primary_codes'])
-    assert not set(selection['primary_codes'])&set(selection['reserve_codes'])
-    assert all(weights[c]==0 for c in selection['reserve_codes'])
-    assert all(weights[c]==0 for c,v in categories.items() if v['name'] in book['exclude_minor_names'])
+    excluded={c['code'] for c in book['minor_categories'] if c['name'] in book['exclude_minor_names']}
+    codes={c['code'] for c in book['minor_categories']}-excluded
+    questions=[q for q in survey['questions'] if q['enabled']]
+    assert [q['id'] for q in questions]==[f'q{i:02d}' for i in range(1,15)]
+    assert all(q['minor_code'] in codes and q['metric'] in ('days','time') for q in questions)
+    assert sum(q['metric']=='days' for q in questions)==4 and len({(q['minor_code'],q['metric']) for q in questions})==14
+    assert len(survey['time_choices'])==len(similarity['time_choice_minutes'])==5
 
 
-def test_disabled_settings_keep_existing_java_loader_contract():
+def test_v2_similarity_settings_match_java_clr_contract():
     similarity=yaml.safe_load((ROOT/'config/similarity.yaml').read_text(encoding='utf-8'))
-    assert set(similarity)=={'enabled','method','normalization','weights','minimum_categories','tie_policy','zero_days_policy','types'}
-    assert similarity['enabled'] is False
-    assert similarity['method']=='cosine' and similarity['normalization']=='reference_max'
-    assert similarity['tie_policy']=='joint' and similarity['zero_days_policy']=='exclude'
+    assert similarity['enabled'] is True and similarity['method']=='clr_nearest'
+    assert similarity['clr_scope']=='answered_items' and similarity['clr_blocks']=='joint'
+    minutes=similarity['time_choice_minutes']
+    assert all(math.isfinite(m) and m>0 for m in minutes) and minutes==sorted(minutes)
+    assert similarity['days_scale']==7 and similarity['minimum_items']==6
+    assert 0<=similarity['near_tie_ratio']<1 and similarity['similar_difference']>=0
     assert similarity['types']==[]
-    assert 1<=similarity['minimum_categories']<=sum(w>0 for w in similarity['weights'].values())
 
 
 def test_real_count_units_do_not_silently_enable_day_time_or_weekly_paths():
@@ -46,9 +43,16 @@ def test_real_count_units_do_not_silently_enable_day_time_or_weekly_paths():
     assert contract['clip'] is False and contract['refit_with_user_answer'] is False
     assert contract['daily_metric_enabled'] is False and contract['weekly_comparison_enabled'] is False
     assert contract['zero_count_policy']=='exclude_pending_denominator'
-    assert b['metrics']['daily_time']['enabled'] is False
     assert b['metrics']['weighted_reference_days_enabled'] is False
     assert analysis['runtime_ready'] is False and analysis['apply_only_when_is_mock_false'] is True
+
+
+def test_real_daily_time_is_fixed_to_lgu_minutes_definition():
+    time=load_codebook(ROOT/'config/codebook.yaml')['metrics']['daily_time']
+    assert time['enabled'] is True
+    assert time['source_unit']=='minutes' and time['target_unit']=='minutes'
+    assert time['definition']=='per_user_daily_average_minutes' and time['denominator']=='users'
+    assert not time.get('survey_definition_matches')  # 하루 기준 확인 전에는 설문 정의 일치를 주장하지 않는다
 
 
 def test_fisher_uses_raw_months_and_fcq_does_not_automatically_finalize():
