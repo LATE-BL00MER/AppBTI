@@ -1,0 +1,23 @@
+# 목업(가상 중분류) v2 설문 문항. 일수 6 + 시간 6.
+# minor_code는 codebook.mock.yaml 중분류 코드와 같아야 한다. 시간 지표가 없는 basic 데이터는 일수 문항 6개만 나간다.
+# 목업에서 일부 연령대 값이 비어 있는 뉴스·여행은 문항에서 뺀다(빠지면 basic이 6문항을 채우지 못함).
+period: last7days
+time_choices:
+  - "잠깐 확인만 해요 (3분 이내)"
+  - "10분이 안 돼요 (3~10분)"
+  - "10~30분"
+  - "30분~1시간"
+  - "1시간 이상"
+questions:
+  - {id: q01, minor_code: message, metric: days, enabled: true, text: "최근 7일 중 메신저를 며칠 사용했나요?"}
+  - {id: q02, minor_code: video, metric: days, enabled: true, text: "최근 7일 중 동영상을 며칠 봤나요?"}
+  - {id: q03, minor_code: shopping, metric: days, enabled: true, text: "최근 7일 중 온라인 쇼핑을 며칠 했나요?"}
+  - {id: q04, minor_code: learn, metric: days, enabled: true, text: "최근 7일 중 온라인 학습을 며칠 했나요?"}
+  - {id: q05, minor_code: secondhand, metric: days, enabled: true, text: "최근 7일 중 중고 거래 앱을 며칠 사용했나요?"}
+  - {id: q06, minor_code: fitness, metric: days, enabled: true, text: "최근 7일 중 운동·건강 앱을 며칠 사용했나요?"}
+  - {id: q07, minor_code: video, metric: time, enabled: true, text: "동영상을 본 날, 하루에 보통 얼마나 보나요?"}
+  - {id: q08, minor_code: music, metric: time, enabled: true, text: "음악을 들은 날, 하루에 보통 얼마나 듣나요?"}
+  - {id: q09, minor_code: community, metric: time, enabled: true, text: "커뮤니티를 이용한 날, 하루에 보통 얼마나 이용하나요?"}
+  - {id: q10, minor_code: knowledge, metric: time, enabled: true, text: "생활 정보를 찾아본 날, 하루에 보통 얼마나 보나요?"}
+  - {id: q11, minor_code: language, metric: time, enabled: true, text: "외국어 학습을 한 날, 하루에 보통 얼마나 하나요?"}
+  - {id: q12, minor_code: shopping, metric: time, enabled: true, text: "온라인 쇼핑을 한 날, 하루에 보통 얼마나 하나요?"}

@@ -35,6 +35,7 @@ class ApiV2ControllerTests {
         var signals = ExploreSignalsTests.data(true, true);
         var data = new ProfileData(survey.meta(), List.of(), survey.surveyReference(), null);
         when(repository.get("basic")).thenReturn(data);
+        when(questions.forData(anyBoolean())).thenReturn(questions);
         when(repository.get("signals")).thenReturn(signals);
         when(repository.month(eq(signals), anyString())).thenAnswer(call -> call.getArgument(1));
         when(repository.get("missing")).thenThrow(new ApiException(HttpStatus.NOT_FOUND, "DATASET_NOT_FOUND", "제공하지 않는 데이터 버전입니다."));

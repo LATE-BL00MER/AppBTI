@@ -28,14 +28,14 @@
 
 ### 데이터 종류에 따른 응답 형식
 
-설문 API는 데이터마다 `similarity*.yaml`의 `method`로 응답 형식이 정해진다. 프론트는 실제 데이터 기준인 **v2**로 연동한다.
+설문 API는 데이터마다 `similarity*.yaml`의 `method`로 응답 형식이 정해진다. **실제 데이터와 목업 모두 v2**라서 프론트는 v2 형식 하나만 처리한다.
 
-| 데이터 | 설정 | 설문 응답 |
+| 데이터 | 설정 | 설문 문항 |
 |---|---|---|
-| 실제 데이터 | `similarity.yaml` → `clr_nearest` | **v2** (이 문서 4장) |
-| 목업 데이터 | `similarity.mock.yaml` → v1 방식 | v1 (git 기록의 이전 `docs/API.md`) |
+| 실제 데이터 | `similarity.yaml` → `clr_nearest` | `survey_questions.yaml` (14문항) |
+| 목업 데이터 | `similarity.mock.yaml` → `clr_nearest` | `survey_questions.mock.yaml` (가상 중분류 12문항: 일수 6 + 시간 6. `basic`은 시간 지표가 없어 일수 6문항만 나감) |
 
-TODO(확인 필요): 목업도 v2로 맞출지(신진용).
+v1 계산 코드(`SimilarityCalculator`)는 남아 있어 `method`를 v1 방식으로 바꾸면 v1 응답이 나온다. v1 명세는 git 기록의 이전 `docs/API.md`에 있다.
 
 ### 지표 정의 (LG U+ 답변 기준으로 고정)
 
@@ -491,7 +491,7 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 **신진용 (meta, questions, result)**
 - [x] v2 구현 (임기범이 PR #25에서 초안 구현: `ClrMatcher`, `PeerMessages`, `SurveyQuestions`, `ApiErrors`)
 - [ ] 구현 검토·인계 (PR #25는 리뷰 없이 머지됨)
-- [ ] 목업도 v2로 맞출지 결정
+- [ ] 목업 v2 전환 확인 (`similarity.mock.yaml`, `survey_questions.mock.yaml`, `SurveyQuestions.forData`)
 - [ ] LG U+ '하루' 기준 재확인
 
 **임기범 (profiles, trend, ranking + 파이프라인 산식)**
@@ -518,7 +518,6 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 
 - **일평균 이용시간의 '하루' 기준**(이용한 날 / 그달 전체 일수): LG U+에 예시로 다시 묻는다("10일 동안 하루 30분씩 쓴 사람은 30분인가요, 10분인가요?"). 답에 맞춰 한 버전만 남긴다.
 - **q02 교체**(포털 일수 → 전문쇼핑몰 일수).
-- **목업 데이터 v2 전환** 여부.
 - **패턴 불명확 기준** `flat_pattern_ratio`, **`similar` 기준값**(0.1).
 - **또래 비교 기준값·문구**: `more_ratio`(1.5), `less_ratio`(0.67), 분야별 제안 여부.
 - **결과 유형 이름**(`resultType`).

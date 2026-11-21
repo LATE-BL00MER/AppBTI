@@ -84,7 +84,7 @@ public class ApiController {
         return ExploreSignals.find(data, repository.month(data, month), ageGroup, type, metric, major, limit(limit));
     }
 
-    // 설문 문항과 응답 형식을 돌려준다(실제 데이터는 v2 14문항, 목업은 v1).
+    // 설문 문항과 응답 형식을 돌려준다(similarity 설정이 clr_nearest면 v2, 아니면 v1).
     @GetMapping("/survey/questions")
     public Map<String, Object> questions(@RequestParam(defaultValue = "basic") String dataset) {
         var data = repository.get(dataset);
@@ -98,12 +98,13 @@ public class ApiController {
         return result;
     }
 
-    // 설문 응답을 연령대 통계와 비교한 결과를 돌려준다(실제 데이터는 v2 CLR 매칭, 목업은 v1).
+    // 설문 응답을 연령대 통계와 비교한 결과를 돌려준다(clr_nearest면 v2 CLR 매칭, 아니면 v1).
     @PostMapping("/survey/result")
     public Object result(@RequestBody SurveyRequest request, @RequestParam(defaultValue = "basic") String dataset) {
         var data = repository.get(dataset);
         var config = settings.forData(data.meta().isMock());
         if (config.isClr()) {
+            var questions = this.questions.forData(data.meta().isMock());
             if (!questions.available()) throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "SURVEY_UNAVAILABLE", "설문 문항 설정을 준비하지 못했습니다.");
             return ClrMatcher.calculate(data, config, questions.served(data.meta()), questions.timeChoices().size(), peer.get(), request);
         }
@@ -112,6 +113,7 @@ public class ApiController {
 
     // v2 문항 목록·응답 형식·최소 문항 수를 만든다.
     private Map<String, Object> questionsV2(ProfileData data, SimilaritySettings config) {
+        var questions = this.questions.forData(data.meta().isMock());
         if (!questions.available()) throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "SURVEY_UNAVAILABLE", "설문 문항 설정을 준비하지 못했습니다.");
         var minors = data.meta().minorCategories();
         var served = questions.served(data.meta());

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** config/survey_questions.yaml(API v2 14문항). 파일이 없으면 실제 데이터 설문을 제공하지 않는다. */
+/** config/survey_questions.yaml(API v2 14문항)과 목업용 survey_questions.mock.yaml. 파일이 없으면 그 데이터의 설문을 제공하지 않는다. */
 @Component
 public class SurveyQuestions {
     private static final Logger log = LoggerFactory.getLogger(SurveyQuestions.class);
@@ -27,27 +27,37 @@ public class SurveyQuestions {
     public record Config(String period, List<String> time_choices, List<Question> questions) {}
 
     private final Config config;
+    private final SurveyQuestions mock;
 
-    // 문항 설정 파일을 기동 시 읽고 형식을 검사한다.
+    // 실제·목업 문항 설정 파일을 기동 시 읽고 형식을 검사한다.
     @Autowired
-    public SurveyQuestions(ObjectMapper mapper, @Value("${appbti.survey-questions-path}") String path) throws IOException {
+    public SurveyQuestions(ObjectMapper mapper, @Value("${appbti.survey-questions-path}") String path,
+                           @Value("${appbti.mock-survey-questions-path}") String mockPath) throws IOException {
+        config = read(mapper, path);
+        mock = new SurveyQuestions(read(mapper, mockPath));
+    }
+
+    // 설정 파일 하나를 읽는다. 없으면 null.
+    private static Config read(ObjectMapper mapper, String path) throws IOException {
         Path file = Path.of(path);
         if (!Files.isRegularFile(file)) {
-            log.warn("설문 문항 설정이 없어 실제 데이터 설문을 제공하지 않습니다: {}", file.toAbsolutePath().normalize());
-            config = null;
-            return;
+            log.warn("설문 문항 설정이 없어 이 데이터의 설문을 제공하지 않습니다: {}", file.toAbsolutePath().normalize());
+            return null;
         }
         try (var stream = Files.newInputStream(file)) {
             Object document = new Yaml().load(stream);
             if (!(document instanceof Map)) throw new IllegalArgumentException("YAML 설정 객체가 필요합니다.");
-            config = validate(mapper.convertValue(document, Config.class));
+            return validate(mapper.convertValue(document, Config.class));
         } catch (RuntimeException error) {
             throw new IOException("설문 문항 설정 오류: " + path + " — " + error.getMessage(), error);
         }
     }
 
     // 테스트·다른 설정에서 문항 설정을 직접 넣어 만든다.
-    public SurveyQuestions(Config config) { this.config = config == null ? null : validate(config); }
+    public SurveyQuestions(Config config) { this.config = config == null ? null : validate(config); this.mock = null; }
+
+    // 데이터 종류(실제·목업)에 맞는 문항 설정을 돌려준다.
+    public SurveyQuestions forData(boolean isMock) { return isMock && mock != null ? mock : this; }
 
     // 문항 ID 중복, 지표 이름, 시간 선택지를 검사한다.
     private static Config validate(Config config) {
