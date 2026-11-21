@@ -179,50 +179,53 @@ function QuestionShell({ question, number, answer, onChange, allowNotUsed, allow
   </fieldset>;
 }
 
-function DaysQuestion(props: QuestionProps & { format: SurveyQuestions['answerFormats']['days'] }) {
-  const { question, answer, onChange, format } = props;
-  const values = Array.from({ length: format.max - format.min + 1 }, (_, i) => format.min + i);
-  const middle = Math.round((format.min + format.max) / 2);
+interface ScaleOption { value: number; short: string; full: string }
+
+/**
+ * Figma 설문의 원형 척도. 양 끝은 크고 가운데로 갈수록 작게, 왼쪽 보라 → 가운데 회색 → 오른쪽 초록.
+ * 일수(1~7일)와 시간(5지선다) 문항이 같은 모양을 쓴다. 원 아래에 짧은 값, 고르면 전체 문구를 보여 준다.
+ */
+function Scale({ question, answer, onChange, options, ends }: QuestionProps & { options: ScaleOption[]; ends: [string, string, string] }) {
   const selected = answer?.status === 'answered' ? answer.value : null;
-  // Figma 척도처럼 양 끝은 크고 가운데로 갈수록 작게, 왼쪽은 보라·가운데 회색·오른쪽 초록으로 칠한다.
-  const tone = (value: number) => value < middle ? 'low' : value > middle ? 'high' : 'mid';
-  const size = (value: number) => Math.abs(value - middle) / Math.max(middle - format.min, 1);
-  return <QuestionShell {...props} allowNotUsed={format.allowNotUsed} allowUnknown={format.allowUnknown} centered>
-    <div className="sv-scale">
-      <div className="sv-scale-ends" aria-hidden="true">
-        <span className="low">거의 안 씀</span><span className="mid">절반쯤</span><span className="high">매일</span>
-      </div>
-      <div className="sv-scale-dots">
-        {values.map(value => <label key={value} className={`${tone(value)}${selected === value ? ' selected' : ''}`}
-          style={{ ['--dot' as string]: `${26 + Math.round(size(value) * 18)}px` }}>
-          <input type="radio" name={`q-${question.id}`} value={value} checked={selected === value}
-            onChange={() => onChange({ questionId: question.id, status: 'answered', value })} />
-          <span className="sv-dot" aria-hidden="true">{selected === value && <CheckIcon />}</span>
-          <span className="sv-dot-label">{value}{format.unit}</span>
-        </label>)}
-      </div>
-      <p className="sv-scale-caption" aria-live="polite">{selected ? `${selected}${format.unit} 이용했어요` : answer?.status === 'not_used' ? '사용하지 않았어요' : answer?.status === 'unknown' ? '잘 모르겠어요' : '선택해 주세요'}</p>
+  const center = (options.length - 1) / 2;
+  const tone = (index: number) => index < center ? 'low' : index > center ? 'high' : 'mid';
+  const size = (index: number) => center === 0 ? 1 : Math.abs(index - center) / center;
+  const chosen = options.find(o => o.value === selected);
+  return <div className="sv-scale" style={{ ['--n' as string]: options.length }}>
+    <div className="sv-scale-ends" aria-hidden="true">
+      <span className="low">{ends[0]}</span><span className="mid">{ends[1]}</span><span className="high">{ends[2]}</span>
     </div>
+    <div className="sv-scale-dots">
+      {options.map((option, index) => <label key={option.value} className={`${tone(index)}${selected === option.value ? ' selected' : ''}`}
+        style={{ ['--dot' as string]: `${26 + Math.round(size(index) * 18)}px` }}>
+        <input type="radio" name={`q-${question.id}`} value={option.value} checked={selected === option.value}
+          onChange={() => onChange({ questionId: question.id, status: 'answered', value: option.value })} />
+        <span className="sv-dot" aria-hidden="true">{selected === option.value && <CheckIcon />}</span>
+        <span className="sv-dot-label"><span className="sr-only">{option.full} </span><span aria-hidden="true">{option.short}</span></span>
+      </label>)}
+    </div>
+    <p className="sv-scale-caption" aria-live="polite">{chosen ? chosen.full : answer?.status === 'not_used' ? '사용하지 않았어요' : answer?.status === 'unknown' ? '잘 모르겠어요' : '선택해 주세요'}</p>
+  </div>;
+}
+
+function DaysQuestion(props: QuestionProps & { format: SurveyQuestions['answerFormats']['days'] }) {
+  const { format } = props;
+  const options = Array.from({ length: format.max - format.min + 1 }, (_, i) => format.min + i)
+    .map(value => ({ value, short: `${value}${format.unit}`, full: `${value}${format.unit} 이용했어요` }));
+  return <QuestionShell {...props} allowNotUsed={format.allowNotUsed} allowUnknown={format.allowUnknown} centered>
+    <Scale {...props} options={options} ends={['거의 안 씀', '절반쯤', '매일']} />
   </QuestionShell>;
 }
 
 function TimeQuestion(props: QuestionProps & { format: SurveyQuestions['answerFormats']['time'] }) {
-  const { question, answer, onChange, format } = props;
-  const selected = answer?.status === 'answered' ? answer.value : null;
-  return <QuestionShell {...props} allowNotUsed={format.allowNotUsed} allowUnknown={format.allowUnknown}>
-    <div className="sv-choices">
-      {format.choices.map(choice => {
-        // "잠깐 확인만 해요 (3분 이내)" → 제목 + 괄호 안 보조 설명
-        const match = /^(.*?)\s*\(([^)]*)\)$/.exec(choice.label);
-        return <label key={choice.value} className={`sv-choice${selected === choice.value ? ' selected' : ''}`}>
-          <input type="radio" name={`q-${question.id}`} value={choice.value} checked={selected === choice.value}
-            onChange={() => onChange({ questionId: question.id, status: 'answered', value: choice.value })} />
-          <span className="sv-choice-num" aria-hidden="true">{choice.value}</span>
-          <span className="sv-choice-text"><strong>{match ? match[1] : choice.label}</strong>{match && <small>{match[2]}</small>}</span>
-          <span className="sv-choice-mark" aria-hidden="true">{selected === choice.value && <CheckIcon />}</span>
-        </label>;
-      })}
-    </div>
+  const { format } = props;
+  // "잠깐 확인만 해요 (3분 이내)" → 원 아래에는 괄호 안 "3분 이내"만, 고르면 전체 문구
+  const options = format.choices.map(choice => {
+    const match = /^(.*?)\s*\(([^)]*)\)$/.exec(choice.label);
+    return { value: choice.value, short: match ? match[2] : choice.label, full: choice.label };
+  });
+  return <QuestionShell {...props} allowNotUsed={format.allowNotUsed} allowUnknown={format.allowUnknown} centered>
+    <Scale {...props} options={options} ends={['짧게', '중간', '길게']} />
   </QuestionShell>;
 }
 

@@ -36,41 +36,27 @@
 .sv-question.centered .sv-guide { text-align: center; }
 .sv-question input[type=radio] { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
 
-/* 일수: 7점 원형 척도 — Figma처럼 양 끝이 크고 가운데가 작다. 왼쪽 보라 → 가운데 회색 → 오른쪽 초록. */
-.sv-scale { max-width: 560px; margin-inline: auto; }
+/* 원형 척도(일수 7점·시간 5점 공통) — Figma처럼 양 끝이 크고 가운데가 작다. 왼쪽 보라 → 가운데 회색 → 오른쪽 초록.
+   칸을 같은 폭(--n)으로 나눠 원 아래 글자가 길어도 원 간격이 고르다. */
+.sv-scale { --n: 7; max-width: 600px; margin-inline: auto; }
 .sv-scale-ends { display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
 .sv-scale-ends .low { color: #7B5A97; text-align: left; }
 .sv-scale-ends .mid { color: #8A94A0; text-align: center; }
 .sv-scale-ends .high { color: var(--brand-light); text-align: right; }
-.sv-scale-dots { position: relative; display: flex; justify-content: space-between; align-items: flex-start; }
-.sv-scale-dots::before { content: ''; position: absolute; left: 22px; right: 22px; top: 22px; height: 2px; background: var(--line); }
+.sv-scale-dots { position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); align-items: start; }
+.sv-scale-dots::before { content: ''; position: absolute; left: calc(100% / var(--n) / 2); right: calc(100% / var(--n) / 2); top: 22px; height: 2px; background: var(--line); }
 .sv-scale-dots label { --dot: 32px; --tone: #C9CFD8; --tone-soft: #fff; --tone-strong: #8A94A0;
-  position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 44px; }
+  position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; min-width: 0; }
 .sv-scale-dots label.low { --tone: #B9A3CC; --tone-soft: #F6F1FA; --tone-strong: #6B4A86; }
 .sv-scale-dots label.high { --tone: #8CCBAA; --tone-soft: #EEF8F2; --tone-strong: var(--brand); }
-.sv-dot { display: grid; place-items: center; width: var(--dot); height: var(--dot); margin-top: calc((44px - var(--dot)) / 2); border-radius: 50%;
+.sv-dot { display: grid; place-items: center; width: var(--dot); height: var(--dot); margin-block: calc((44px - var(--dot)) / 2); border-radius: 50%;
   border: 2px solid var(--tone); background: var(--tone-soft); color: #fff; transition: transform .12s, background .12s, box-shadow .12s; }
 .sv-scale-dots label:hover .sv-dot { transform: scale(1.08); border-color: var(--tone-strong); }
 .sv-scale-dots label.selected .sv-dot { border-color: var(--tone-strong); background: var(--tone-strong); box-shadow: 0 0 0 6px color-mix(in srgb, var(--tone-strong) 14%, transparent); }
 .sv-scale-dots label:has(input:focus-visible) .sv-dot { outline: 2px solid var(--brand); outline-offset: 3px; }
-.sv-dot-label { margin-top: calc((44px - var(--dot)) / 2); font-size: 11px; color: #9aa3ae; font-variant-numeric: tabular-nums; }
+.sv-dot-label { margin-top: 8px; padding-inline: 2px; font-size: 11px; line-height: 1.35; text-align: center; color: #9aa3ae; word-break: keep-all; font-variant-numeric: tabular-nums; }
 .sv-scale-dots label.selected .sv-dot-label { color: var(--tone-strong); font-weight: 700; }
 .sv-scale-caption { margin-top: 12px; text-align: center; font-size: 13px; color: var(--muted); }
-
-/* 시간: 5지선다 목록 */
-.sv-choices { display: flex; flex-direction: column; gap: 10px; }
-.sv-choice { position: relative; cursor: pointer; display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 20px; border: 1px solid var(--line); border-radius: 20px; background: #fff; transition: border-color .12s, box-shadow .12s; }
-.sv-choice:hover { border-color: var(--brand-light); }
-.sv-choice.selected { border-color: var(--brand); background: rgb(232 245 238 / 45%); box-shadow: 0 4px 16px rgb(0 108 72 / 10%); }
-.sv-choice:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 3px; }
-.sv-choice-num { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #F2F4F9; font-size: 12px; font-weight: 700; color: var(--muted); }
-.sv-choice.selected .sv-choice-num { background: var(--brand); color: #fff; }
-.sv-choice-text { display: flex; flex-direction: column; min-width: 0; }
-.sv-choice-text strong { font-size: 15px; font-weight: 600; }
-.sv-choice.selected .sv-choice-text strong { color: var(--brand); }
-.sv-choice-text small { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.sv-choice-mark { margin-left: auto; display: grid; place-items: center; flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--line); color: #fff; }
-.sv-choice.selected .sv-choice-mark { background: var(--brand); }
 
 /* 사용 안 함 · 잘 모르겠음 */
 .sv-extra { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--line); }
@@ -112,11 +98,9 @@
   .sv-chip { grid-column: 2; justify-self: start; }
   .sv-question, .sv-age-card { padding: 24px 18px; border-radius: 24px; }
   .sv-qtext { font-size: 17px; }
-  .sv-scale-dots label { width: 38px; }
-  .sv-dot { width: calc(var(--dot) * .86); height: calc(var(--dot) * .86); margin-top: calc((38px - var(--dot) * .86) / 2); }
-  .sv-dot-label { margin-top: calc((38px - var(--dot) * .86) / 2); }
-  .sv-scale-dots::before { left: 19px; right: 19px; top: 19px; }
-  .sv-choice { padding: 10px 14px; gap: 12px; border-radius: 16px; }
+  .sv-dot { width: calc(var(--dot) * .86); height: calc(var(--dot) * .86); margin-block: calc((38px - var(--dot) * .86) / 2); }
+  .sv-scale-dots::before { top: 19px; }
+  .sv-dot-label { font-size: 10px; }
   .sv-nav { flex-wrap: wrap; }
   .sv-nav-hint { order: -1; width: 100%; }
   .sv-nav .button { flex: 1; }
