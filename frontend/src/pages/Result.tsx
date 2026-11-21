@@ -73,7 +73,7 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
       <div>
         <p className="rs-eyebrow">가장 비슷한 연령대</p>
         <h1 id="match-title" className="rs-match">{matchLabels}</h1>
-        <p className="rs-sentence">응답 패턴이 {matchLabels} 집단의 통계와 가장 비슷합니다.</p>
+        <p className="rs-sentence">응답 패턴이 {asGroup(matchLabels)}의 통계와 가장 비슷합니다.</p>
         {result.nearTie?.isNear && result.nearTie.second && <p className="rs-sub">{withJosa(result.nearTie.second.label, '와', '과')}도 비슷합니다.</p>}
         {result.patternClarity === 'weak' && <p className="rs-sub">응답 패턴이 뚜렷하지 않아요. 여러 연령대와 비슷하게 나올 수 있어요.</p>}
         {result.matches.length > 1 && <p className="rs-sub">공동 1위예요. 아래 근거는 {evidenceLabel} 기준으로 보여 드려요.</p>}
@@ -158,6 +158,8 @@ function TopLine({ result, period }: { result: SurveyResult; period: string }) {
   </div>;
 }
 
+// 목업처럼 이름이 이미 '○집단'이면 '집단'을 다시 붙이지 않는다.
+const asGroup = (label: string) => label.endsWith('집단') ? label : `${label} 집단`;
 const metricLabel = (e: Evidence) => e.metric === 'days' ? '최근 7일 이용일' : '이용한 날 하루 시간';
 const fmt = (value: number) => new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 1 }).format(value);
 
