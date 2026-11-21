@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
+import type { ApiErrorBody } from './types';
+
+/** 서버 오류 본문 {status, code, message}를 그대로 담는다. 화면 분기는 code로 한다(docs/API.md 1-3). */
+export class ApiError extends Error {
+  constructor(message: string, readonly status: number, readonly code: string | null) { super(message); this.name = 'ApiError'; }
+}
 
 export async function request<T>(path: string, dataset: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`/api${path}${path.includes('?') ? '&' : '?'}dataset=${encodeURIComponent(dataset)}`, {
     ...options, headers: { 'Content-Type': 'application/json', ...options.headers },
   });
   if (!response.ok) {
-    const error = await response.json().catch(() => ({})) as { message?: string };
-    throw new Error(error.message || `데이터를 불러오지 못했습니다. (${response.status})`);
+    const error = await response.json().catch(() => ({})) as Partial<ApiErrorBody>;
+    throw new ApiError(error.message || `데이터를 불러오지 못했습니다. (${response.status})`, response.status, error.code ?? null);
   }
   return response.json() as Promise<T>;
 }

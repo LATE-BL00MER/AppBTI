@@ -1,121 +1,200 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { request } from '../api/client';
-import type { CountEvidence, CountResult, Evidence, SurveyResult } from '../api/types';
-import { EmptyResult, ErrorNotice, formatNumber, Loading, monthLabel, Source } from '../components/Common';
+import type { Evidence, SurveyRequest, SurveyResult } from '../api/types';
+import { EmptyResult, ErrorNotice, Loading, monthLabel, withJosa } from '../components/Common';
 import { useApp } from '../state';
-import { ageColor, isLightAgeColor } from '../ageColors';
+import './result.css';
 
-function EvidenceList({ items, group }: { items: (Evidence | CountEvidence)[]; group: string }) {
-  return <div className="evidence-list">{items.map(item => {
-    const count = 'userCount' in item;
-    const user = count ? item.userCount : item.userDays;
-    const reference = count ? item.groupValue : item.groupDays;
-    const difference = count ? Math.abs(user - reference) : item.differenceDays;
-    const scale = count ? Math.max(user, reference, 1) : 31;
-    const unit = count ? '회' : '일';
-    return <div className="evidence-row" key={item.minorCode}>
-      <div className="evidence-title"><div><span>{item.major}</span><Link to={`/explore?minor=${encodeURIComponent(item.minorCode)}`}>{item.name} ↗</Link></div><strong>{formatNumber(difference, `${unit} 차이`)}</strong></div>
-      <div className="comparison-bars">
-        <div><span>내 응답</span><div><i style={{ width: `${user / scale * 100}%` }} /></div><strong>{formatNumber(user, unit)}</strong></div>
-        <div><span>{group}</span><div><i className="group-bar" style={{ width: `${reference / scale * 100}%` }} /></div><strong>{formatNumber(reference, unit)}</strong></div>
-      </div>
-      {!count && item.userMinutes !== null && item.groupMinutes !== null && <p className="time-evidence">하루 평균 시간: 내 응답 {formatNumber(item.userMinutes, '분')} · {group} {formatNumber(item.groupMinutes, '분')}</p>}
-    </div>;
-  })}</div>;
-}
-
+/**
+ * 결과는 POST /survey/result 응답 하나로 그린다(docs/API.md 0장).
+ * 설문에서 넘어오면 그 응답을 쓰고, 새로고침 등으로 없으면 이 탭의 응답으로 다시 요청한다.
+ */
 export default function Result() {
   const { draft } = useApp();
-  const state = useLocation().state as { countResult?: CountResult; dataset?: string; isExample?: boolean } | null;
-  if (state?.countResult && state.dataset === draft.dataset) return <ResultReport result={state.countResult} isExample={state.isExample} />;
-  return <LegacyResult />;
-}
-
-function LegacyResult() {
-  const { meta, draft } = useApp();
-  const [result, setResult] = useState<SurveyResult | null>(null);
+  const state = useLocation().state as { result?: SurveyResult; dataset?: string } | null;
+  const initial = state?.result && state.dataset === draft.dataset ? state.result : null;
+  const [result, setResult] = useState<SurveyResult | null>(initial);
   const [error, setError] = useState<string | null>(null);
-  const [retry, setRetry] = useState(0);
-  const serialized = JSON.stringify(draft.answers);
-  const month = meta?.months.at(-1);
+  const [busy, setBusy] = useState(false);
+  const hasAnswers = Object.keys(draft.answers).length > 0;
+
+  async function fetchResult(ageGroup: string | null) {
+    setBusy(true); setError(null);
+    const body: SurveyRequest = { ageGroup, answers: Object.values(draft.answers) };
+    try { setResult(await request<SurveyResult>('/survey/result', draft.dataset, { method: 'POST', body: JSON.stringify(body) })); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : '결과를 불러오지 못했어요.'); }
+    finally { setBusy(false); }
+  }
+
   useEffect(() => {
-    if (!month || !draft.answers.length) return;
-    let active = true;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), 12000);
-    setResult(null); setError(null);
-    request<SurveyResult>('/survey/result', draft.dataset, { method: 'POST', body: JSON.stringify({ month, answers: JSON.parse(serialized) }), signal: controller.signal })
-      .then(value => { if (active) setResult(value); })
-      .catch((reason: unknown) => { if (active) setError(reason instanceof Error && reason.name !== 'AbortError' ? reason.message : '계산이 지연되고 있습니다. 다시 시도해 주세요.'); })
-      .finally(() => window.clearTimeout(timer));
-    return () => { active = false; controller.abort(); window.clearTimeout(timer); };
-  }, [serialized, draft.dataset, month, retry]);
-  if (!draft.answers.length) return <div className="container"><EmptyResult /></div>;
-  if (error) return <div className="container page"><ErrorNotice message={error} retry={() => setRetry(key => key + 1)} /><Link to="/survey" className="text-link">응답 수정하기</Link></div>;
-  if (!result || !meta) return <div className="container"><Loading /></div>;
-  return <ResultReport result={result} isExample={draft.isExample} />;
+    if (!initial && hasAnswers) void fetchResult(draft.ageGroup);
+    // 처음 한 번만 다시 요청한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!result && !hasAnswers) return <div className="container"><EmptyResult /></div>;
+  if (error && !result) return <div className="container page"><ErrorNotice message={error} retry={() => fetchResult(draft.ageGroup)} /><Link to="/survey" className="text-link">응답 수정하기</Link></div>;
+  if (!result) return <div className="container"><Loading /></div>;
+  return <Report result={result} busy={busy} error={error} onPickAge={fetchResult} />;
 }
 
-function ResultReport({ result, isExample }: { result: SurveyResult | CountResult; isExample?: boolean }) {
-  const { meta, setAnswers } = useApp();
-  const [copied, setCopied] = useState('');
-  if (!meta) return <div className="container"><Loading /></div>;
-  const v1 = 'rankings' in result;
-  const scores = v1 ? result.rankings : result.scores;
-  const nextAction = v1 ? result.nextAction : null;
-  const restart = () => setAnswers([]);
-  if (result.status === 'insufficient') return <div className="container page insufficient"><p className="context-label">나의 패턴 리포트</p><div className="insufficient-symbol" aria-hidden="true">…</div><h1>비교할 단서가<br />조금 더 필요해요.</h1><p>{result.reason}</p><div className="insufficient-count"><strong>{result.comparedCategories}<span> / {result.minimumCategories}개</span></strong><span>비교 가능한 항목 / 최소 필요 항목</span></div><p>응답하지 않은 활동이나 비공개 데이터는 비교에서 제외해요.<br />설문을 더 작성하거나, 집단별 통계를 먼저 둘러볼 수 있어요.</p><div className="button-row"><Link className="button primary" to="/survey">응답 이어서 작성하기</Link><Link className="button secondary" to={nextAction?.path ?? "/explore"}>{nextAction?.label ?? "세대별 탐색하기"}</Link></div>{nextAction?.message && <p>{nextAction.message}</p>}<Exclusions items={result.excluded} /><Source month={result.month} /></div>;
-  const group = (v1 ? result.evidenceGroup : null)?.label ?? result.matches[0].label;
-  const matchLabels = result.matches.map(g => g.label).join(' · ');
-  const runnerUp = scores[1];
-  // TODO(확인 필요): 1·2위 근소 차이의 기준값을 팀에서 확정한다.
-  const closeRunnerUp = v1 && result.matches.length === 1 && runnerUp && scores[0].score - runnerUp.score <= 1;
-  const matchIndexes = result.matches.map(match => meta.ageGroups.findIndex(age => age.id === match.id));
-  const matchColors = matchIndexes.map(ageColor);
-  const sharedResult = matchColors.length > 1;
-  const matchBackground = sharedResult
-    ? `linear-gradient(90deg, ${matchColors.join(', ')}) top / 100% 8px no-repeat #edf8f1`
-    : matchColors[0];
-  const lightResult = sharedResult || isLightAgeColor(matchIndexes[0]);
-  const copy = async () => {
-    const text = `AppBTI 패턴 리포트${isExample ? ' (예시 응답)' : ''}\n응답 패턴이 ${matchLabels} 통계와 가장 비슷합니다.\n패턴 유사도 ${scores[0].score}점 · 공통 ${result.comparedCategories}개 항목\n닮은 항목: ${result.closest.map(e => e.name).join(', ')}\n${result.source}\n실제 연령 추정이나 개인 이용 기록 분석이 아닙니다.`;
-    try { await navigator.clipboard.writeText(text); setCopied('리포트 요약을 복사했어요.'); }
-    catch { setCopied('이 브라우저에서는 복사할 수 없어요. 화면의 내용을 선택해 복사해 주세요.'); }
-  };
-  return <div className="container result-page">
-    <div className="page-topline"><p className="context-label">나의 패턴 리포트</p><span>{monthLabel(result.month)} 기준 · {result.comparedCategories}개 항목 비교</span></div>
-    {isExample && <div className="example-note"><strong>예시 응답으로 보는 결과입니다.</strong><span>직접 설문에 참여하면 나의 응답을 바탕으로 비교할 수 있어요.</span><Link to="/survey" onClick={restart}>직접 해보기 ↗</Link></div>}
-    <header className="report-intro">
-      <h1>나의 디지털 습관 리포트</h1>
-      <p>응답과 집단 통계를 비교한 결과예요.</p>
-    </header>
-    <section className={`result-hero${lightResult ? ' light-result' : ''}`} aria-labelledby="match-heading" style={{ background: matchBackground }}>
-      <div>
-        <h2 id="match-heading">가장 비슷한 연령집단</h2>
-        <p className="matched-groups">{matchLabels}</p>
-        <p>응답 패턴이 {matchLabels}의 통계와 가장 비슷합니다.</p>
-        {closeRunnerUp && <p>{runnerUp.label} 집단의 통계와도 비슷합니다.</p>}
-        {v1 && result.resultType.name && <p>{result.resultType.name} {result.resultType.description}</p>}
-        {result.matches.length > 1 && <p className="tie-note">공동 결과입니다. 항목별 근거는 {group} 기준으로 표시합니다.</p>}
-        <Source month={result.month} />
+function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy: boolean; error: string | null; onPickAge: (age: string) => void }) {
+  const { meta, draft, setAgeGroup, resetSurvey } = useApp();
+  const navigate = useNavigate();
+  const period = result.referenceMonths.length === 2 ? `${monthLabel(result.referenceMonths[0])} ~ ${monthLabel(result.referenceMonths[1])}` : '';
+  const restart = () => { resetSurvey(); navigate('/survey'); };
+
+  if (result.status === 'insufficient') return <div className="rs-page">
+    <TopLine result={result} period={period} />
+    <section className="rs-card rs-insufficient" aria-labelledby="insufficient-title">
+      <div className="rs-insufficient-symbol" aria-hidden="true">…</div>
+      <h1 id="insufficient-title">비교할 단서가 조금 더 필요해요</h1>
+      {result.reason && <p>{result.reason}</p>}
+      <div className="rs-count"><strong>{result.comparedItems}<span> / {result.minimumItems}개</span></strong><span>비교할 수 있는 문항 / 최소 필요 문항</span></div>
+      <div className="rs-actions">
+        <Link className="button primary" to="/survey">응답 이어서 하기</Link>
+        {result.nextAction && <Link className="button secondary" to={result.nextAction.path}>{result.nextAction.label} →</Link>}
       </div>
-      <div className="similarity-number">
-        <span>패턴 유사도</span>
-        <strong>{formatNumber(scores[0].score)}<small>점</small></strong>
-        <p>응답과 집단 통계의 유사도를 0~100점으로 표현한 값</p>
+      {result.nextAction?.message && <p className="rs-muted">{result.nextAction.message}</p>}
+    </section>
+    <Excluded items={result.excluded} />
+    <Source text={result.source} />
+  </div>;
+
+  const matchLabels = result.matches.map(m => m.label).join(' · ');
+  const evidenceLabel = result.evidenceGroup?.label ?? matchLabels;
+  const peer = result.peerComparison;
+
+  return <div className="rs-page">
+    <TopLine result={result} period={period} />
+
+    <section className="rs-hero" aria-labelledby="match-title">
+      <div>
+        <p className="rs-eyebrow">가장 비슷한 연령대</p>
+        <h1 id="match-title" className="rs-match">{matchLabels}</h1>
+        <p className="rs-sentence">응답 패턴이 {matchLabels} 집단의 통계와 가장 비슷합니다.</p>
+        {result.nearTie?.isNear && result.nearTie.second && <p className="rs-sub">{withJosa(result.nearTie.second.label, '와', '과')}도 비슷합니다.</p>}
+        {result.patternClarity === 'weak' && <p className="rs-sub">응답 패턴이 뚜렷하지 않아요. 여러 연령대와 비슷하게 나올 수 있어요.</p>}
+        {result.matches.length > 1 && <p className="rs-sub">공동 1위예요. 아래 근거는 {evidenceLabel} 기준으로 보여 드려요.</p>}
+        {result.resultType.name && <p className="rs-type"><strong>{result.resultType.name}</strong>{result.resultType.description && <span>{result.resultType.description}</span>}</p>}
+      </div>
+      <div className="rs-hero-side">
+        <span className="rs-hero-rank">1위</span>
+        <span>{result.comparedItems}개 문항으로 비교했어요</span>
       </div>
     </section>
-    <section className="result-evidence"><div><div className="evidence-heading"><span className="small-dot" /><h2>이런 습관이 닮았어요</h2><span>{result.closest.length}개 항목</span></div><EvidenceList items={result.closest} group={group} /></div><div><div className="evidence-heading"><span className="small-dot muted" /><h2>{result.farthest.every(e => ('normalizedDifference' in e ? e.normalizedDifference : e.normalizedDistance) === 0) ? '다른 항목도 같았어요' : '이런 습관은 달라요'}</h2><span>{result.farthest.length}개 항목</span></div><EvidenceList items={result.farthest} group={group} /></div></section>
-    <Source month={result.month} />
-    <section className="ranking-section"><div><p className="context-label">다른 집단과도 비교해 보면</p><h2>한 가지 결과 너머의<br />패턴도 살펴보세요.</h2><p>같은 항목과 같은 기준으로 모든 집단을 비교했어요.<br />응답이 달라지면 닮은 집단도 달라질 수 있습니다.</p><Link to="/explore" className="text-link">집단별 통계 자세히 보기 ↗</Link></div><div className="ranking-list">{scores.map(score => <div key={score.ageGroup} className={result.matches.some(g => g.id === score.ageGroup) ? 'best' : ''}><span>{score.label}{v1 && "rank" in score && <small> · {String(score.rank)}위</small>}</span><div><i style={{ width: `${score.score}%` }} /></div><strong>{formatNumber(score.score)}<small>점</small></strong></div>)}<Source month={result.month} /></div></section>
-    <details className="method-note"><summary>결과는 어떻게 계산했나요?</summary><p>{v1 && result.method === "cosine" ? "항목별 집단 최댓값을 기준으로 응답과 집단 통계를 정규화한 뒤, 코사인 유사도를 계산했어요." : "중분류별 집단 값의 최대·최소 차이로 응답과 통계 사이의 거리를 정규화하고, 항목 가중치를 적용했어요."} 비교하지 못한 항목은 점수에 포함하지 않아요.</p>{!v1 && <p>시간은 설문과 집단의 정의가 같을 때만 함께 비교합니다.</p>}<Link className="text-link" to="/data">데이터 범위와 한계 확인하기</Link></details>
-    <Exclusions items={result.excluded} />
-    <div className="result-actions"><Link className="button primary" to="/survey">응답 수정하기</Link><button className="button secondary" onClick={copy}>리포트 요약 복사</button><Link className="text-link" to="/survey" onClick={restart}>처음부터 다시 하기</Link><span role="status">{copied}</span></div>
+
+    <div className="rs-grid">
+      <section className="rs-card" aria-labelledby="ranking-title">
+        <div className="rs-card-head"><h2 id="ranking-title">연령대별 순위</h2><span className="rs-chip">6개 연령대 비교</span></div>
+        <p className="rs-muted">응답 패턴과 각 연령대 통계가 얼마나 가까운지 순서대로 보여 드려요.</p>
+        <ol className="rs-ranking">
+          {result.rankings.map(item => {
+            const best = result.matches.some(m => m.id === item.ageGroup);
+            const near = result.nearTie?.isNear && result.nearTie.second?.id === item.ageGroup;
+            return <li key={item.ageGroup} className={best ? 'best' : near ? 'near' : ''}>
+              <span className="rs-rank-num">{item.rank}</span>
+              <span className="rs-rank-label">{item.label}</span>
+              <span className="rs-tags">
+                {item.isTied && <span className="rs-tag">공동</span>}
+                {best && <span className="rs-tag brand">가장 비슷함</span>}
+                {near && <span className="rs-tag">근소한 차이</span>}
+              </span>
+            </li>;
+          })}
+        </ol>
+      </section>
+
+      <section className="rs-card" aria-labelledby="peer-title">
+        {peer ? <>
+          <div className="rs-card-head"><h2 id="peer-title">{peer.ageGroup.label} 이용자 통계와 견줘 보면</h2></div>
+          {!peer.matchesStated && peer.statedDiffers && <p className="rs-callout">{peer.statedDiffers}</p>}
+          {peer.more.length + peer.less.length === 0
+            ? <p className="rs-muted">{peer.ageGroup.label} 이용자 통계와 크게 다른 항목은 없었어요.</p>
+            : <ul className="rs-peer-list">
+              {peer.more.map(item => <li key={item.questionId}><span className="rs-dir more" aria-hidden="true">↑</span>{item.message}</li>)}
+              {peer.less.map(item => <li key={item.questionId}><span className="rs-dir less" aria-hidden="true">↓</span>{item.message}</li>)}
+            </ul>}
+          {peer.suggestion && <p className="rs-suggestion"><span aria-hidden="true">✦</span>{peer.suggestion.message}</p>}
+          <p className="rs-note">{peer.note}</p>
+          {meta && <AgePicker current={draft.ageGroup} ages={meta.ageGroups} busy={busy} label="다른 연령대와 견주기" onPick={age => { setAgeGroup(age); onPickAge(age); }} />}
+        </> : <>
+          <div className="rs-card-head"><h2 id="peer-title">내 연령대 통계와 견줘 보기</h2><span className="rs-chip">선택 사항</span></div>
+          <p className="rs-muted">연령대를 고르면 그 연령대 이용자 통계와 비교해 어느 쪽으로 더·덜 치우쳐 쓰는지 알려 드려요. 순위 계산에는 쓰지 않고 저장하지 않아요.</p>
+          {meta && <AgePicker current={draft.ageGroup} ages={meta.ageGroups} busy={busy} onPick={age => { setAgeGroup(age); onPickAge(age); }} />}
+          {draft.ageGroup && !busy && <p className="rs-note">비교할 수 있는 문항이 부족해 이 연령대와의 비교를 만들지 못했어요.</p>}
+        </>}
+        {error && <p className="inline-error" role="alert">{error}</p>}
+      </section>
+    </div>
+
+    <div className="rs-grid">
+      <EvidenceCard title="이런 습관이 닮았어요" tone="similar" items={result.closest} group={evidenceLabel} />
+      <EvidenceCard title="이런 습관은 달라요" tone="different" items={result.farthest} group={evidenceLabel} />
+    </div>
+
+    <details className="rs-card rs-method">
+      <summary>결과는 어떻게 계산했나요?</summary>
+      <p>답한 문항만 모아 내 응답 안에서 서비스별 비중을 맞춘 뒤, 6개 연령대 이용자 통계({period})와 같은 방식으로 견줘 가장 가까운 순서를 정했어요. ‘사용 안 함’·‘잘 모르겠음’과 통계가 없는 문항은 비교에서 빼요.</p>
+      <p>실제 나이를 추정하거나 개인의 이용 기록을 분석한 결과가 아니에요. 스스로 답한 응답과 집단 통계의 패턴을 비교한 결과예요.</p>
+      <Link className="text-link" to="/data">데이터와 비교 기준 알아보기</Link>
+    </details>
+    <Excluded items={result.excluded} />
+
+    <div className="rs-actions bottom">
+      <Link className="button primary" to="/explore">세대별 통계 살펴보기 →</Link>
+      <Link className="button secondary" to="/survey">응답 수정하기</Link>
+      <button type="button" className="text-link" onClick={restart}>처음부터 다시 하기</button>
+    </div>
+    <Source text={result.source} />
   </div>;
 }
 
-function Exclusions({ items }: { items: SurveyResult['excluded'] }) {
+function TopLine({ result, period }: { result: SurveyResult; period: string }) {
+  return <div className="rs-topline">
+    <span className="rs-status"><span aria-hidden="true">●</span>나의 패턴 리포트</span>
+    <span>{period && `${period} 통계 기준 · `}{result.answeredCount}개 문항 응답{result.isMock ? ' · 예시 데이터' : ''}</span>
+  </div>;
+}
+
+const metricLabel = (e: Evidence) => e.metric === 'days' ? '최근 7일 이용일' : '이용한 날 하루 시간';
+const fmt = (value: number) => new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 1 }).format(value);
+
+function EvidenceCard({ title, tone, items, group }: { title: string; tone: 'similar' | 'different'; items: Evidence[]; group: string }) {
+  return <section className={`rs-card rs-evidence ${tone}`}>
+    <div className="rs-card-head"><h2>{title}</h2><span className="rs-chip">{items.length}개 항목</span></div>
+    {items.length === 0 ? <p className="rs-muted">보여 드릴 항목이 없어요.</p> : <ul>
+      {items.map(item => <li key={item.questionId}>
+        <div className="rs-ev-title"><strong>{item.name}</strong><span>{metricLabel(item)}</span>
+          {tone === 'different' && item.direction !== 'similar' && <span className={`rs-tag ${item.direction}`}>{item.direction === 'more' ? '더 치우침' : '덜 치우침'}</span>}
+        </div>
+        <dl className="rs-ev-values">
+          <div><dt>내 응답</dt><dd>{fmt(item.userValue)}{item.unit}</dd></div>
+          <div><dt>{group} 통계</dt><dd>{fmt(item.groupValue)}{item.unit}</dd></div>
+        </dl>
+      </li>)}
+    </ul>}
+    {tone === 'different' && items.length > 0 && <p className="rs-note">‘더·덜 치우침’은 내 응답 안에서 다른 서비스와 견준 상대적인 비중이에요. 사용량이 몇 분 더 많다는 뜻은 아니에요.</p>}
+  </section>;
+}
+
+function AgePicker({ current, ages, busy, label, onPick }: { current: string | null; ages: { id: string; label: string }[]; busy: boolean; label?: string; onPick: (id: string) => void }) {
+  return <div className="rs-age" role="group" aria-label={label ?? '비교할 연령대 고르기'}>
+    {label && <span className="rs-age-label">{label}</span>}
+    {ages.map(age => <button key={age.id} type="button" aria-pressed={current === age.id} disabled={busy} onClick={() => onPick(age.id)}>{age.label}</button>)}
+    {busy && <span className="rs-muted" role="status">불러오는 중…</span>}
+  </div>;
+}
+
+const reasonText: Record<string, string> = { not_used: '사용 안 함', unknown: '잘 모르겠음', group_missing: '비교할 통계 없음' };
+function Excluded({ items }: { items: SurveyResult['excluded'] }) {
   if (!items.length) return null;
-  return <details className="method-note"><summary>비교에서 제외한 {items.length}개 항목</summary><ul className="excluded-list">{items.map(item => <li key={item.minorCode}><strong>{item.name}</strong><span>{item.reason}</span></li>)}</ul></details>;
+  return <details className="rs-card rs-method"><summary>비교에서 뺀 문항 {items.length}개</summary>
+    <ul className="rs-excluded">{items.map(item => <li key={item.questionId}><strong>{item.name}</strong><span>{reasonText[item.reason] ?? item.reason}</span></li>)}</ul>
+  </details>;
+}
+
+function Source({ text }: { text: string | null }) {
+  return text ? <p className="source rs-source">출처: {text}</p> : null;
 }
