@@ -33,3 +33,6 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# 에이전트 도구 세션 파일 (모든 위치)
+.omc/

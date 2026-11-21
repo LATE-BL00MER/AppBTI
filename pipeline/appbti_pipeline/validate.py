@@ -9,6 +9,7 @@ import pandas as pd
 
 def validate(frame: pd.DataFrame, codebook: dict) -> dict:
     errors, warnings = [], []
+    unit_problems = 0
     ages = {a["id"] for a in codebook["age_groups"]}
     minors = {c["code"]: c for c in codebook["minor_categories"]}
     if len(ages) != 6 or not minors:
@@ -46,10 +47,16 @@ def validate(frame: pd.DataFrame, codebook: dict) -> dict:
                 errors.append(f"{prefix}: {field} 숫자 범위 오류")
         if pd.notna(row["avg_daily_time"]) and row["avg_daily_time"] != "":
             if pd.isna(row["time_unit"]) or row["time_unit"] not in {"초", "분", "시간", "seconds", "minutes", "hours"}:
-                warnings.append(f"{prefix}: 시간 단위 누락·미지원으로 시간 지표 제외")
+                unit_problems += 1
+    if unit_problems:
+        warnings.append(f"시간 단위 누락·미지원 {unit_problems}행은 시간 지표에서 제외합니다.")
     if frame["status"].isin(["missing", "suppressed"]).any():
         warnings.append("비공개·결측 행의 수치는 null로 처리합니다.")
-    expected = len(pd.period_range(codebook["period"]["start"], codebook["period"]["end"], freq="M")) * len(ages) * len(minors)
+    excluded_names = set(codebook.get("exclude_minor_names", []))
+    active = sum(1 for minor in minors.values() if minor["name"] not in excluded_names)
+    expected = len(pd.period_range(codebook["period"]["start"], codebook["period"]["end"], freq="M")) * len(ages) * active
     if len(frame) < expected:
         warnings.append(f"기대 행 {expected}개 중 {expected - len(frame)}개 부족. 누락 조합은 null로 출력합니다.")
-    return {"valid": not errors, "errors": errors, "warnings": warnings, "rowCount": len(frame)}
+    status_counts = {str(key): int(value) for key, value in frame["status"].value_counts().items()}
+    return {"valid": not errors, "errors": errors, "warnings": warnings, "rowCount": len(frame),
+            "statusCounts": status_counts, "excluded": frame.attrs.get("excluded", [])}

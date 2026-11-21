@@ -20,6 +20,8 @@ class ApiControllerTests {
     @MockitoBean ProfileRepository repository;
     @MockitoBean SimilaritySettings.Loader settings;
     @MockitoBean SurveySummary survey;
+    @MockitoBean kr.ac.hansung.appbti.survey.SurveyQuestions questions;
+    @MockitoBean kr.ac.hansung.appbti.similarity.PeerMessages.Loader peer;
 
     @BeforeEach void prepare() {
         var data = SimilarityCalculatorTests.fixture(false);

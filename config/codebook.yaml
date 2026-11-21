@@ -1,14 +1,20 @@
-# 우서현 요청: AppBTI_123_요약의 분석·설문 비교 설계를 기록한 실제 데이터 코드북 초안.
-# 대상은 이미 정제된 clean.csv의 표준 컬럼이다. 제공처 원본은 먼저 별도 정제가 필요하다.
-# 접속 횟수 해석은 사용자 가정이며 제공처 확정 정의와 구분한다. 실제 측정값은 넣지 않는다.
-# TODO(확인 필요): 현우에게 분류·정제 계약, 진용에게 횟수 응답·코사인 계약을 인계한다.
-# 현재 Python의 일수 상한·안전민감 제외 처리와 Java의 응답/API 계약은 별도 구현이 필요하다.
+# 실제 데이터 코드북. LG U+ 원본 CSV를 받은 그대로 읽는다(정제 CSV·목업 형식도 같은 매핑으로 읽음).
+# 원본 정제(열 매핑, YYYYMM 변환, 연령대 ID, 중분류 코드, 안전민감 제외, 상태 판정)는 어댑터가 이 파일로 한다.
+# 지표 정의는 LG U+ 답변 기준(이용자 1명당 월 평균 이용일수, 일평균 이용시간(분))이다. 실제 측정값은 넣지 않는다.
+# 아래 real_analysis.metric_definitions의 '접속 횟수' 해석은 이전 초안 가정이며 API v2에서는 쓰지 않는다.
 schema_version: 1
 is_mock: false
-source: "LG U+ 제공 연령대·기간 집계 / 접속 횟수 해석은 사용자 가정"
+source: "LG U+ 제공 연령대·기간(2025년 1~6월) 집계"
 
-# 기존 목업의 한글 컬럼 매핑도 유지한다. 실제 입력에는 영문 표준 컬럼을 쓴다.
+# LG U+ 원본 열(받은 그대로), 정제 CSV의 표준 열, 기존 목업의 한글 열을 모두 같은 내부 필드로 읽는다.
 columns:
+  P_YYYYMM: month
+  YY10_AGLV_ID: age_group
+  CNC_INFO_CATG_LVL1_NM: major
+  CNC_INFO_CATG_LVL2_NM: minor_name
+  UNQ_USER_CNT: uu
+  AVG_TADV_DAYS: avg_days
+  AVG_ASMP_VSIT_TM: avg_daily_time
   기준월: month
   연령대(6구간): age_group
   대분류명: major
@@ -127,6 +133,7 @@ minor_categories:
   - {"code": "multimedia", "name": "멀티미디어", "major": "엔터테인먼트"}
   - {"code": "music", "name": "음악", "major": "엔터테인먼트"}
   - {"code": "news_etc", "name": "뉴스/정보 - 기타", "major": "뉴스/정보"}
+  - {"code": "safety_sensitive", "name": "안전민감", "major": "뉴스/정보"}  # exclude_minor_names로 분석에서 제외
   - {"code": "newspaper", "name": "신문", "major": "뉴스/정보"}
   - {"code": "online_etc", "name": "온라인 서비스-기타", "major": "온라인서비스"}
   - {"code": "online_news", "name": "온라인 뉴스", "major": "뉴스/정보"}
@@ -170,7 +177,7 @@ minor_categories:
   - {"code": "wedding", "name": "결혼", "major": "가족"}
   - {"code": "womens_fashion", "name": "여성패션", "major": "의류/패션"}
 
-# 제외 정책의 계약이다. 현행 공통 어댑터는 이 키를 적용하지 않으므로 구현 전 실제 실행 금지.
+# 분석에서 뺄 중분류. 어댑터가 읽을 때 제외하고 제외 내역을 validation_report.json에 남긴다. 사유는 docs/DATA_NOTES.md.
 exclude_minor_names:
   - 안전민감
 
@@ -182,16 +189,38 @@ statuses:
   결측: missing
   비공개: suppressed
 
-# 기존 공통 파이프라인 호환 키. 미확정 UU 가중 기준값·시간 변환은 계속 끈다.
+# 평균 이용일수의 분모는 이용자(LG U+ 답변)이므로 UU 가중 기준일수와 상대 빈도를 계산한다(AGENTS.md 6-1).
 metrics:
-  avg_days_denominator: null  # TODO(확인 필요): 평균의 대상 인원·분모
-  weighted_reference_days_enabled: false
+  avg_days_denominator: users
+  weighted_reference_days_enabled: true
+  # 일평균 이용시간: LG U+ 답변 기준으로 고정한다 (이용자 1명당 일평균 이용시간, 분).
+  # 원본에 시간 단위 열이 없으므로, 단위가 비어 있는 행은 source_unit(분)으로 읽는다.
+  # TODO(확인 필요): '하루'가 이용한 날 기준인지 달력 일수 기준인지. 확인 전에는 설문 정의 일치를 주장하지 않는다.
   daily_time:
-    enabled: false  # avg_daily_time을 시간으로 환산하거나 시간 비교에 사용하지 않는다.
-    source_unit: null
-    definition: null
-    denominator: null
-    target_unit: minutes  # 기존 시간 경로의 호환 필드이며 위 enabled=false로 미사용
+    enabled: true
+    source_unit: minutes
+    definition: per_user_daily_average_minutes
+    denominator: users
+    target_unit: minutes
+    # '하루' 기준. used_days: 이용한 날 평균(원본 그대로 비교), calendar_days: 그달 전체 일수 평균(설문 기준값을 쓴 날 사용량으로 환산).
+    # 후자 버전 설정 묶음: codebook.calendar_days.yaml, similarity.calendar_days.yaml, survey_questions.calendar_days.yaml
+    day_basis: used_days
+
+# 이 달의 특이 신호(/api/explore/signals). 나머지 달 평균 대비 min_ratio 이상 변하고,
+# 평소 흔들림(나머지 달의 로그 표준편차, 하한 min_std)의 min_z배 이상이면 신호다.
+# 공통 변화(6개 연령대 평균)를 빼고도 generation_min_ratio 이상이면 세대 신호, 아니면 전체 신호.
+# 처음·끝 달은 한쪽 달들하고만 비교되므로 edge_min_ratio(1.5배) 이상 변화만 신호로 보고 isEdgeMonth로 표시한다.
+# 팀 결정(11/20): 6개월 자료로는 근거가 부족해 발표 범위에서 제외하고 꺼 둔다. 코드는 남겨 다시 켤 수 있게 한다.
+# 꺼져 있으면 산출물에 monthlySignals가 없고 /api/explore/signals는 200 + status=unavailable을 돌려준다.
+monthly_signals:
+  enabled: false
+  status: draft
+  metrics: [days, time]
+  min_ratio: 1.25
+  min_z: 3.0
+  generation_min_ratio: 1.25
+  edge_min_ratio: 1.5
+  min_std: 0.02
 
 # TODO(확인 필요): 분류·집계 기준 변경 월. 확인되지 않은 경계를 지어내지 않는다.
 continuity_breaks: []
@@ -203,8 +232,8 @@ real_analysis:
   status: draft
   runtime_ready: false
   input:
-    format: clean_canonical
-    filename: clean.csv
+    format: lgu_original_or_clean_canonical
+    filename: null  # 입력 폴더의 CSV 하나(원본 그대로). clean.csv는 파이프라인 산출물이다.
     month_format: YYYY-MM
     duplicate_key: [month, age_group, minor_code]
     missing_policy: null

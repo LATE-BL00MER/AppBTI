@@ -72,6 +72,35 @@ def test_time_is_optional_and_units_are_converted(frame, book):
     assert build(timed, book)["meta"]["metrics"]["dailyTime"] is False
 
 
+def test_blank_time_unit_uses_declared_source_unit(book, tmp_path):
+    source = pd.read_csv(next((ROOT / "data/mock/with_time").glob("*.csv")), encoding="utf-8-sig", dtype=str)
+    unit_column = next(k for k, v in book["columns"].items() if v == "time_unit" and k in source.columns)
+    source[unit_column] = ""
+    source.to_csv(tmp_path / "mock_blank_unit.csv", index=False, encoding="utf-8-sig")
+    declared = deepcopy(book)
+    declared["metrics"]["daily_time"]["source_unit"] = "minutes"
+    loaded = read_source(tmp_path, declared)
+    has_time = loaded["avg_daily_time"].notna() & loaded["avg_daily_time"].ne("")
+    assert loaded.loc[has_time, "time_unit"].eq("minutes").all()
+    assert loaded.loc[~has_time, "time_unit"].isna().all()  # 시간 값이 없는 행에는 단위를 지어내지 않는다
+    assert not any("시간 단위" in w for w in validate(loaded, declared)["warnings"])
+    result = build(loaded, declared)
+    assert result["meta"]["metrics"]["dailyTime"] is True
+    first = float(source.loc[0, next(k for k, v in book["columns"].items() if v == "avg_daily_time" and k in source.columns)])
+    assert result["profiles"][0]["avgDailyTime"] == pytest.approx(first, abs=0.00001)
+
+
+def test_blank_time_unit_without_declaration_stays_null(book, tmp_path):
+    source = pd.read_csv(next((ROOT / "data/mock/with_time").glob("*.csv")), encoding="utf-8-sig", dtype=str)
+    source[next(k for k, v in book["columns"].items() if v == "time_unit" and k in source.columns)] = ""
+    source.to_csv(tmp_path / "mock_blank_unit.csv", index=False, encoding="utf-8-sig")
+    undeclared = deepcopy(book)
+    undeclared["metrics"]["daily_time"]["source_unit"] = None
+    loaded = read_source(tmp_path, undeclared)
+    assert any("시간 단위" in w for w in validate(loaded, undeclared)["warnings"])
+    assert all(r["avgDailyTime"] is None for r in build(loaded, undeclared)["profiles"])
+
+
 def test_continuity_breaks_split_segments(frame, book):
     book["continuity_breaks"] = ["2025-04"]
     result = build(frame, book)

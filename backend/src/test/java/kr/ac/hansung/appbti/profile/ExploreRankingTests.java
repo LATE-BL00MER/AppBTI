@@ -54,6 +54,12 @@ class ExploreRankingTests {
         assertEquals(List.of(1, 2), top.items().stream().map(ExploreRanking.Item::rank).toList());
     }
 
+    @Test void timeMetricDoesNotChangeRanking() {
+        var withoutTime = rank(false, ExploreRanking.Basis.ageShare, null, null);
+        var withTime = ExploreRanking.rank(RealShapeFixture.profiles(false, true), "20s", "2025-06", ExploreRanking.Basis.ageShare, null, null);
+        assertEquals(withoutTime, withTime);
+    }
+
     @Test void sameInputGivesSameResult() {
         assertEquals(rank(false, ExploreRanking.Basis.ageShare, null, null), rank(false, ExploreRanking.Basis.ageShare, null, null));
     }

@@ -20,6 +20,8 @@ class ProfileApiRealShapeTests {
     @MockitoBean ProfileRepository repository;
     @MockitoBean SimilaritySettings.Loader settings;
     @MockitoBean SurveySummary survey;
+    @MockitoBean kr.ac.hansung.appbti.survey.SurveyQuestions questions;
+    @MockitoBean kr.ac.hansung.appbti.similarity.PeerMessages.Loader peer;
 
     private void use(ProfileData data) {
         when(repository.get("basic")).thenReturn(data);
@@ -87,6 +89,26 @@ class ProfileApiRealShapeTests {
         mvc.perform(get("/api/explore/ranking?ageGroup=20s&basis=relativeFrequency")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("available"))
                 .andExpect(jsonPath("$.items[0].value").value(1.5));
+    }
+
+    @Test void apisWorkWithAndWithoutTimeMetric() throws Exception {
+        // 시간 지표 없음(현재 실제 데이터): 값은 null로 내려가고 0으로 채우지 않는다.
+        mvc.perform(get("/api/meta")).andExpect(jsonPath("$.metrics.dailyTime").value(false));
+        mvc.perform(get("/api/profiles")).andExpect(status().isOk()).andExpect(jsonPath("$.profiles[0].avgDailyTime").isEmpty());
+        // 시간 지표 있음: 산출물 값을 그대로 전달하고, 결측 행은 계속 null이다.
+        use(RealShapeFixture.profiles(false, true));
+        mvc.perform(get("/api/meta")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.metrics.dailyTime").value(true))
+                .andExpect(jsonPath("$.metrics.timeComparable").value(true));
+        mvc.perform(get("/api/profiles")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.profiles[?(@.ageGroup=='20s' && @.minorCode=='m_b')].avgDailyTime").value(org.hamcrest.Matchers.contains(45.0)))
+                .andExpect(jsonPath("$.profiles[?(@.ageGroup=='60plus' && @.minorCode=='m_d')].avgDailyTime").value(org.hamcrest.Matchers.contains((Object) null)));
+        mvc.perform(get("/api/profiles/trend?minor=m_a")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.profiles.length()").value(12))
+                .andExpect(jsonPath("$.profiles[0].avgDailyTime").value(30.0));
+        mvc.perform(get("/api/explore/ranking?ageGroup=20s")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("available"))
+                .andExpect(jsonPath("$.items[0].minorCode").value("m_b"));
     }
 
     @Test void invalidRankingRequestsReturnMessage400() throws Exception {
