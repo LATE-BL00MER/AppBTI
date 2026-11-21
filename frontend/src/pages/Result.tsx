@@ -169,14 +169,22 @@ function EvidenceCard({ title, tone, items, group }: { title: string; tone: 'sim
         <div className="rs-ev-title"><strong>{item.name}</strong><span>{metricLabel(item)}</span>
           {tone === 'different' && item.direction !== 'similar' && <span className={`rs-tag ${item.direction}`}>{item.direction === 'more' ? '더 치우침' : '덜 치우침'}</span>}
         </div>
-        <dl className="rs-ev-values">
-          <div><dt>내 응답</dt><dd>{fmt(item.userValue)}{item.unit}</dd></div>
-          <div><dt>{group} 통계</dt><dd>{fmt(item.groupValue)}{item.unit}</dd></div>
-        </dl>
+        <PairBars item={item} group={group} />
       </li>)}
     </ul>}
     {tone === 'different' && items.length > 0 && <p className="rs-note">‘더·덜 치우침’은 내 응답 안에서 다른 서비스와 견준 상대적인 비중이에요. 사용량이 몇 분 더 많다는 뜻은 아니에요.</p>}
   </section>;
+}
+
+/** Figma 상세 분석의 '나 vs 집단' 막대. API가 준 두 값을 같은 단위로 나란히 그리기만 한다. */
+function PairBars({ item, group }: { item: Evidence; group: string }) {
+  // 일수는 최근 7일이 끝, 시간은 두 값 중 큰 값에 여유를 둔 값이 끝이다.
+  const max = item.metric === 'days' ? 7 : Math.max(item.userValue, item.groupValue) * 1.15 || 1;
+  const width = (value: number) => `${Math.min(value / max * 100, 100)}%`;
+  return <dl className="rs-bars">
+    <div><dt>나</dt><dd><span className="rs-bar"><i className="me" style={{ width: width(item.userValue) }} /></span><b>{fmt(item.userValue)}{item.unit}</b></dd></div>
+    <div><dt>{group}</dt><dd><span className="rs-bar"><i style={{ width: width(item.groupValue) }} /></span><b>{fmt(item.groupValue)}{item.unit}</b></dd></div>
+  </dl>;
 }
 
 function AgePicker({ current, ages, busy, label, onPick }: { current: string | null; ages: { id: string; label: string }[]; busy: boolean; label?: string; onPick: (id: string) => void }) {

@@ -182,16 +182,23 @@ function QuestionShell({ question, number, answer, onChange, allowNotUsed, allow
 function DaysQuestion(props: QuestionProps & { format: SurveyQuestions['answerFormats']['days'] }) {
   const { question, answer, onChange, format } = props;
   const values = Array.from({ length: format.max - format.min + 1 }, (_, i) => format.min + i);
+  const middle = Math.round((format.min + format.max) / 2);
   const selected = answer?.status === 'answered' ? answer.value : null;
+  // Figma 척도처럼 양 끝은 크고 가운데로 갈수록 작게, 왼쪽은 보라·가운데 회색·오른쪽 초록으로 칠한다.
+  const tone = (value: number) => value < middle ? 'low' : value > middle ? 'high' : 'mid';
+  const size = (value: number) => Math.abs(value - middle) / Math.max(middle - format.min, 1);
   return <QuestionShell {...props} allowNotUsed={format.allowNotUsed} allowUnknown={format.allowUnknown} centered>
     <div className="sv-scale">
-      <div className="sv-scale-ends" aria-hidden="true"><span>{format.min}{format.unit}</span><span>{format.max}{format.unit} (매일)</span></div>
+      <div className="sv-scale-ends" aria-hidden="true">
+        <span className="low">거의 안 씀</span><span className="mid">절반쯤</span><span className="high">매일</span>
+      </div>
       <div className="sv-scale-dots">
-        {values.map(value => <label key={value} className={selected === value ? 'selected' : ''}>
+        {values.map(value => <label key={value} className={`${tone(value)}${selected === value ? ' selected' : ''}`}
+          style={{ ['--dot' as string]: `${26 + Math.round(size(value) * 18)}px` }}>
           <input type="radio" name={`q-${question.id}`} value={value} checked={selected === value}
             onChange={() => onChange({ questionId: question.id, status: 'answered', value })} />
-          <span className="sv-dot" aria-hidden="true">{selected === value ? <CheckIcon /> : value}</span>
-          <span className="sr-only">{value}{format.unit}</span>
+          <span className="sv-dot" aria-hidden="true">{selected === value && <CheckIcon />}</span>
+          <span className="sv-dot-label">{value}{format.unit}</span>
         </label>)}
       </div>
       <p className="sv-scale-caption" aria-live="polite">{selected ? `${selected}${format.unit} 이용했어요` : answer?.status === 'not_used' ? '사용하지 않았어요' : answer?.status === 'unknown' ? '잘 모르겠어요' : '선택해 주세요'}</p>
