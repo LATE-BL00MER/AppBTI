@@ -21,7 +21,7 @@ public final class ClrMatcher {
     public record PeerItem(String questionId, String minorCode, String name, String metric, double relativeRatio, String message) {}
     public record Suggestion(String questionId, String message) {}
     public record Peer(ProfileData.AgeGroup ageGroup, int comparedItems, List<PeerItem> more, List<PeerItem> less,
-                       Suggestion suggestion, boolean matchesStated, String note) {}
+                       Suggestion suggestion, boolean matchesStated, String statedDiffers, String note) {}
     public record ResultType(String name, String description, String status) {}
     public record NextAction(String path, String label, String message) {}
     public record Result(String status, String reasonCode, String reason, String method, List<String> referenceMonths,
@@ -128,7 +128,7 @@ public final class ClrMatcher {
                 .sorted(Comparator.comparingDouble(Evidence::difference).reversed().thenComparing(Evidence::questionId)).limit(3).toList();
 
         Peer peerComparison = stated == null || peer == null ? null
-                : peer(peer, stated, used, user, group[ages.indexOf(stated)], matches.contains(stated));
+                : peer(peer, stated, used, user, group[ages.indexOf(stated)], matches);
         return new Result("comparable", null, null, SimilaritySettings.CLR_NEAREST, months, answered, used.size(), minimum,
                 rankings, matches, nearTie, clarity, evidenceGroup, rounded(closest), rounded(farthest), excluded,
                 peerComparison, PENDING, null, meta.isMock(), meta.source());
@@ -166,7 +166,8 @@ public final class ClrMatcher {
     }
 
     // 고른 연령대와 문항별 상대 배수를 비교해 더·덜 치우친 문항과 제안 문장을 만든다.
-    private static Peer peer(PeerMessages config, ProfileData.AgeGroup stated, List<Used> used, double[] user, double[] group, boolean matchesStated) {
+    private static Peer peer(PeerMessages config, ProfileData.AgeGroup stated, List<Used> used, double[] user, double[] group,
+                             List<ProfileData.AgeGroup> matches) {
         List<double[]> scored = new ArrayList<>();
         for (int i = 0; i < used.size(); i++) scored.add(new double[]{i, user[i] - group[i]});
         Comparator<double[]> strongest = Comparator.comparingDouble((double[] s) -> -Math.abs(s[1]))
@@ -187,7 +188,13 @@ public final class ClrMatcher {
                         && config.categories().get(m.minorCode()).reduce() != null)
                 .max(Comparator.comparingDouble(PeerItem::relativeRatio).thenComparing(PeerItem::questionId, Comparator.reverseOrder()))
                 .map(m -> new Suggestion(m.questionId(), config.categories().get(m.minorCode()).reduce())).orElse(null);
-        return new Peer(stated, used.size(), more, less, suggestion, matchesStated, PeerMessages.fill(config.templates().note(), Map.of("age", stated.label())));
+        boolean matchesStated = matches.contains(stated);
+        // 매칭 1위(공동이면 모두)에 고른 연령대가 없으면 서버가 안내 문장을 채운다. 템플릿이 없으면 null.
+        String statedDiffers = matchesStated || config.templates().stated_differs() == null ? null
+                : PeerMessages.fill(config.templates().stated_differs(), Map.of("age", stated.label(),
+                        "match", String.join("·", matches.stream().map(ProfileData.AgeGroup::label).toList())));
+        return new Peer(stated, used.size(), more, less, suggestion, matchesStated, statedDiffers,
+                PeerMessages.fill(config.templates().note(), Map.of("age", stated.label())));
     }
 
     // 비교 불가 응답을 만든다. 순위·근거는 비우고 0으로 채우지 않는다.

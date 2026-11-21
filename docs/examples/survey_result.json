@@ -1,151 +1,192 @@
 {
-  "_comment": "API v1 POST /api/survey/result 비교 가능 예시. 모든 응답·집단 값은 직접 만든 가상 값이며 실제 제공 수치가 아니다(문항 코드만 회의안 기준). 12문항 중 10개 answered(0회 1개 포함), 건너뛰기 1·모르겠음 1 → 비교 9개. 점수는 docs/API.md 4-2 코사인 식으로 이 가상 값에서 계산했다. 코사인 특성상 점수가 높게 몰린다. _comment는 API 필드가 아니다.",
+  "_comment": "API v2 POST /api/survey/result 비교 가능 예시(요청에 ageGroup=30s). 모든 응답·거리·집단 값은 직접 만든 가상 값이며 실제 제공 수치가 아니다. 문장은 config/peer_messages.yaml 템플릿이다. _comment는 API 필드가 아니다.",
   "status": "comparable",
   "reasonCode": null,
   "reason": null,
-  "month": "2025-06",
-  "method": "cosine",
-  "answeredCount": 10,
-  "comparedCategories": 9,
-  "minimumCategories": 6,
+  "method": "clr_nearest",
+  "referenceMonths": [
+    "2025-01",
+    "2025-06"
+  ],
+  "answeredCount": 12,
+  "comparedItems": 12,
+  "minimumItems": 6,
   "rankings": [
     {
-      "ageGroup": "20s",
-      "label": "20대",
-      "score": 99.8,
+      "ageGroup": "50s",
+      "label": "50대",
       "rank": 1,
-      "isTied": false
-    },
-    {
-      "ageGroup": "under20",
-      "label": "20대 미만",
-      "score": 99.2,
-      "rank": 2,
-      "isTied": false
-    },
-    {
-      "ageGroup": "30s",
-      "label": "30대",
-      "score": 99.0,
-      "rank": 3,
+      "distance": 0.824,
       "isTied": false
     },
     {
       "ageGroup": "40s",
       "label": "40대",
-      "score": 96.7,
-      "rank": 4,
-      "isTied": false
-    },
-    {
-      "ageGroup": "50s",
-      "label": "50대",
-      "score": 95.2,
-      "rank": 5,
+      "rank": 2,
+      "distance": 0.851,
       "isTied": false
     },
     {
       "ageGroup": "60plus",
       "label": "60대 이상",
-      "score": 92.5,
+      "rank": 3,
+      "distance": 1.102,
+      "isTied": false
+    },
+    {
+      "ageGroup": "30s",
+      "label": "30대",
+      "rank": 4,
+      "distance": 1.317,
+      "isTied": false
+    },
+    {
+      "ageGroup": "20s",
+      "label": "20대",
+      "rank": 5,
+      "distance": 1.905,
+      "isTied": false
+    },
+    {
+      "ageGroup": "under20",
+      "label": "20대 미만",
       "rank": 6,
+      "distance": 2.233,
       "isTied": false
     }
   ],
   "matches": [
     {
-      "id": "20s",
-      "label": "20대"
+      "id": "50s",
+      "label": "50대"
     }
   ],
+  "nearTie": {
+    "isNear": true,
+    "second": {
+      "id": "40s",
+      "label": "40대"
+    },
+    "gapRatio": 0.032
+  },
+  "patternClarity": "clear",
   "evidenceGroup": {
-    "id": "20s",
-    "label": "20대"
+    "id": "50s",
+    "label": "50대"
   },
   "closest": [
     {
+      "questionId": "q14",
+      "minorCode": "land_transport",
+      "name": "육상",
+      "metric": "time",
+      "userValue": 17.3,
+      "groupValue": 15.1,
+      "unit": "분",
+      "difference": 0.08,
+      "direction": "similar"
+    },
+    {
       "questionId": "q01",
-      "minorCode": "general_mall",
-      "name": "종합쇼핑몰",
-      "major": "쇼핑",
-      "userCount": 30,
-      "groupValue": 30.0,
-      "normalizedDifference": 0.0
+      "minorCode": "weather",
+      "name": "날씨",
+      "metric": "days",
+      "userValue": 5,
+      "groupValue": 4.6,
+      "unit": "일",
+      "difference": 0.12,
+      "direction": "more"
     },
     {
-      "questionId": "q09",
-      "minorCode": "music",
-      "name": "음악",
-      "major": "엔터테인먼트",
-      "userCount": 30,
-      "groupValue": 30.0,
-      "normalizedDifference": 0.0
-    },
-    {
-      "questionId": "q10",
-      "minorCode": "ott",
-      "name": "OTT",
-      "major": "엔터테인먼트",
-      "userCount": 20,
-      "groupValue": 20.0,
-      "normalizedDifference": 0.0
+      "questionId": "q12",
+      "minorCode": "mobile_bank",
+      "name": "모바일 은행",
+      "metric": "time",
+      "userValue": 5.5,
+      "groupValue": 6.2,
+      "unit": "분",
+      "difference": 0.15,
+      "direction": "less"
     }
   ],
   "farthest": [
     {
-      "questionId": "q07",
-      "minorCode": "webtoon",
-      "name": "웹툰",
-      "major": "엔터테인먼트",
-      "userCount": 45,
-      "groupValue": 40.0,
-      "normalizedDifference": 0.119
+      "questionId": "q06",
+      "minorCode": "sns",
+      "name": "소셜네트워킹",
+      "metric": "time",
+      "userValue": 42.4,
+      "groupValue": 11.6,
+      "unit": "분",
+      "difference": 1.21,
+      "direction": "more"
     },
     {
       "questionId": "q04",
-      "minorCode": "online_news",
-      "name": "온라인 뉴스",
-      "major": "뉴스/정보",
-      "userCount": 10,
-      "groupValue": 12.0,
-      "normalizedDifference": 0.1
-    },
-    {
-      "questionId": "q03",
-      "minorCode": "weather",
-      "name": "날씨",
-      "major": "뉴스/정보",
-      "userCount": 10,
-      "groupValue": 9.0,
-      "normalizedDifference": 0.062
+      "minorCode": "game",
+      "name": "게임",
+      "metric": "days",
+      "userValue": 1,
+      "groupValue": 2.4,
+      "unit": "일",
+      "difference": 0.95,
+      "direction": "less"
     }
   ],
   "excluded": [
     {
-      "questionId": "q02",
-      "minorCode": "food_delivery",
-      "name": "배달식품",
-      "reason": "zero_count"
-    },
-    {
-      "questionId": "q08",
-      "minorCode": "game",
-      "name": "게임",
-      "reason": "skipped"
+      "questionId": "q13",
+      "minorCode": "online_stock",
+      "name": "온라인 증권거래",
+      "reason": "not_used"
     },
     {
       "questionId": "q11",
-      "minorCode": "radio",
-      "name": "라디오",
+      "minorCode": "specialty_mall",
+      "name": "전문쇼핑몰",
       "reason": "unknown"
     }
   ],
+  "peerComparison": {
+    "ageGroup": {
+      "id": "30s",
+      "label": "30대"
+    },
+    "comparedItems": 12,
+    "more": [
+      {
+        "questionId": "q06",
+        "minorCode": "sns",
+        "name": "소셜네트워킹",
+        "metric": "time",
+        "relativeRatio": 2.02,
+        "message": "30대 이용자 통계에 비해, 다른 앱보다 소셜네트워킹 쪽으로 더 치우쳐 쓴다고 응답하셨어요."
+      }
+    ],
+    "less": [
+      {
+        "questionId": "q04",
+        "minorCode": "game",
+        "name": "게임",
+        "metric": "days",
+        "relativeRatio": 0.45,
+        "message": "30대 이용자 통계에 비해, 다른 앱보다 게임 쪽은 덜 쓰는 편이라고 응답하셨어요."
+      }
+    ],
+    "suggestion": {
+      "questionId": "q06",
+      "message": "이번 달에는 SNS 시간을 조금 줄여보는 건 어떨까요?"
+    },
+    "matchesStated": false,
+    "statedDiffers": "응답 패턴은 50대 통계와 가장 비슷해요. 고른 연령대(30대) 통계와는 차이가 있어요.",
+    "note": "응답을 LG U+ 2025년 1~6월 30대 이용자 집계와 비교했어요. 측정 방식이 달라 사용량 크기가 아니라 앱 사이의 상대적인 비중으로 비교했어요."
+  },
   "resultType": {
     "name": null,
     "description": null,
     "status": "pending"
   },
   "nextAction": null,
-  "isMock": true,
-  "source": "예시 데이터: 가상 값, 실제 제공 수치 아님"
+  "isMock": false,
+  "source": "LG U+ 제공 연령대·기간(2025년 1~6월) 집계"
 }

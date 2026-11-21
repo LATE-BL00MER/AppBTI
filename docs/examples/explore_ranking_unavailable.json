@@ -1,5 +1,5 @@
 {
-  "_comment": "API v1 basis=relativeFrequency인데 metrics.weightedReference=false일 때. _comment는 API 필드가 아니다.",
+  "_comment": "basis=relativeFrequency인데 metrics.weightedReference=false일 때(목업 등). v2 실제 데이터는 weightedReference=true라 이 응답이 나오지 않는다. _comment는 API 필드가 아니다.",
   "status": "unavailable",
   "reason": "평균 이용일수의 분모가 확인되지 않아 기준값 대비 비교를 제공하지 않습니다. basis=ageShare로 볼 수 있어요.",
   "month": "2025-06",

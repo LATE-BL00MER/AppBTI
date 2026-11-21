@@ -26,19 +26,19 @@ for dataset, timed in [("basic", False), ("time", True)]:
     assert len(meta["ageGroups"]) == 6
     profiles = call("/profiles" + suffix)["profiles"]
     questions = call("/survey/questions" + suffix)
-    assert questions["timeAvailable"] == timed
-    assert len(questions["questions"]) == len(meta["minorCategories"])
-    answers = [{"minorCode": row["minorCode"], "days": row["avgDays"], "minutes": row["avgDailyTime"]}
-               for row in profiles if row["ageGroup"] == meta["ageGroups"][2]["id"]]
-    result = call("/survey/result" + suffix, {"answers": answers})
-    assert result["status"] == "comparable" and result["scores"][0]["score"] == 100
-    assert result["comparedCategories"] == len(questions["questions"]) - 1
-    assert call("/survey/result" + suffix, {"answers": answers}) == result
+    assert questions["timeAvailable"] == timed and questions["comparisonEnabled"]
+    assert len(questions["questions"]) >= questions["minimumItems"]
+    answers = [{"questionId": q["id"], "status": "answered", "value": 3} for q in questions["questions"]]
+    result = call("/survey/result" + suffix, {"ageGroup": meta["ageGroups"][2]["id"], "answers": answers})
+    assert result["status"] == "comparable" and result["method"] == "clr_nearest" and len(result["rankings"]) == 6
+    assert result["comparedItems"] == len(answers) and result["peerComparison"] is not None
+    peer = result["peerComparison"]
+    assert (peer["statedDiffers"] is None) == peer["matchesStated"]
+    assert call("/survey/result" + suffix, {"ageGroup": meta["ageGroups"][2]["id"], "answers": answers}) == result
     assert call("/survey/result" + suffix, {"answers": []})["status"] == "insufficient"
-    assert call("/survey/result" + suffix, {"answers": [{"minorCode": answers[0]["minorCode"], "days": 0}]})["answeredCount"] == 1
-    call("/survey/result" + suffix, {"answers": [{"minorCode": answers[0]["minorCode"], "days": -1}]}, 400)
+    call("/survey/result" + suffix, {"answers": [{"questionId": answers[0]["questionId"], "status": "answered", "value": 0}]}, 400)
     call("/survey/result" + suffix, {"answers": [answers[0], answers[0]]}, 400)
-    call("/survey/result" + suffix, {"month": "2099-01", "answers": []}, 400)
+    call("/survey/result" + suffix, {"answers": [{"questionId": "q99", "status": "answered", "value": 1}]}, 400)
     travel = call(f"/profiles/trend?minor=travel&dataset={dataset}")["profiles"]
     assert any(row["avgDays"] is None and row["status"] == "missing" for row in travel)
     news = [row for row in profiles if row["minorCode"] == "news"]
