@@ -103,3 +103,12 @@ def test_mock_survey_uses_v2_with_mock_categories():
     # 시간 지표가 없는 basic 목업도 최소 문항 수만큼 일수 문항이 있어야 비교할 수 있다.
     assert sum(q['metric']=='days' for q in enabled)>=similarity['minimum_items']
     assert len(questions['time_choices'])==len(similarity['time_choice_minutes'])
+
+
+def test_peer_message_templates_do_not_attach_particles_to_names():
+    import re
+    import yaml
+    templates=yaml.safe_load(open(ROOT/'config/peer_messages.yaml',encoding='utf-8'))['templates']
+    # {age}·{name}·{match} 바로 뒤 조사는 이름 끝 받침에 따라 틀린다(예: "60대 이상예요", "날씨은").
+    for text in templates.values():
+        assert not re.search(r'\}(은|는|이|가|을|를|과|와|예요|이에요|으로|로)', text), text
