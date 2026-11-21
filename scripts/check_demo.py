@@ -32,6 +32,8 @@ for dataset, timed in [("basic", False), ("time", True)]:
     result = call("/survey/result" + suffix, {"ageGroup": meta["ageGroups"][2]["id"], "answers": answers})
     assert result["status"] == "comparable" and result["method"] == "clr_nearest" and len(result["rankings"]) == 6
     assert result["comparedItems"] == len(answers) and result["peerComparison"] is not None
+    peer = result["peerComparison"]
+    assert (peer["statedDiffers"] is None) == peer["matchesStated"]
     assert call("/survey/result" + suffix, {"ageGroup": meta["ageGroups"][2]["id"], "answers": answers}) == result
     assert call("/survey/result" + suffix, {"answers": []})["status"] == "insufficient"
     call("/survey/result" + suffix, {"answers": [{"questionId": answers[0]["questionId"], "status": "answered", "value": 0}]}, 400)

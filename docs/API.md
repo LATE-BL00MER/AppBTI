@@ -443,8 +443,9 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 5. `more`·`less` 각각 `|ln relativeRatio|` 내림차순 → `questionId` 순 최대 `max_items`(2)개
 6. `suggestion`: `more` 중 `suggest_reduce: true`인 분야에서 `relativeRatio`가 가장 큰 1개. 없으면 `null`
 7. `matchesStated`: 매칭 1위에 고른 연령대가 들어 있으면 `true`
+8. `statedDiffers`: `matchesStated=false`일 때 서버가 `stated_differs` 템플릿으로 채운 문장. 1위가 공동이면 `{match}`에 공동 1위를 `·`로 이어 넣는다. `true`면 `null`
 
-설정: `config/peer_messages.yaml` (`more_ratio`, `less_ratio`, `max_items`, 문장 템플릿 `templates`, 분야별 제안 여부 `categories`)
+설정: `config/peer_messages.yaml` (`more_ratio`, `less_ratio`, `max_items`, 문장 템플릿 `templates`(`more`, `less`, `stated_differs`, `note`), 분야별 제안 여부 `categories`)
 
 | 필드 | 타입 | null | 의미 |
 |---|---|---|---|
@@ -455,7 +456,8 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 | `…[].relativeRatio` | number | 아니요 | 상대적 치우침의 배수 (1보다 크면 더, 작으면 덜). **화면 문장에 숫자로 넣지 않는다** |
 | `…[].message` | string | 아니요 | 템플릿 문장 |
 | `suggestion` | {questionId, message} | 예 | 제안 문장 1개. 해당 분야가 없으면 `null` |
-| `matchesStated` | boolean | 아니요 | `false`면 `stated_differs` 문장("응답 패턴은 ○○ 통계와 가장 비슷하지만, 고른 연령대는 ○○예요")을 쓸 수 있다 |
+| `matchesStated` | boolean | 아니요 | 매칭 1위에 고른 연령대가 있는지 (화면 분기용) |
+| `statedDiffers` | string | 예 | `matchesStated=false`일 때 서버가 채운 안내 문장("응답 패턴은 50대 통계와 가장 비슷하지만, 고른 연령대는 30대예요."). 화면은 그대로 보여 주고 직접 만들지 않는다. `true`면 `null` |
 | `note` | string | 아니요 | 출처·한계 안내 문장 |
 
 문구 규칙: "**응답하셨어요**"(실제 이용 기록처럼 보이지 않게), "**○○대 이용자 통계**"(이용자만의 평균). 제안은 "어떨까요?" 한 문장만 쓰고, 생활·정보·금융 분야는 제안하지 않는다. AI 생성 문장을 쓰지 않는다(템플릿만).

@@ -189,8 +189,18 @@ public class ClrMatcherTests {
         assertEquals(List.of(0.14, 0.19), peer.less().stream().map(ClrMatcher.PeerItem::relativeRatio).toList());
         assertEquals("30s 더 이름_music", peer.more().getFirst().message());
         assertTrue(peer.matchesStated());
+        assertNull(peer.statedDiffers());
         assertEquals("30s 안내", peer.note());
         assertEquals(14, peer.comparedItems());
+    }
+
+    @Test void statedDiffersIsFilledByServerOnlyWhenStatedAgeIsNotTopMatch() {
+        var result = run(data(null), request("60plus", NORMAL));
+        var peer = result.peerComparison();
+        assertFalse(peer.matchesStated());
+        String match = String.join("·", result.matches().stream().map(ProfileData.AgeGroup::label).toList());
+        assertEquals(match + " 60plus", peer.statedDiffers());
+        assertNull(run(data(null), request("30s", NORMAL)).peerComparison().statedDiffers());
     }
 
     @Test void peerSuggestionOnlyForReduceCategoriesAndThresholdsAreApplied() {
