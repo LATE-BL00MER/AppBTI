@@ -1,5 +1,5 @@
 {
-  "_comment": "API v1 GET /api/meta 실제 데이터 구조 예시. 대분류 14개와 연령대 ID·라벨은 정제 데이터 구조를 따르고, example_* 중분류 식별자·이름과 quality 수치는 가상이다. 중분류는 3개만 예시로 적었다. 실제 산출물을 적재했을 때의 구조를 보이려고 isMock=false로 두었으며 실제 수치는 없다. _comment는 예시 설명용이며 API 필드가 아니다.",
+  "_comment": "API v2 GET /api/meta 실제 데이터 구조 예시. 대분류 14개와 연령대 ID·라벨은 정제 데이터 구조를 따르고, example_* 중분류 식별자·이름과 quality 수치는 가상이다. 중분류는 3개만 예시로 적었다. 실제 산출물을 적재했을 때의 구조를 보이려고 isMock=false로 두었으며 실제 수치는 없다. _comment는 예시 설명용이며 API 필드가 아니다.",
   "schemaVersion": 1,
   "isMock": false,
   "source": "예시: 실제 적재 시 LG U+ 제공 연령대·기간(2025년 1~6월) 집계",
@@ -74,11 +74,11 @@
     "주거/홈케어"
   ],
   "metrics": {
-    "dailyTime": false,
+    "dailyTime": true,
     "timeComparable": false,
-    "weightedReference": false
+    "weightedReference": true
   },
-  "avgDaysDenominator": null,
+  "avgDaysDenominator": "users",
   "continuityBreaks": [],
   "quality": {
     "rowCount": 100,
@@ -88,11 +88,12 @@
     "basic"
   ],
   "dataset": "basic",
-  "comparisonEnabled": false,
+  "comparisonEnabled": true,
   "zeroDaysPolicy": null,
   "survey": {
-    "questionCount": 12,
-    "period": "monthly",
-    "method": "cosine"
+    "questionCount": 14,
+    "period": "last7days",
+    "method": "clr_nearest",
+    "timeAvailable": true
   }
 }
