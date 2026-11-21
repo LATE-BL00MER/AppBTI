@@ -56,7 +56,7 @@ def test_real_count_units_do_not_silently_enable_day_time_or_weekly_paths():
     assert contract['clip'] is False and contract['refit_with_user_answer'] is False
     assert contract['daily_metric_enabled'] is False and contract['weekly_comparison_enabled'] is False
     assert contract['zero_count_policy']=='exclude_pending_denominator'
-    assert b['metrics']['weighted_reference_days_enabled'] is False
+    assert b['metrics']['weighted_reference_days_enabled'] is True and b['metrics']['avg_days_denominator']=='users'
     assert analysis['runtime_ready'] is False and analysis['apply_only_when_is_mock_false'] is True
 
 
