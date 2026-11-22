@@ -56,6 +56,12 @@ export interface Evidence {
   questionId: string; minorCode: string; name: string; metric: SurveyMetric;
   userValue: number; groupValue: number; unit: string; difference: number;
   direction: 'more' | 'less' | 'similar';
+  /** 응답 전체 크기를 뺀 뒤 이 항목의 상대 배수(1 = 비중이 같음). 화면 막대 위치용 */
+  relativeRatio: number;
+  /** 나·근거 연령대 각자의 평소(자기 평균) 대비 이 항목 비중. 점 두 개 막대 위치용 */
+  userRelative: number; groupRelative: number;
+  /** 시간 문항만: 내가 고른 선택지와 집단 시간이 속한 선택지 구간(번호·문구). 일수 문항은 null */
+  userChoice: number | null; userLabel: string | null; groupChoice: number | null; groupLabel: string | null;
 }
 export interface PeerItem { questionId: string; minorCode: string; name: string; metric: SurveyMetric; relativeRatio: number; message: string }
 export interface PeerComparison {
@@ -72,7 +78,13 @@ export interface SurveyResult {
   nearTie: { isNear: boolean; second: AgeGroup | null; gapRatio: number | null } | null;
   patternClarity: 'clear' | 'weak' | null;
   evidenceGroup: AgeGroup | null;
+  /** 근거 집단 대비 응답 전체의 크기(기하평균 배수). 비교 불가면 null */
+  overallRatio: number | null;
+  /** similar: closest가 상대 비중·화면 수치 모두 가까운 항목 / values: 그런 항목이 없어 상대 비중만 가까운 항목(제목을 '항목별 이용 수치'로) */
+  closestMode: 'similar' | 'values' | null;
   closest: Evidence[]; farthest: Evidence[];
+  /** 응답 패턴 지도: 나와 6개 연령대를 2차원으로 줄인 좌표(-1~1). 비교 불가면 null */
+  patternMap: { points: { id: string; label: string; x: number; y: number; isUser: boolean }[]; explained: number } | null;
   excluded: { questionId: string; minorCode: string; name: string; reason: 'not_used' | 'unknown' | 'group_missing' | string }[];
   peerComparison: PeerComparison | null;
   resultType: { name: string | null; description: string | null; status: string };

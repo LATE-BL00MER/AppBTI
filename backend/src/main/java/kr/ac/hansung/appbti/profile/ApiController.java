@@ -106,7 +106,7 @@ public class ApiController {
         if (config.isClr()) {
             var questions = this.questions.forData(data.meta().isMock());
             if (!questions.available()) throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "SURVEY_UNAVAILABLE", "설문 문항 설정을 준비하지 못했습니다.");
-            return ClrMatcher.calculate(data, config, questions.served(data.meta()), questions.timeChoices().size(), peer.get(), request);
+            return ClrMatcher.calculate(data, config, questions.served(data.meta()), questions.timeChoices(), peer.get(), request);
         }
         return SimilarityCalculator.calculate(data, config, request, repository.month(data, request.month()));
     }

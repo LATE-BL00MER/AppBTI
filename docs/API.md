@@ -280,6 +280,8 @@ days_scale: 7                  # 일수 응답 ÷ 7
 near_tie_ratio: 0.05           # (2위 거리 − 1위 거리) ÷ 2위 거리 < 0.05 → 근소
 similar_difference: 0.1        # 근거 direction=similar 기준
 flat_pattern_ratio: null       # TODO(확인 필요): 패턴 불명확 기준
+close_value_ratio: 1.25        # '가까운 항목'은 화면 수치도 이 배수 안이어야 함 (TODO: 우서현 확정)
+time_choice_edges: [3, 10, 30, 60]   # 시간 선택지 구간 경계(분). 근거의 집단 시간을 선택지 구간으로 표시할 때 사용 (후자 버전 [15, 30, 45, 90])
 ```
 
 ```yaml
@@ -384,8 +386,9 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 7. **순위**: `d_a`를 소수 3자리로 반올림해 오름차순, 경쟁 순위
 8. **근소**: `(d_2위 − d_1위) ÷ d_2위 < near_tie_ratio` → `nearTie.isNear = true`
 9. **패턴 불명확**: TODO(확인 필요). `flat_pattern_ratio`가 `null`이면 항상 `clear`
-10. **근거**: 1위 연령대(공동이면 `/meta.ageGroups` 순 첫 집단)와 문항별 `|q'_i − g'_a,i|`
-    - `closest`: 오름차순 → `questionId` 순 최대 3개
+10. **근거**: 근거 연령대와 문항별 `|q'_i − g'_a,i|`. 근거 연령대는 요청에 `ageGroup`이 있으면 **그 연령대**, 없으면 1위 연령대(공동이면 `/meta.ageGroups` 순 첫 집단)다. 순위·1위는 `ageGroup`과 무관하다
+    - `closest`: CLR 차이가 작은 절반 안에 있고 화면 수치도 `close_value_ratio`배 안인 문항을 CLR 차이 오름차순으로 최대 3개 → `closestMode=similar`. 그런 문항이 없으면 CLR 차이 오름차순 3개 → `closestMode=values`
+    - 화면은 `similar`면 수치 막대, `values`면 점 두 개 막대(상대 비중)로 보여 준다
     - `farthest`: `closest`를 뺀 나머지에서 내림차순 → `questionId` 순 최대 3개
 11. **또래 비교**: 요청에 `ageGroup`이 있으면 4-3 규칙으로 `peerComparison`을 만든다
 
@@ -404,7 +407,10 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 | `matches[]` | {id, label} | 아니요 | 1위(공동이면 모두) |
 | `nearTie` | {isNear, second, gapRatio} | 예 | `insufficient`이면 `null` |
 | `patternClarity` | string | 예 | `clear` / `weak`. `insufficient`이면 `null` |
-| `evidenceGroup` | {id, label} | 예 | 근거를 계산한 집단 |
+| `evidenceGroup` | {id, label} | 예 | 근거를 계산한 집단. 요청에 `ageGroup`이 있으면 그 연령대 |
+| `overallRatio` | number | 예 | 근거 연령대 대비 응답 전체 크기(기하평균 배수). 측정 방식 차이가 섞여 있어 **화면에 표시하지 않는다** |
+| `closestMode` | string | 예 | `similar`(수치까지 가까운 항목) / `values`(상대 비중만 가까운 항목) |
+| `patternMap` | object | 예 | 응답 패턴 지도: `{points: [{id, label, x, y, isUser}], explained}`. 6개 연령대 CLR 패턴의 주성분 2개 축에 나를 투영한 좌표(-1~1). `explained`는 연령대 차이 중 지도에 담긴 비율. 거리만 의미 있고 정확한 순서는 `rankings`를 따른다 |
 | `closest[]`, `farthest[]` | object[] | 아니요 | 닮은 항목·다른 항목 각각 최대 3개, 서로 겹치지 않음 |
 | `…[].questionId`, `minorCode`, `name`, `metric` | string | 아니요 | 문항 |
 | `…[].userValue` | number | 아니요 | 내 값. `days`는 일(1~7), `time`은 선택지 대표 분 |
@@ -412,6 +418,10 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 | `…[].unit` | string | 아니요 | `일` / `분` |
 | `…[].difference` | number | 아니요 | `|q'_i − g'_a,i|`, 소수 2자리. 작을수록 비슷함 |
 | `…[].direction` | string | 아니요 | `more`(내가 상대적으로 더 씀) / `less` / `similar`(`difference` < 0.1) |
+| `…[].relativeRatio` | number | 아니요 | `exp(q'_i − g'_a,i)`. 1보다 크면 더, 작으면 덜 치우침 |
+| `…[].userRelative`, `groupRelative` | number | 아니요 | 점 두 개 막대 위치. 나·근거 연령대의 CLR 값을 같은 지표(일수·시간) 안에서 근거 연령대 평균 기준으로 옮긴 배수. 두 값의 비가 `relativeRatio` |
+| `…[].userChoice`, `userLabel` | integer, string | 예 | 시간 문항만: 내가 고른 선택지 번호·문구. 일수 문항은 `null` |
+| `…[].groupChoice`, `groupLabel` | integer, string | 예 | 시간 문항만: 집단 시간이 속한 선택지 구간(`time_choice_edges` 기준). 경계 설정이 없으면 `null` |
 | `excluded[]` | {questionId, minorCode, name, reason} | 아니요 | 비교에서 뺀 문항. `reason`: `not_used` / `unknown` / `group_missing` |
 | `peerComparison` | object | 예 | 또래 비교(4-3). `ageGroup`이 없거나 비교 문항이 6개 미만이면 `null` |
 | `resultType` | {name, description, status} | 아니요 | 결과 유형 이름. 지금은 `status: pending` |

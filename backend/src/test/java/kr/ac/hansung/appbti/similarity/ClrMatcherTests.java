@@ -54,7 +54,7 @@ public class ClrMatcherTests {
     // 분석 시험값과 같은 v2 매칭 설정을 만든다.
     public static SimilaritySettings settings(List<Double> minutes) {
         return new SimilaritySettings(true, "clr_nearest", null, null, null, "joint", null, List.of(), 6, "answered_items", "joint",
-                minutes, 7.0, 0.05, 0.1, null);
+                minutes, 7.0, 0.05, 0.1, null, 1.25, null);
     }
 
     // 또래 비교 시험 설정을 만든다.
@@ -89,14 +89,16 @@ public class ClrMatcherTests {
         assertEquals("30s", result.evidenceGroup().id());
         assertFalse(result.nearTie().isNear());
         assertEquals(0.059, result.nearTie().gapRatio());
-        assertEquals(List.of("q02", "q03", "q12"), result.closest().stream().map(ClrMatcher.Evidence::questionId).toList());
-        assertEquals(List.of(0.14, 0.25, 0.39), result.closest().stream().map(ClrMatcher.Evidence::difference).toList());
+        // 상대 비중이 가까운 q02·q03·q12 중 화면 수치도 1.25배 안인 것은 q03뿐이다.
+        assertEquals("similar", result.closestMode());
+        assertEquals(List.of("q03"), result.closest().stream().map(ClrMatcher.Evidence::questionId).toList());
+        assertEquals(List.of(0.25), result.closest().stream().map(ClrMatcher.Evidence::difference).toList());
         assertEquals(List.of("q13", "q14", "q08"), result.farthest().stream().map(ClrMatcher.Evidence::questionId).toList());
         assertEquals(List.of("less", "less", "more"), result.farthest().stream().map(ClrMatcher.Evidence::direction).toList());
         assertEquals(14, result.comparedItems());
         assertEquals(List.of("2025-01", "2025-06"), result.referenceMonths());
         assertEquals("일", result.closest().getFirst().unit());
-        assertEquals(3.0, result.closest().getFirst().userValue());
+        assertEquals(2.0, result.closest().getFirst().userValue());
         assertNull(result.peerComparison());
         assertNull(result.nextAction());
         assertEquals("pending", result.resultType().status());
@@ -176,7 +178,7 @@ public class ClrMatcherTests {
         var without = run(data(null), request(null, NORMAL));
         var with = run(data(null), request("30s", NORMAL));
         assertEquals(without.rankings(), with.rankings());
-        assertEquals(without.closest(), with.closest());
+        assertEquals(without.matches(), with.matches());
         assertNull(without.peerComparison());
         assertNotNull(with.peerComparison());
     }
@@ -192,6 +194,90 @@ public class ClrMatcherTests {
         assertNull(peer.statedDiffers());
         assertEquals("30s 안내", peer.note());
         assertEquals(14, peer.comparedItems());
+    }
+
+    @Test void evidenceRelativeRatioMatchesDirectionAndOverallRatioIsReported() {
+        var base = run(data(null), request(null, NORMAL));
+        assertTrue(base.overallRatio() != null && base.overallRatio() > 0);
+        for (var e : java.util.stream.Stream.concat(base.closest().stream(), base.farthest().stream()).toList()) {
+            // relativeRatio = exp(q' − g'), difference = |q' − g'|
+            assertEquals(e.difference(), Math.abs(Math.log(e.relativeRatio())), 0.03);  // 둘 다 소수 2자리 반올림
+            // 점 두 개(나·연령대 각자의 평소 대비 비중)의 비율이 상대 배수다.
+            // 세 값 모두 소수 2자리 반올림이라 작은 값에서는 비율 오차가 커서 로그로 비교한다.
+            assertEquals(Math.log(e.relativeRatio()), Math.log(e.userRelative() / e.groupRelative()), 0.15);
+            if ("more".equals(e.direction())) assertTrue(e.relativeRatio() > 1 && e.userRelative() > e.groupRelative());
+            if ("less".equals(e.direction())) assertTrue(e.relativeRatio() < 1);
+        }
+        assertNull(run(data(null), request(null, 5, 3, 2, 6)).overallRatio());
+    }
+
+    @Test void closestNeedsBothRelativeAndDisplayedValuesCloseOtherwiseValuesMode() {
+        var result = run(data(null), request(null, NORMAL));
+        if ("similar".equals(result.closestMode())) {
+            for (var e : result.closest()) {
+                double r = e.userValue() / e.groupValue();
+                assertTrue(r <= 1.25 && r >= 0.8, e.questionId());
+            }
+        } else {
+            assertEquals("values", result.closestMode());
+            assertEquals(3, result.closest().size());
+        }
+        // 집단 값을 내 답과 같게 만들면(수치도 같음) 가까운 항목 모드가 된다.
+        int[] inputs = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+        BiFunction<Integer, Integer, Double> same = (a, i) -> Math.log("days".equals(QUESTIONS[i][2]) ? 3 / 7.0 : 17.3) + (a == 2 ? 0 : 0.5 * (i % 3));
+        var close = run(data(same), request(null, inputs));
+        assertEquals("similar", close.closestMode());
+        assertNull(run(data(null), request(null, 5, 3, 2, 6)).closestMode());
+    }
+
+    @Test void timeEvidenceCarriesChoiceLabelsForUserAndGroup() {
+        var base = settings(MINUTES);
+        var withEdges = new SimilaritySettings(true, "clr_nearest", null, null, null, "joint", null, List.of(), 6, "answered_items", "joint",
+                MINUTES, 7.0, 0.05, 0.1, null, 1.25, List.of(3.0, 10.0, 30.0, 60.0));
+        var labels = List.of("3분 이내", "3~10분", "10~30분", "30분~1시간", "1시간 이상");
+        var result = ClrMatcher.calculate(data(null), withEdges, questions(), labels, peer(), request(null, NORMAL));
+        for (var e : java.util.stream.Stream.concat(result.closest().stream(), result.farthest().stream()).toList()) {
+            if ("days".equals(e.metric())) {
+                assertNull(e.userLabel()); assertNull(e.groupLabel());
+                continue;
+            }
+            assertEquals(labels.get(e.userChoice() - 1), e.userLabel());
+            double g = e.groupValue();
+            int expected = g < 3 ? 1 : g < 10 ? 2 : g < 30 ? 3 : g < 60 ? 4 : 5;
+            assertEquals(expected, e.groupChoice());
+            assertEquals(labels.get(expected - 1), e.groupLabel());
+        }
+        // 경계 설정이 없으면 집단 구간은 비우고, 매칭 결과는 같다.
+        var noEdges = run(data(null), request(null, NORMAL));
+        assertEquals(noEdges.rankings(), result.rankings());
+        assertTrue(noEdges.farthest().stream().allMatch(e -> e.groupLabel() == null));
+        assertThrows(IllegalArgumentException.class, () -> new SimilaritySettings(true, "clr_nearest", null, null, null, "joint", null, List.of(), 6,
+                "answered_items", "joint", MINUTES, 7.0, 0.05, 0.1, null, 1.25, List.of(10.0, 3.0, 30.0, 60.0)));
+    }
+
+    @Test void statedAgeGroupBecomesEvidenceGroup() {
+        var without = run(data(null), request(null, NORMAL));
+        assertEquals(without.matches().getFirst(), without.evidenceGroup());
+        var with = run(data(null), request("60plus", NORMAL));
+        assertEquals("60plus", with.evidenceGroup().id());
+        assertNotEquals("60plus", with.matches().getFirst().id());
+        assertNotEquals(without.closest(), with.closest());
+        assertEquals(without.rankings(), with.rankings());
+    }
+
+    @Test void patternMapKeepsNearestGroupNearAndIsDeterministic() {
+        var result = run(data(null), request(null, NORMAL));
+        var map = result.patternMap();
+        assertEquals(7, map.points().size());
+        assertTrue(map.points().getFirst().isUser());
+        assertTrue(map.explained() > 0 && map.explained() <= 1);
+        var me = map.points().getFirst();
+        // 2차원 지도에서도 1위 연령대가 6위 연령대보다 나에게 가깝다.
+        java.util.function.Function<String, Double> dist = id -> map.points().stream().filter(p -> p.id().equals(id))
+                .mapToDouble(p -> Math.hypot(p.x() - me.x(), p.y() - me.y())).findFirst().orElseThrow();
+        assertTrue(dist.apply(result.rankings().getFirst().ageGroup()) < dist.apply(result.rankings().getLast().ageGroup()));
+        assertEquals(map, run(data(null), request(null, NORMAL)).patternMap());
+        assertNull(run(data(null), request(null, 5, 3, 2, 6)).patternMap());
     }
 
     @Test void statedDiffersIsFilledByServerOnlyWhenStatedAgeIsNotTopMatch() {
@@ -221,7 +307,7 @@ public class ClrMatcherTests {
     }
 
     @Test void disabledSettingsOrMissingReferenceAreComparisonDisabled() {
-        var disabled = new SimilaritySettings(false, "clr_nearest", null, null, null, null, null, null, 6, null, null, null, 7.0, null, null, null);
+        var disabled = new SimilaritySettings(false, "clr_nearest", null, null, null, null, null, null, 6, null, null, null, 7.0, null, null, null, null, null);
         assertEquals("comparison_disabled", ClrMatcher.calculate(data(null), disabled, questions(), 5, peer(), request(null, NORMAL)).reasonCode());
         var noReference = new ProfileData(data(null).meta(), List.of());
         assertEquals("comparison_disabled", run(noReference, request(null, NORMAL)).reasonCode());
