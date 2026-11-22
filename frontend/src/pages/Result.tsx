@@ -80,8 +80,9 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
         {result.resultType.name && <p className="rs-type"><strong>{result.resultType.name}</strong>{result.resultType.description && <span>{result.resultType.description}</span>}</p>}
       </div>
       <div className="rs-hero-side">
-        <span className="rs-hero-rank">1위</span>
-        <span>{result.comparedItems}개 문항으로 비교했어요</span>
+        {/* 1위는 왼쪽 문구와 겹쳐서, 결과를 얼마나 많은 근거로 냈는지(비교 문항 수)를 크게 보여 준다. */}
+        <span className="rs-hero-rank"><span>{result.comparedItems}<small>개</small></span></span>
+        <span>비교한 문항</span>
       </div>
     </section>
 
