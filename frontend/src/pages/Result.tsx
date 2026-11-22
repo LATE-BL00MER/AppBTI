@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { request } from '../api/client';
 import type { Evidence, SurveyRequest, SurveyResult } from '../api/types';
@@ -137,7 +137,7 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
 
     <PatternMapCard result={result} />
     {/* 비슷한·먼 항목은 지도 아래 토글 안에 접어 둔다. */}
-    <details className="rs-card rs-items-toggle">
+    <details className="rs-card rs-items-toggle" open>
       <summary>비슷한 항목과 다른 항목 보기</summary>
       <div className="rs-grid">
         <EvidenceCard title={result.closestMode === 'values' ? '서비스 사이 비중이 비슷한 항목' : '응답과 통계가 가까운 항목'} tone="similar"
@@ -191,6 +191,7 @@ function EvidenceCard({ title, tone, mode, items, group }: { title: string; tone
         </> : <PairBars item={item} group={group} />}
       </li>)}
     </ul>}
+    {tone === 'different' && items.length > 0 && <p className="rs-note">‘더·덜 치우침’은 상대적인 비중이에요.</p>}
   </section>;
 }
 
@@ -232,26 +233,47 @@ function DotBar({ item, group }: { item: Evidence; group: string }) {
 
 /** 응답 패턴 지도. 나(★)와 6개 연령대(●)의 응답 패턴을 2차원으로 줄여 찍는다. 점 사이 거리가 대략적인 패턴 차이다. */
 function PatternMapCard({ result }: { result: SurveyResult }) {
+  // 그림 너비를 실제 화면 너비로 맞춰 글씨가 휴대폰에서도 13px로 보이게 한다.
+  const wrap = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(640);
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const update = () => setW(Math.max(Math.round(el.clientWidth), 300));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const map = result.patternMap;
   if (!map) return null;
+  // 방향은 지도(주성분)를 따르되, 나와 각 연령대 사이 거리는 서버가 준 distance(순위 거리에서 모든 연령대 공통 부분을 뺀 값)에 맞춘다 → 지도 순서와 순위가 항상 같다.
+  const me0 = map.points.find(p => p.isUser)!;
+  const ages = map.points.filter(p => !p.isUser);
+  const points = [me0, ...ages.map((p, i) => {
+    const d = p.distance ?? 0;
+    const dx = p.x - me0.x, dy = p.y - me0.y, len = Math.hypot(dx, dy);
+    const angle = len > 1e-6 ? Math.atan2(dy, dx) : (2 * Math.PI * i) / ages.length;
+    return { ...p, x: me0.x + Math.cos(angle) * d, y: me0.y + Math.sin(angle) * d };
+  })];
   // 가로·세로를 같은 눈금(unit)으로 그려 거리가 틀어지지 않게 하고, 높이는 점이 퍼진 범위에 맞춘다.
-  const W = 640, PAD = 64, PAD_Y = 52;
-  const xs = map.points.map(p => p.x), ys = map.points.map(p => p.y);
+  const PAD = Math.min(64, W * 0.12), PAD_Y = 52;
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
   const xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys);
   const unit = Math.min((W - 2 * PAD) / Math.max(xMax - xMin, 0.2), (420 - 2 * PAD_Y) / Math.max(yMax - yMin, 0.01));  // 세로로 퍼져도 높이 420 이내
   const H = Math.max(Math.round((yMax - yMin) * unit + 2 * PAD_Y), 180);
   const xOffset = (W - (xMax - xMin) * unit) / 2, yOffset = (H - (yMax - yMin) * unit) / 2;
   const px = (x: number) => xOffset + (x - xMin) * unit, py = (y: number) => yOffset + (yMax - y) * unit;
-  const me = map.points.find(p => p.isUser)!;
+  const me = points[0];
   const top = result.matches[0]?.id, focus = result.evidenceGroup?.id;
   const rank = (id: string) => result.rankings.find(r => r.ageGroup === id)?.rank;
   // 이름표 자리: 오른쪽·왼쪽·위·아래 중 다른 이름표·점과 겹치지 않고 그림 안에 들어가는 첫 자리를 고른다.
   type Box = { x1: number; y1: number; x2: number; y2: number };
   const hit = (a: Box, b: Box) => a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2;
-  const taken: Box[] = map.points.map(p => ({ x1: px(p.x) - 14, y1: py(p.y) - 14, x2: px(p.x) + 14, y2: py(p.y) + 14 }));
+  const taken: Box[] = points.map(p => ({ x1: px(p.x) - 14, y1: py(p.y) - 14, x2: px(p.x) + 14, y2: py(p.y) + 14 }));
   taken.push({ x1: px(me.x) - 12, y1: py(me.y) + 14, x2: px(me.x) + 12, y2: py(me.y) + 32 });  // '나' 글자
   const labels = new Map<string, { x: number; y: number; anchor: 'start' | 'end' | 'middle' }>();
-  map.points.filter(p => !p.isUser).sort((a, b) => (rank(a.id) ?? 9) - (rank(b.id) ?? 9)).forEach(p => {
+  points.filter(p => !p.isUser).sort((a, b) => (rank(a.id) ?? 9) - (rank(b.id) ?? 9)).forEach(p => {
     const text = `${rank(p.id)}위 ${p.label}`, w = text.length * 16, cx = px(p.x), cy = py(p.y);  // 한글 13px 기준 넉넉한 너비
     const options = [
       { x: cx + 15, y: cy + 5, anchor: 'start' as const, box: { x1: cx + 15, y1: cy - 9, x2: cx + 15 + w, y2: cy + 9 } },
@@ -272,10 +294,11 @@ function PatternMapCard({ result }: { result: SurveyResult }) {
   });
   return <section className="rs-card rs-map-card" aria-labelledby="map-title">
     <div className="rs-card-head"><h2 id="map-title">응답 패턴 지도</h2><span className="rs-chip">대략적인 위치</span></div>
+    <div ref={wrap}>
     <svg className="rs-map" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`나와 6개 연령대의 응답 패턴 지도. 가장 가까운 연령대는 ${result.matches.map(m => m.label).join(', ')}`}>
-      {map.points.filter(p => !p.isUser && (p.id === top || p.id === focus)).map(p =>
+      {points.filter(p => !p.isUser && (p.id === top || p.id === focus)).map(p =>
         <line key={`l-${p.id}`} x1={px(me.x)} y1={py(me.y)} x2={px(p.x)} y2={py(p.y)} className={p.id === top ? 'top' : 'focus'} />)}
-      {map.points.filter(p => !p.isUser).map(p => {
+      {points.filter(p => !p.isUser).map(p => {
         const cls = p.id === top ? 'top' : p.id === focus ? 'focus' : '';
         return <g key={p.id} className={`rs-map-age ${cls}`} transform={`translate(${px(p.x)} ${py(p.y)})`}>
           <circle r={p.id === top ? 11 : 8} />
@@ -287,7 +310,8 @@ function PatternMapCard({ result }: { result: SurveyResult }) {
         <text y={28} textAnchor="middle">나</text>
       </g>
     </svg>
-    <p className="rs-map-legend"><span className="me">★</span> 나 <span className="top">●</span> 가장 가까운 연령대{focus && focus !== top && <> <span className="focus">●</span> 고른 연령대</>} <span className="other">●</span> 다른 연령대</p>
+    </div>
+    <p className="rs-map-legend"><span className="me">★</span> 나 <span className="top">●</span> 가장 가까운 연령대{focus && focus !== top && <> <span className="focus">●</span> 내 연령대</>} <span className="other">●</span> 다른 연령대</p>
   </section>;
 }
 

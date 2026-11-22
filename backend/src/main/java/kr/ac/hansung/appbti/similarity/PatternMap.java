@@ -10,7 +10,8 @@ import java.util.List;
 public final class PatternMap {
     private PatternMap() {}
 
-    public record Point(String id, String label, double x, double y, boolean isUser) {}
+    // distance: 나와 이 연령대 사이 거리에서 모든 연령대에 똑같이 더해지는 부분(연령대 공간 밖 성분)을 뺀 값. 순서가 순위와 같다. 나는 null
+    public record Point(String id, String label, double x, double y, boolean isUser, Double distance) {}
     public record Layout(List<Point> points, double explained) {}
 
     // rows[0]은 나, rows[1..]은 연령대 순서. 지도 축은 연령대끼리 다른 방향(연령대 6점의 주성분)으로 잡고 나를 그 위에 투영한다.
@@ -27,9 +28,11 @@ public final class PatternMap {
         double total = 0;
         for (int a = 0; a < g; a++) for (int b = 0; b < g; b++) gram[a][b] = dot(centered[a + 1], centered[b + 1]);
         for (int a = 0; a < g; a++) total += gram[a][a];
-        double[][] axes = new double[2][k];
-        double captured = 0;
-        for (int c = 0; c < 2; c++) {
+        // 연령대 공간의 모든 주성분(최대 g−1개)을 구한다. 앞 2개는 지도 축, 전체는 공통 성분을 뺀 거리에 쓴다.
+        int components = Math.min(g - 1, k);
+        double[][] axes = new double[components][k];
+        double captured = 0, captured2 = 0;
+        for (int c = 0; c < components; c++) {
             double[] v = new double[g];
             for (int i = 0; i < g; i++) v[i] = 1.0 + i;  // 고정 시작값: 같은 입력이면 같은 좌표
             double lambda = 0;
@@ -42,12 +45,15 @@ public final class PatternMap {
                 lambda = norm;
                 v = next;
             }
+            if (c < 2) captured2 += lambda;
             captured += lambda;
             if (lambda > 1e-12) for (int i = 0; i < g; i++) for (int j = 0; j < k; j++) axes[c][j] += v[i] * centered[i + 1][j] / Math.sqrt(lambda);
             for (int a = 0; a < g; a++) for (int b = 0; b < g; b++) gram[a][b] -= lambda * v[a] * v[b];  // 다음 성분을 위해 제거
         }
+        double[][] full = new double[n][components];
+        for (int i = 0; i < n; i++) for (int c = 0; c < components; c++) full[i][c] = dot(centered[i], axes[c]);
         double[][] coords = new double[n][2];
-        for (int i = 0; i < n; i++) for (int c = 0; c < 2; c++) coords[i][c] = dot(centered[i], axes[c]);
+        for (int i = 0; i < n; i++) for (int c = 0; c < Math.min(2, components); c++) coords[i][c] = full[i][c];
         if (coords[n - 1][0] < 0) for (double[] p : coords) p[0] = -p[0];
         if (coords[1][1] < 0) for (double[] p : coords) p[1] = -p[1];
         double scale = 0;
@@ -55,9 +61,15 @@ public final class PatternMap {
         List<Point> points = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             double x = scale == 0 ? 0 : coords[i][0] / scale, y = scale == 0 ? 0 : coords[i][1] / scale;
-            points.add(new Point(ids.get(i), labels.get(i), Math.round(x * 1000) / 1000.0, Math.round(y * 1000) / 1000.0, i == 0));
+            Double distance = null;
+            if (i > 0) {
+                double sum = 0;
+                for (int c = 0; c < components; c++) sum += Math.pow(full[i][c] - full[0][c], 2);
+                distance = Math.round(Math.sqrt(sum) * 1000) / 1000.0;
+            }
+            points.add(new Point(ids.get(i), labels.get(i), Math.round(x * 1000) / 1000.0, Math.round(y * 1000) / 1000.0, i == 0, distance));
         }
-        return new Layout(points, total == 0 ? 1 : Math.round(captured / total * 100) / 100.0);
+        return new Layout(points, total == 0 ? 1 : Math.round(captured2 / total * 100) / 100.0);
     }
 
     private static double dot(double[] a, double[] b) {

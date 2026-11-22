@@ -277,6 +277,10 @@ public class ClrMatcherTests {
                 .mapToDouble(p -> Math.hypot(p.x() - me.x(), p.y() - me.y())).findFirst().orElseThrow();
         assertTrue(dist.apply(result.rankings().getFirst().ageGroup()) < dist.apply(result.rankings().getLast().ageGroup()));
         assertEquals(map, run(data(null), request(null, NORMAL)).patternMap());
+        // 공통 성분을 뺀 거리는 순위와 같은 순서다(d² − r², r²는 모든 연령대에 같음).
+        var byDistance = map.points().stream().filter(p -> !p.isUser()).sorted(java.util.Comparator.comparingDouble(PatternMap.Point::distance))
+                .map(PatternMap.Point::id).toList();
+        assertEquals(result.rankings().stream().map(ClrMatcher.Ranking::ageGroup).toList(), byDistance);
         assertNull(run(data(null), request(null, 5, 3, 2, 6)).patternMap());
     }
 

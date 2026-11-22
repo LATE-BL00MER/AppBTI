@@ -95,7 +95,7 @@ v1 계산 코드(`SimilarityCalculator`)는 남아 있어 `method`를 v1 방식�
 
 ### 1-5. 화면 문구
 - 금지: "당신은 ○○대입니다", "디지털 나이", "정확도", "일치 확률", "일치율", "이용률", "인기", "○○대가 가장 많이 쓰는", "○배 많이 써요"(절대량 비교)
-- 사용: "응답 패턴이 ○○ 집단의 통계와 가장 비슷합니다", "패턴 유사도", "이 분류 이용자 중 ○○대 비중", "응답하셨어요"
+- 사용: "전체 응답 패턴은 ○○ 집단의 통계와 가장 가까워요", "패턴 유사도", "이 분류 이용자 중 ○○대 비중", "응답하셨어요"
 - 출처 옆에 "LG U+ 제공 연령대·기간(2025년 1~6월) 집계"를 표시한다(`/meta.source`).
 
 ---
@@ -410,7 +410,7 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 | `evidenceGroup` | {id, label} | 예 | 근거를 계산한 집단. 요청에 `ageGroup`이 있으면 그 연령대 |
 | `overallRatio` | number | 예 | 근거 연령대 대비 응답 전체 크기(기하평균 배수). 측정 방식 차이가 섞여 있어 **화면에 표시하지 않는다** |
 | `closestMode` | string | 예 | `similar`(수치까지 가까운 항목) / `values`(상대 비중만 가까운 항목) |
-| `patternMap` | object | 예 | 응답 패턴 지도: `{points: [{id, label, x, y, isUser}], explained}`. 6개 연령대 CLR 패턴의 주성분 2개 축에 나를 투영한 좌표(-1~1). `explained`는 연령대 차이 중 지도에 담긴 비율. 거리만 의미 있고 정확한 순서는 `rankings`를 따른다 |
+| `patternMap` | object | 예 | 응답 패턴 지도: `{points: [{id, label, x, y, isUser, distance}], explained}`. 6개 연령대 CLR 패턴의 주성분 2개 축에 나를 투영한 좌표(-1~1). `distance`는 나와 그 연령대 거리에서 모든 연령대에 똑같이 더해지는 부분을 뺀 값(순서가 순위와 같음). `explained`는 연령대 차이 중 지도 2축에 담긴 비율. 화면은 방향은 좌표를, 나와의 거리는 `distance`를 써서 그린다(지도 순서 = 순위) |
 | `closest[]`, `farthest[]` | object[] | 아니요 | 닮은 항목·다른 항목 각각 최대 3개, 서로 겹치지 않음 |
 | `…[].questionId`, `minorCode`, `name`, `metric` | string | 아니요 | 문항 |
 | `…[].userValue` | number | 아니요 | 내 값. `days`는 일(1~7), `time`은 선택지 대표 분 |
@@ -432,7 +432,7 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 
 규칙
 1. `insufficient`이면 `rankings`, `matches`, `closest`, `farthest`는 `[]`, `nearTie`·`patternClarity`·`evidenceGroup`은 `null`이다. 거리를 0으로 채우지 않는다.
-2. 화면 문구: `matches` → "응답 패턴이 ○○ 집단의 통계와 가장 비슷합니다", `nearTie.isNear` → "○○대와도 비슷합니다", `patternClarity=weak` → "응답 패턴이 뚜렷하지 않아요".
+2. 화면 문구: `matches` → "전체 응답 패턴은 ○○ 집단의 통계와 가장 가까워요", `nearTie.isNear` → "○○대와도 비슷합니다", `patternClarity=weak` → "응답 패턴이 뚜렷하지 않아요".
 3. `direction`은 CLR 기준이라 "자기 평소 대비 그 앱에 더 치우쳐 있다"는 뜻이다. "○분 더 쓴다"처럼 절대량으로 말하지 않는다.
 4. 결과는 **과거 제공 기간의 이용자 집단 통계와 응답 패턴을 비교한 것**이다. 실제 나이 추정이나 개인 기록 분석처럼 쓰지 않는다.
 5. v1에서 삭제된 필드: `month`(요청·응답), `rankings[].score`, `closest[].userCount`, `normalizedDifference`, `comparedCategories`, `minimumCategories`

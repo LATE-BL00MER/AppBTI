@@ -84,7 +84,7 @@ export interface SurveyResult {
   closestMode: 'similar' | 'values' | null;
   closest: Evidence[]; farthest: Evidence[];
   /** 응답 패턴 지도: 나와 6개 연령대를 2차원으로 줄인 좌표(-1~1). 비교 불가면 null */
-  patternMap: { points: { id: string; label: string; x: number; y: number; isUser: boolean }[]; explained: number } | null;
+  patternMap: { points: { id: string; label: string; x: number; y: number; isUser: boolean; distance: number | null }[]; explained: number } | null;
   excluded: { questionId: string; minorCode: string; name: string; reason: 'not_used' | 'unknown' | 'group_missing' | string }[];
   peerComparison: PeerComparison | null;
   resultType: { name: string | null; description: string | null; status: string };
