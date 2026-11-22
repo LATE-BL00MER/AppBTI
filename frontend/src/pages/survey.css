@@ -1,0 +1,107 @@
+/* 설문 v2 — Figma「AppBTI 최종 통합 · 설문 검사」(node 48-460) 기준.
+   진행바 → 파트 카드 → 안내 → 문항 카드(일수: 7점 원형 척도 / 시간: 5지선다 목록) → 이전·다음 → 파트 트래커. */
+.sv-page { width: min(896px, calc(100% - 48px)); margin-inline: auto; padding-block: 16px 72px; display: flex; flex-direction: column; gap: 28px; }
+
+.sv-progress { position: sticky; top: 0; z-index: 5; padding: 14px 4px 12px; background: rgb(246 249 255 / 94%); backdrop-filter: blur(6px); }
+.sv-progress-text { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.sv-progress-text > span { display: inline-flex; align-items: center; gap: 8px; }
+.sv-part-dot { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; }
+.sv-progress-text strong { color: var(--brand); font-size: 16px; }
+.sv-progress-text small { color: var(--muted); font-weight: 500; font-size: 12px; }
+.sv-page progress { height: 8px; margin-top: 10px; border-radius: var(--pill-radius); background: var(--line); overflow: hidden; }
+.sv-page progress::-webkit-progress-bar { background: var(--line); border-radius: var(--pill-radius); }
+.sv-page progress::-webkit-progress-value { background: linear-gradient(90deg, var(--brand-light), var(--brand)); border-radius: var(--pill-radius); }
+.sv-page progress::-moz-progress-bar { background: var(--brand); border-radius: var(--pill-radius); }
+
+.sv-part-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 20px; padding: 28px 32px; border-radius: var(--card-radius); background: radial-gradient(ellipse at right bottom, rgb(0 108 72 / 6%), transparent 60%), var(--paper); box-shadow: var(--card-shadow); }
+.sv-part-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: #EFE8F4; color: #6B4A86; }
+.sv-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #755087; margin-bottom: 6px; }
+.sv-part-card h1 { font-size: 24px; scroll-margin-top: 96px; }
+.sv-part-card h1:focus { outline: none; }
+.sv-part-card p:not(.sv-eyebrow) { margin-top: 6px; font-size: 14px; color: var(--muted); }
+.sv-chip { align-self: center; padding: 6px 14px; border-radius: var(--pill-radius); background: var(--surface); font-size: 12px; font-weight: 600; color: var(--brand); white-space: nowrap; }
+
+.sv-tip { display: flex; gap: 12px; padding: 16px 22px; border-radius: 20px; background: var(--surface); font-size: 13px; color: #3c4652; line-height: 1.7; }
+.sv-tip > span:first-child { color: var(--brand); }
+
+.sv-questions { display: flex; flex-direction: column; gap: 24px; }
+.sv-question { margin: 0; min-width: 0; padding: 32px; border: 1px solid transparent; border-radius: var(--card-radius); background: var(--paper); box-shadow: var(--card-shadow); transition: border-color .15s; }
+.sv-question.responded { border-color: rgb(51 164 116 / 25%); }
+.sv-question legend { float: left; width: 100%; padding: 0; margin-bottom: 20px; }
+.sv-question legend + * { clear: both; }
+.sv-question.centered legend { text-align: center; }
+.sv-qnum { display: inline-block; padding: 3px 12px; border-radius: var(--pill-radius); background: #F2F4F9; font-size: 11px; font-weight: 700; letter-spacing: .03em; color: var(--muted); }
+.sv-qtext { display: block; margin-top: 12px; font-size: 20px; font-weight: 650; line-height: 1.5; letter-spacing: -.03em; color: var(--ink); word-break: keep-all; }
+.sv-guide { clear: both; margin: -8px 0 16px; font-size: 13px; color: var(--muted); }
+.sv-question.centered .sv-guide { text-align: center; }
+.sv-question input[type=radio] { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+
+/* 원형 척도(일수 7점·시간 5점 공통) — Figma처럼 양 끝이 크고 가운데가 작다. 왼쪽 보라 → 가운데 회색 → 오른쪽 초록.
+   칸을 같은 폭(--n)으로 나눠 원 아래 글자가 길어도 원 간격이 고르다. */
+.sv-scale { --n: 7; max-width: 600px; margin-inline: auto; }
+.sv-scale-ends { display: grid; grid-template-columns: 1fr 1fr 1fr; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+.sv-scale-ends .low { color: #7B5A97; text-align: left; }
+.sv-scale-ends .mid { color: #8A94A0; text-align: center; }
+.sv-scale-ends .high { color: var(--brand-light); text-align: right; }
+.sv-scale-dots { position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); align-items: start; }
+.sv-scale-dots::before { content: ''; position: absolute; left: calc(100% / var(--n) / 2); right: calc(100% / var(--n) / 2); top: 22px; height: 2px; background: var(--line); }
+.sv-scale-dots label { --dot: 32px; --tone: #C9CFD8; --tone-soft: #fff; --tone-strong: #8A94A0;
+  position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.sv-scale-dots label.low { --tone: #B9A3CC; --tone-soft: #F6F1FA; --tone-strong: #6B4A86; }
+.sv-scale-dots label.high { --tone: #8CCBAA; --tone-soft: #EEF8F2; --tone-strong: var(--brand); }
+.sv-dot { display: grid; place-items: center; width: var(--dot); height: var(--dot); margin-block: calc((44px - var(--dot)) / 2); border-radius: 50%;
+  border: 2px solid var(--tone); background: var(--tone-soft); color: #fff; transition: transform .12s, background .12s, box-shadow .12s; }
+.sv-scale-dots label:hover .sv-dot { transform: scale(1.08); border-color: var(--tone-strong); }
+.sv-scale-dots label.selected .sv-dot { border-color: var(--tone-strong); background: var(--tone-strong); box-shadow: 0 0 0 6px color-mix(in srgb, var(--tone-strong) 14%, transparent); }
+.sv-scale-dots label:has(input:focus-visible) .sv-dot { outline: 2px solid var(--brand); outline-offset: 3px; }
+.sv-dot-label { margin-top: 8px; padding-inline: 2px; font-size: 11px; line-height: 1.35; text-align: center; color: #9aa3ae; word-break: keep-all; font-variant-numeric: tabular-nums; }
+.sv-scale-dots label.selected .sv-dot-label { color: var(--tone-strong); font-weight: 700; }
+.sv-scale-caption { margin-top: 12px; text-align: center; font-size: 13px; color: var(--muted); }
+
+/* 사용 안 함 · 잘 모르겠음 */
+.sv-extra { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; padding-top: 18px; border-top: 1px dashed var(--line); }
+.sv-pill { position: relative; cursor: pointer; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 18px; border: 1px solid var(--line); border-radius: var(--pill-radius); background: #fff; font-size: 13px; font-weight: 600; color: #4a5561; }
+.sv-pill:hover { border-color: #b9c3cf; }
+.sv-pill.selected { border-color: #6B4A86; background: #F4EFF8; color: #5b3a76; }
+.sv-pill:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 3px; }
+.sv-clear { min-height: 40px; padding: 8px 10px; font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
+
+/* 연령대 선택(선택 사항) */
+.sv-age-card { display: grid; gap: 18px; padding: 28px 32px; border-radius: var(--card-radius); background: var(--paper); box-shadow: var(--card-shadow); border: 1px dashed #cfd8e3; }
+.sv-age-card h2 { font-size: 20px; }
+.sv-age-card p:not(.sv-eyebrow) { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.sv-age-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.sv-age-options button { min-height: 40px; padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--pill-radius); background: #fff; font-size: 13px; font-weight: 600; color: #4a5561; }
+.sv-age-options button[aria-checked=true] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+
+.sv-notice { padding: 14px 20px; border-radius: 16px; background: #FFF7E8; color: #7a5410; font-size: 13px; }
+
+.sv-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sv-nav-hint { font-size: 12px; color: var(--muted); text-align: center; }
+
+.sv-tracker { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 10px; }
+.sv-tracker li { min-width: 0; }
+.sv-tracker button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--surface); text-align: left; color: var(--muted); }
+.sv-tracker button > span:first-child { color: #9aa5b1; }
+.sv-tracker button > span:last-child { min-width: 0; }
+.sv-tracker strong { display: block; font-size: 12px; font-weight: 650; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sv-tracker small { font-size: 11px; }
+.sv-tracker button.done > span:first-child, .sv-tracker button.done small { color: var(--brand); }
+.sv-tracker button.current { background: var(--brand-soft); box-shadow: inset 0 0 0 1px rgb(0 108 72 / 25%); }
+.sv-tracker button.current > span:first-child, .sv-tracker button.current small { color: var(--brand); }
+
+@media (max-width: 600px) {
+  .sv-page { width: calc(100% - 32px); gap: 20px; }
+  .sv-part-card { grid-template-columns: auto minmax(0, 1fr); padding: 22px 20px; border-radius: 24px; gap: 14px; }
+  .sv-part-icon { width: 44px; height: 44px; border-radius: 14px; }
+  .sv-part-card h1 { font-size: 20px; }
+  .sv-chip { grid-column: 2; justify-self: start; }
+  .sv-question, .sv-age-card { padding: 24px 18px; border-radius: 24px; }
+  .sv-qtext { font-size: 17px; }
+  .sv-dot { width: calc(var(--dot) * .86); height: calc(var(--dot) * .86); margin-block: calc((38px - var(--dot) * .86) / 2); }
+  .sv-scale-dots::before { top: 19px; }
+  .sv-dot-label { font-size: 10px; }
+  .sv-nav { flex-wrap: wrap; }
+  .sv-nav-hint { order: -1; width: 100%; }
+  .sv-nav .button { flex: 1; }
+}

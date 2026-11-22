@@ -16,3 +16,10 @@ export function EmptyResult() {
 }
 export const formatNumber = (value: number | null, suffix = '') => value === null ? '데이터 없음' : `${new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 1 }).format(value)}${suffix}`;
 export const monthLabel = (month: string) => `${month.slice(0, 4)}년 ${Number(month.slice(5))}월`;
+
+/** 받침 여부에 따라 조사를 고른다. 예: withJosa('60대 이상', '와', '과') → '60대 이상과' */
+export function withJosa(word: string, withoutFinal: string, withFinal: string) {
+  const code = word.trim().charCodeAt(word.trim().length - 1) - 0xAC00;
+  const hasFinal = code >= 0 && code <= 11171 && code % 28 !== 0;
+  return `${word}${hasFinal ? withFinal : withoutFinal}`;
+}
