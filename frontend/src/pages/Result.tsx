@@ -140,9 +140,9 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
     <details className="rs-card rs-items-toggle" open>
       <summary>비슷한 항목과 다른 항목 보기</summary>
       <div className="rs-grid">
-        <EvidenceCard title={result.closestMode === 'values' ? '서비스 사이 비중이 비슷한 항목' : '응답과 통계가 가까운 항목'} tone="similar"
+        <EvidenceCard title="이런 습관이 닮았어요" tone="similar"
           mode={result.closestMode} items={result.closest} group={evidenceLabel} />
-        <EvidenceCard title="상대 이용 패턴이 먼 항목" tone="different" mode={result.closestMode} items={result.farthest} group={evidenceLabel} />
+        <EvidenceCard title="이런 습관은 달라요" tone="different" mode={result.closestMode} items={result.farthest} group={evidenceLabel} />
       </div>
     </details>
 
