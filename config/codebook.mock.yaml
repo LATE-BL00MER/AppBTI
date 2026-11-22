@@ -31,7 +31,7 @@ minor_categories:
   - {code: news, name: 뉴스 읽기, major: 뉴스/정보, description: "사회, 경제, 생활 소식 살펴보기"}
   - {code: knowledge, name: 생활 정보, major: 뉴스/정보, description: "날씨, 요리, 생활에 필요한 정보 찾기"}
 metrics:
-  # 가상 데이터의 분모만 이용자로 정의한다. 실제 데이터는 확인 전까지 기본 설정 off.
+  # 가상 데이터도 실제와 같이 평균 이용일수 분모를 이용자로 둔다.
   avg_days_denominator: users
   weighted_reference_days_enabled: true
   daily_time:

@@ -46,18 +46,12 @@ def test_v2_similarity_settings_match_java_clr_contract():
     assert similarity['types']==[]
 
 
-def test_real_count_units_do_not_silently_enable_day_time_or_weekly_paths():
+def test_real_codebook_has_only_v2_blocks_and_weighted_reference_on():
     b=load_codebook(ROOT/'config/codebook.yaml')
-    contract=b['survey_contract'];analysis=b['real_analysis']
-    assert contract['response_unit']=='count' and contract['response_maximum'] is None
-    assert contract['reference_month']==analysis['exploration']['display_month']
-    assert b['period']['start']<=contract['reference_month']<=b['period']['end']
-    assert contract['response_period']=='previous_calendar_month'
-    assert contract['clip'] is False and contract['refit_with_user_answer'] is False
-    assert contract['daily_metric_enabled'] is False and contract['weekly_comparison_enabled'] is False
-    assert contract['zero_count_policy']=='exclude_pending_denominator'
+    for old in ('real_analysis','survey_selection','survey_contract','method_sources'):
+        assert old not in b  # 이전 초안(접속 횟수·코사인) 계약은 쓰지 않는다
     assert b['metrics']['weighted_reference_days_enabled'] is True and b['metrics']['avg_days_denominator']=='users'
-    assert analysis['runtime_ready'] is False and analysis['apply_only_when_is_mock_false'] is True
+    assert b['monthly_signals']['enabled'] is False
 
 
 def test_real_daily_time_is_fixed_to_lgu_minutes_definition():
@@ -66,17 +60,6 @@ def test_real_daily_time_is_fixed_to_lgu_minutes_definition():
     assert time['source_unit']=='minutes' and time['target_unit']=='minutes'
     assert time['definition']=='per_user_daily_average_minutes' and time['denominator']=='users'
     assert not time.get('survey_definition_matches')  # 하루 기준 확인 전에는 설문 정의 일치를 주장하지 않는다
-
-
-def test_fisher_uses_raw_months_and_fcq_does_not_automatically_finalize():
-    b=load_codebook(ROOT/'config/codebook.yaml')
-    review=b['real_analysis']['candidate_review']
-    assert review['input_scale']=='raw'
-    assert review['start_month']==b['period']['start'] and review['end_month']==b['period']['end']
-    assert review['metric']==b['survey_contract']['reference_metric']
-    assert review['fisher']['within_scatter']=='temporal_variation_within_age_group'
-    assert review['leave_one_month_out']['enabled'] is True
-    assert review['fcq']['automatic_finalization'] is False
 
 
 def test_mock_categories_still_use_their_own_major_and_metric_contract():

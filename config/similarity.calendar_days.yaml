@@ -13,5 +13,5 @@ near_tie_ratio: 0.05
 # TODO(확인 필요): 근거 항목의 similar 판정 기준값과 패턴 불명확 기준
 similar_difference: 0.1
 flat_pattern_ratio: null
-tie_policy: joint
+# TODO(확인 필요): 결과 유형 이름(resultType). 정해지기 전에는 비워 둔다.
 types: []
