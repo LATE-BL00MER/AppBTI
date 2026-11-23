@@ -408,7 +408,6 @@ TODO(확인 필요): q02를 전문쇼핑몰 일수로 바꾸는 안(모의 설�
 | `nearTie` | {isNear, second, gapRatio} | 예 | `insufficient`이면 `null` |
 | `patternClarity` | string | 예 | `clear` / `weak`. `insufficient`이면 `null` |
 | `evidenceGroup` | {id, label} | 예 | 근거를 계산한 집단. 요청에 `ageGroup`이 있으면 그 연령대 |
-| `overallRatio` | number | 예 | 근거 연령대 대비 응답 전체 크기(기하평균 배수). 측정 방식 차이가 섞여 있어 **화면에 표시하지 않는다** |
 | `closestMode` | string | 예 | `similar`(수치까지 가까운 항목) / `values`(상대 비중만 가까운 항목) |
 | `patternMap` | object | 예 | 응답 패턴 지도: `{points: [{id, label, x, y, isUser, distance}], explained}`. 6개 연령대 CLR 패턴의 주성분 2개 축에 나를 투영한 좌표(-1~1). `distance`는 나와 그 연령대 거리에서 모든 연령대에 똑같이 더해지는 부분을 뺀 값(순서가 순위와 같음). `explained`는 연령대 차이 중 지도 2축에 담긴 비율. 화면은 방향은 좌표를, 나와의 거리는 `distance`를 써서 그린다(지도 순서 = 순위) |
 | `closest[]`, `farthest[]` | object[] | 아니요 | 닮은 항목·다른 항목 각각 최대 3개, 서로 겹치지 않음 |

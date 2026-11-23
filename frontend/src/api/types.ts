@@ -78,8 +78,6 @@ export interface SurveyResult {
   nearTie: { isNear: boolean; second: AgeGroup | null; gapRatio: number | null } | null;
   patternClarity: 'clear' | 'weak' | null;
   evidenceGroup: AgeGroup | null;
-  /** 근거 집단 대비 응답 전체의 크기(기하평균 배수). 비교 불가면 null */
-  overallRatio: number | null;
   /** similar: closest가 상대 비중·화면 수치 모두 가까운 항목 / values: 그런 항목이 없어 상대 비중만 가까운 항목(제목을 '항목별 이용 수치'로) */
   closestMode: 'similar' | 'values' | null;
   closest: Evidence[]; farthest: Evidence[];
