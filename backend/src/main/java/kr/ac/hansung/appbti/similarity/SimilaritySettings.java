@@ -33,9 +33,9 @@ public record SimilaritySettings(boolean enabled, String method, String normaliz
                     || days_scale == null || !(days_scale >= 1) || near_tie_ratio == null || !(near_tie_ratio >= 0)
                     || similar_difference == null || !(similar_difference >= 0)
                     || (flat_pattern_ratio != null && !(flat_pattern_ratio >= 0))
-                    || (close_value_ratio != null && !(close_value_ratio > 1))
+                    || close_value_ratio == null || !(close_value_ratio > 1)
                     || (time_choice_edges != null && !validEdges(time_choice_edges, time_choice_minutes.size()))) {
-                throw new IllegalArgumentException("clr_nearest 설정의 최소 문항·CLR 범위·시간 대표 분·일수 척도·근소 기준을 확인하세요.");
+                throw new IllegalArgumentException("clr_nearest 설정의 최소 문항·CLR 범위·시간 대표 분·일수 척도·근소 기준·가까운 항목 배수를 확인하세요.");
             }
         } else if (enabled) {
             if (!"weighted_absolute_distance".equals(method) || !"min_max".equals(normalization)

@@ -196,9 +196,8 @@ public class ClrMatcherTests {
         assertEquals(14, peer.comparedItems());
     }
 
-    @Test void evidenceRelativeRatioMatchesDirectionAndOverallRatioIsReported() {
+    @Test void evidenceRelativeRatioMatchesDirection() {
         var base = run(data(null), request(null, NORMAL));
-        assertTrue(base.overallRatio() != null && base.overallRatio() > 0);
         for (var e : java.util.stream.Stream.concat(base.closest().stream(), base.farthest().stream()).toList()) {
             // relativeRatio = exp(q' − g'), difference = |q' − g'|
             assertEquals(e.difference(), Math.abs(Math.log(e.relativeRatio())), 0.03);  // 둘 다 소수 2자리 반올림
@@ -208,7 +207,6 @@ public class ClrMatcherTests {
             if ("more".equals(e.direction())) assertTrue(e.relativeRatio() > 1 && e.userRelative() > e.groupRelative());
             if ("less".equals(e.direction())) assertTrue(e.relativeRatio() < 1);
         }
-        assertNull(run(data(null), request(null, 5, 3, 2, 6)).overallRatio());
     }
 
     @Test void closestNeedsBothRelativeAndDisplayedValuesCloseOtherwiseValuesMode() {
@@ -253,6 +251,16 @@ public class ClrMatcherTests {
         assertTrue(noEdges.farthest().stream().allMatch(e -> e.groupLabel() == null));
         assertThrows(IllegalArgumentException.class, () -> new SimilaritySettings(true, "clr_nearest", null, null, null, "joint", null, List.of(), 6,
                 "answered_items", "joint", MINUTES, 7.0, 0.05, 0.1, null, 1.25, List.of(10.0, 3.0, 30.0, 60.0)));
+    }
+
+    @Test void closeValueRatioIsRequiredAndMustExceedOne() {
+        for (Double ratio : java.util.Arrays.asList(null, 1.0, 0.8)) {
+            assertThrows(IllegalArgumentException.class, () -> new SimilaritySettings(true, "clr_nearest", null, null, null, "joint", null,
+                    List.of(), 6, "answered_items", "joint", MINUTES, 7.0, 0.05, 0.1, null, ratio, null), String.valueOf(ratio));
+        }
+        // 비활성 설정은 값이 없어도 된다.
+        assertDoesNotThrow(() -> new SimilaritySettings(false, "clr_nearest", null, null, null, null, null, null, 6, null, null,
+                null, 7.0, null, null, null, null, null));
     }
 
     @Test void statedAgeGroupBecomesEvidenceGroup() {

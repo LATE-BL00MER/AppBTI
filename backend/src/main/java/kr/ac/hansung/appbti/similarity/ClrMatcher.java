@@ -29,7 +29,7 @@ public final class ClrMatcher {
     public record Result(String status, String reasonCode, String reason, String method, List<String> referenceMonths,
                          int answeredCount, int comparedItems, int minimumItems, List<Ranking> rankings,
                          List<ProfileData.AgeGroup> matches, NearTie nearTie, String patternClarity,
-                         ProfileData.AgeGroup evidenceGroup, Double overallRatio, String closestMode, List<Evidence> closest, List<Evidence> farthest,
+                         ProfileData.AgeGroup evidenceGroup, String closestMode, List<Evidence> closest, List<Evidence> farthest,
                          PatternMap.Layout patternMap,
                          List<Excluded> excluded, Peer peerComparison, ResultType resultType, NextAction nextAction,
                          boolean isMock, String source) {}
@@ -125,9 +125,6 @@ public final class ClrMatcher {
         // 근거(가까운·먼 항목)는 사용자가 연령대를 고르면 그 연령대와, 고르지 않으면 1위 연령대와 비교한다. 순위·1위는 그대로다.
         int best = stated != null ? ages.indexOf(stated) : order[0];
         var evidenceGroup = ages.get(best);
-        // 근거 집단 대비 응답 전체의 크기(기하평균 배수). CLR에서 빼낸 공통 배수를 화면에 알리는 용도다.
-        double groupLogMean = used.stream().mapToDouble(u -> u.reference().values().get(evidenceGroup.id()).logMean()).average().orElse(0);
-        double overallRatio = round(Math.exp(Arrays.stream(userLog).average().orElse(0) - groupLogMean), 2);
         // 점 두 개 표시용 기준: 일수·시간은 단위가 달라 CLR 값이 크게 벌어지므로, 같은 지표 안에서 근거 연령대 평균을 가운데로 둔다.
         // 두 점에서 같은 값을 빼므로 두 점 사이 거리(판정 기준)는 그대로다.
         Map<String, Double> offset = new HashMap<>();
@@ -155,7 +152,7 @@ public final class ClrMatcher {
         }
         // 가까운 항목은 상대 비중(CLR 차이)이 작은 절반 안에 있고, 화면의 일수·시간도 close_value_ratio배 안인 항목만 고른다.
         // 그런 항목이 없으면 CLR 차이가 작은 순서로 고르되 closestMode=values로 알려 화면이 '항목별 이용 수치'로 보여 주게 한다.
-        double closeRatio = settings.close_value_ratio() == null ? 1.25 : settings.close_value_ratio();
+        double closeRatio = settings.close_value_ratio();
         Comparator<Evidence> byDifference = Comparator.comparingDouble(Evidence::difference).thenComparing(Evidence::questionId);
         var closerHalf = evidence.stream().sorted(byDifference).limit((evidence.size() + 1) / 2).toList();
         var bothClose = closerHalf.stream().filter(e -> valueClose(e, closeRatio)).limit(3).toList();
@@ -168,7 +165,7 @@ public final class ClrMatcher {
         Peer peerComparison = stated == null || peer == null ? null
                 : peer(peer, stated, used, user, group[ages.indexOf(stated)], matches);
         return new Result("comparable", null, null, SimilaritySettings.CLR_NEAREST, months, answered, used.size(), minimum,
-                rankings, matches, nearTie, clarity, evidenceGroup, overallRatio, closestMode, rounded(closest), rounded(farthest), map(user, group, ages), excluded,
+                rankings, matches, nearTie, clarity, evidenceGroup, closestMode, rounded(closest), rounded(farthest), map(user, group, ages), excluded,
                 peerComparison, PENDING, null, meta.isMock(), meta.source());
     }
 
@@ -239,7 +236,7 @@ public final class ClrMatcher {
     private static Result insufficient(ProfileData data, List<String> months, int answered, int compared, int minimum,
                                        List<Excluded> excluded, String code, String reason) {
         return new Result("insufficient", code, reason, SimilaritySettings.CLR_NEAREST, months, answered, compared, minimum,
-                List.of(), List.of(), null, null, null, null, null, List.of(), List.of(), null, excluded, null, PENDING, EXPLORE,
+                List.of(), List.of(), null, null, null, null, List.of(), List.of(), null, excluded, null, PENDING, EXPLORE,
                 data.meta().isMock(), data.meta().source());
     }
 
