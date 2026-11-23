@@ -44,10 +44,13 @@ function SurveyForm({ data }: { data: SurveyQuestions }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const heading = useRef<HTMLHeadingElement>(null);
-  const first = useRef(true);
+  // 파트가 실제로 바뀌었을 때만 제목으로 스크롤한다. '첫 실행 건너뛰기'는 개발 모드(StrictMode)에서
+  // 효과가 두 번 실행돼 첫 화면부터 아래로 스크롤되는 문제가 있었다.
+  const shownStep = useRef(step);
 
   useEffect(() => {
-    if (first.current) { first.current = false; return; }
+    if (shownStep.current === step) return;
+    shownStep.current = step;
     heading.current?.focus({ preventScroll: true });
     heading.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }, [step]);

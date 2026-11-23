@@ -3,6 +3,8 @@
 .sv-page { width: min(896px, calc(100% - 48px)); margin-inline: auto; padding-block: 16px 72px; display: flex; flex-direction: column; gap: 28px; }
 
 .sv-progress { position: sticky; top: 0; z-index: 5; padding: 14px 4px 12px; background: rgb(246 249 255 / 94%); backdrop-filter: blur(6px); }
+/* 파트를 넘길 때 제목이 위에 고정된 진행 막대에 가리지 않게 한다. */
+.sv-page h1[tabindex] { scroll-margin-top: 96px; }
 .sv-progress-text { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
 .sv-progress-text > span { display: inline-flex; align-items: center; gap: 8px; }
 .sv-part-dot { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; }
