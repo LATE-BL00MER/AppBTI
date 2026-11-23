@@ -29,7 +29,13 @@ def test_calendar_day_variant_differs_only_in_time_basis_and_choices():
     cal_s=yaml.safe_load((ROOT/'config/similarity.calendar_days.yaml').read_text(encoding='utf-8'))
     assert cal_q['questions']==base_q['questions'] and cal_q['period']==base_q['period']
     assert len(cal_q['time_choices'])==len(cal_s['time_choice_minutes'])==5
-    assert {k:v for k,v in cal_s.items() if k!='time_choice_minutes'}=={k:v for k,v in base_s.items() if k!='time_choice_minutes'}
+    time_keys={'time_choice_minutes','time_choice_edges'}
+    assert {k:v for k,v in cal_s.items() if k not in time_keys}=={k:v for k,v in base_s.items() if k not in time_keys}
+    # 선택지 구간 경계는 선택지 수보다 하나 적고, 대표 분은 각 구간 안에 있어야 한다.
+    for s in (base_s, cal_s):
+        edges, reps = s['time_choice_edges'], s['time_choice_minutes']
+        assert len(edges)==len(reps)-1 and edges==sorted(edges)
+        assert all((i==0 or reps[i]>=edges[i-1]) and (i==len(edges) or reps[i]<edges[i]) for i in range(len(reps)))
     assert cal_s['time_choice_minutes']==sorted(cal_s['time_choice_minutes']) and cal_s['time_choice_minutes'][0]>base_s['time_choice_minutes'][0]
     assert load_codebook(ROOT/'config/codebook.calendar_days.yaml')['metrics']['daily_time']['day_basis']=='calendar_days'
     assert load_codebook(ROOT/'config/codebook.yaml')['metrics']['daily_time']['day_basis']=='used_days'

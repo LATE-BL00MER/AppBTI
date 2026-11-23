@@ -31,6 +31,13 @@
 .rs-rank-num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #E3E8EF; font-size: 13px; font-weight: 700; color: var(--muted); }
 .rs-ranking li.best .rs-rank-num { background: var(--brand); color: #fff; }
 .rs-rank-label { font-size: 15px; font-weight: 650; }
+.rs-rank-label { min-width: 72px; }
+.rs-rank-bar { flex: 1; height: 10px; border-radius: var(--pill-radius); background: #E6EBF1; overflow: hidden; }
+.rs-rank-bar i { display: block; height: 100%; border-radius: inherit; background: #9FCBB4; transition: width .25s ease; }
+.rs-ranking li.best .rs-rank-bar i { background: var(--brand); }
+.rs-ranking li.near .rs-rank-bar i { background: var(--brand-light); }
+/* 표시 칸을 모든 줄에 같은 너비로 둬서 막대 칸 길이가 같게 한다(막대끼리 길이 비교가 되도록). */
+.rs-ranking .rs-tags { margin-left: 0; flex: 0 0 92px; justify-content: flex-end; }
 .rs-tag { padding: 2px 10px; border-radius: var(--pill-radius); background: #E9EDF2; font-size: 11px; font-weight: 650; color: #4a5561; }
 .rs-tag.brand { background: var(--brand); color: #fff; }
 .rs-tags { margin-left: auto; display: flex; gap: 6px; }
@@ -61,7 +68,7 @@
 .rs-bars { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; }
 .rs-bars > div { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 10px; }
 .rs-bars dt { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rs-bars dd { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) 64px; align-items: center; gap: 10px; }
+.rs-bars dd { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(64px, max-content); align-items: center; gap: 10px; }
 .rs-bar { display: block; height: 10px; border-radius: var(--pill-radius); background: #E6EBF1; overflow: hidden; }
 .rs-bar i { display: block; height: 100%; border-radius: inherit; background: #8CCBAA; }
 .rs-bar i.me { background: var(--brand); }
@@ -100,3 +107,45 @@
   .rs-sentence { font-size: 15px; }
   .rs-actions .button { flex: 1 1 100%; }
 }
+
+/* 점 두 개 막대: 가운데가 '평소(자기 평균)'. 나(●)와 연령대(◆)의 위치, 그 사이 선이 차이다. */
+.rs-scale { padding: 16px 22px; border-radius: 20px; background: var(--paper); box-shadow: var(--card-shadow); font-size: 13px; color: var(--muted); line-height: 1.7; }
+.rs-scale strong { display: block; color: var(--ink); font-size: 15px; }
+.rs-legend { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.rs-legend .me { color: var(--brand); }
+.rs-legend .group { color: #C27A1A; margin-left: 10px; }
+/* 범례도 속이 빈 마름모(◇)로 맞춘다. */
+.rs-dot { margin-top: 14px; }
+.rs-dot-track { position: relative; display: block; height: 10px; border-radius: var(--pill-radius); background: #E6EBF1; }
+.rs-dot-mid { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; background: #9AA5B1; border-radius: 1px; }
+.rs-dot-track i { position: absolute; top: 2px; bottom: 2px; border-radius: var(--pill-radius); background: #8CCBAA; }
+.rs-dot-track i.more { background: #E4A194; }
+.rs-dot-track i.less { background: #93B4E3; }
+.rs-dot-track b { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; box-shadow: 0 0 0 2px var(--paper); }
+.rs-dot-track b.me { border-radius: 50%; background: var(--brand); }
+.rs-dot-track b.group { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: transparent; border: 3px solid #E8A23A; box-shadow: none; transform: rotate(45deg); border-radius: 3px; }
+.rs-dot-scale { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--muted); }
+.rs-ev-raw { margin-top: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 응답 패턴 지도 */
+.rs-map { display: block; width: 100%; height: auto; margin-top: 8px; background: #F7F9FC; border-radius: 20px; }
+.rs-map line { stroke-width: 2; stroke-dasharray: 5 5; }
+.rs-map line.top { stroke: var(--brand); }
+.rs-map line.focus { stroke: #E8A23A; }
+.rs-map-age circle { fill: #B8C2CF; stroke: #fff; stroke-width: 2; }
+.rs-map-age.top circle { fill: var(--brand); }
+.rs-map-age.focus circle { fill: #E8A23A; }
+.rs-map-age text { font-size: 13px; font-weight: 600; fill: #4a5561; }
+.rs-map-age.top text { fill: var(--brand); font-weight: 750; }
+.rs-map-me path { fill: #151C22; stroke: #fff; stroke-width: 2; }
+.rs-map-me text { font-size: 13px; font-weight: 750; fill: #151C22; }
+.rs-map-legend { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.rs-map-legend .me { color: #151C22; } .rs-map-legend .top { color: var(--brand); } .rs-map-legend .focus { color: #E8A23A; } .rs-map-legend .other { color: #B8C2CF; }
+.rs-map-legend span:not(:first-child) { margin-left: 8px; }
+
+/* 비슷한·먼 항목 토글 */
+.rs-items-toggle > summary { cursor: pointer; font-size: 16px; font-weight: 700; list-style: none; display: flex; align-items: center; gap: 8px; }
+.rs-items-toggle > summary::before { content: '▸'; color: var(--muted); transition: transform .15s; }
+.rs-items-toggle[open] > summary::before { transform: rotate(90deg); }
+.rs-items-toggle > .rs-grid { margin-top: 18px; }
+.rs-items-toggle .rs-card { box-shadow: none; background: #FAFBFD; }
