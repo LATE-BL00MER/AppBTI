@@ -84,9 +84,9 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
         {result.resultType.name && <p className="rs-type"><strong>{result.resultType.name}</strong>{result.resultType.description && <span>{result.resultType.description}</span>}</p>}
       </div>
       <div className="rs-hero-side">
-        {/* 1위는 왼쪽 문구와 겹쳐서, 결과를 얼마나 많은 근거로 냈는지(비교 문항 수)를 크게 보여 준다. */}
-        <span className="rs-hero-rank"><span>{result.comparedItems}<small>개</small></span></span>
-        <span>비교한 문항</span>
+        {/* 1위는 왼쪽 문구와 겹쳐서, 전체 문항 중 몇 개에 답했는지를 링(채운 비율)과 숫자로 보여 준다. */}
+        <AnsweredRing answered={result.answeredCount} total={meta?.survey?.questionCount ?? null} />
+        <span>응답한 문항</span>
       </div>
     </section>
 
@@ -339,4 +339,20 @@ function Excluded({ items }: { items: SurveyResult['excluded'] }) {
 
 function Source({ text }: { text: string | null }) {
   return text ? <p className="source rs-source">출처: {text}</p> : null;
+}
+
+/**
+ * 응답한 문항 링: 전체 문항(/meta.survey.questionCount) 중 답한 비율만큼 12시 방향부터 시계 방향으로 채운다.
+ * 전체 문항 수를 모르면 지금까지처럼 꽉 찬 원으로 그린다.
+ */
+function AnsweredRing({ answered, total }: { answered: number; total: number | null }) {
+  const ratio = total && total > 0 ? Math.min(Math.max(answered / total, 0), 1) : 1;
+  const label = total ? `전체 ${total}개 문항 중 ${answered}개 응답` : `${answered}개 문항 응답`;
+  return <span className="rs-hero-rank" role="img" aria-label={label}>
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle className="rs-ring-track" cx="50" cy="50" r="45" pathLength={100} />
+      <circle className="rs-ring-fill" cx="50" cy="50" r="45" pathLength={100} strokeDasharray={`${ratio * 100} 100`} />
+    </svg>
+    <span aria-hidden="true">{answered}<small>개</small></span>
+  </span>;
 }
