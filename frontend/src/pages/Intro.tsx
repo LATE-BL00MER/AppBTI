@@ -31,14 +31,14 @@ export default function Intro() {
 
     <section className="container scope-summary" aria-label="데이터 범위">
       <p>{meta.ageGroups.length}개 집단</p>
-      <p>{meta.minorCategories.length}개 중분류</p>
+      <p>{meta.minorCategories.length}개 카테고리</p>
       <Link to="/data">{monthLabel(meta.months[0])} ~ {monthLabel(month)} ↗</Link>
     </section>
 
     <section className="container pattern-workspace" aria-labelledby="pattern-title">
       <div className="pattern-context"><div><h2 id="pattern-title">같은 하루, 다른 사용 습관.</h2><p>집단을 바꾸며 어떤 활동을 얼마나 자주 이용하는지 살펴보세요.</p></div><span className="snapshot-period">{monthLabel(month)}{meta.isMock ? ' · 예시' : ''}</span></div>
       <div className="pattern-layout">
-        <div className="pattern-selector"><p>비교해 볼 집단</p><div className="group-picker" role="group" aria-label="미리 볼 집단">{meta.ageGroups.map(age => <button key={age.id} aria-pressed={sampleAge?.id === age.id} onClick={() => setSelectedAge(age.id)}>{age.label}<span aria-hidden="true">↗</span></button>)}</div><p className="pattern-caption">{meta.isMock ? 'A~F는 시연용 가상 집단입니다.' : '제공처 기준 연령 구간입니다.'}</p><Link className="text-link" to="/explore">모든 중분류 살펴보기 ↗</Link></div>
+        <div className="pattern-selector"><p>비교해 볼 집단</p><div className="group-picker" role="group" aria-label="미리 볼 집단">{meta.ageGroups.map(age => <button key={age.id} aria-pressed={sampleAge?.id === age.id} onClick={() => setSelectedAge(age.id)}>{age.label}<span aria-hidden="true">↗</span></button>)}</div><p className="pattern-caption">{meta.isMock ? 'A~F는 시연용 가상 집단입니다.' : '제공처 기준 연령 구간입니다.'}</p><Link className="text-link" to="/explore">모든 카테고리 살펴보기 ↗</Link></div>
         <div className="pattern-data" aria-busy={!data && !previewError}>
           <div className="pattern-chart-title"><h3>{sampleAge?.label || '집단'}의 월평균 이용일수</h3><span>단위: 일 / 월</span></div>
           {previewError ? <ErrorNotice message={previewError} retry={reload} /> : <><div className="pattern-rows">{preview.map(minor => {

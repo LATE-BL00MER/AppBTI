@@ -3,6 +3,8 @@
 .sv-page { width: min(896px, calc(100% - 48px)); margin-inline: auto; padding-block: 16px 72px; display: flex; flex-direction: column; gap: 28px; }
 
 .sv-progress { position: sticky; top: 0; z-index: 5; padding: 14px 4px 12px; background: rgb(246 249 255 / 94%); backdrop-filter: blur(6px); }
+/* 파트를 넘길 때 제목이 위에 고정된 진행 막대에 가리지 않게 한다. */
+.sv-page h1[tabindex] { scroll-margin-top: 96px; }
 .sv-progress-text { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
 .sv-progress-text > span { display: inline-flex; align-items: center; gap: 8px; }
 .sv-part-dot { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; }
@@ -67,12 +69,6 @@
 .sv-clear { min-height: 40px; padding: 8px 10px; font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
 
 /* 연령대 선택(선택 사항) */
-.sv-age-card { display: grid; gap: 18px; padding: 28px 32px; border-radius: var(--card-radius); background: var(--paper); box-shadow: var(--card-shadow); border: 1px dashed #cfd8e3; }
-.sv-age-card h2 { font-size: 20px; }
-.sv-age-card p:not(.sv-eyebrow) { margin-top: 6px; font-size: 13px; color: var(--muted); }
-.sv-age-options { display: flex; flex-wrap: wrap; gap: 8px; }
-.sv-age-options button { min-height: 40px; padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--pill-radius); background: #fff; font-size: 13px; font-weight: 600; color: #4a5561; }
-.sv-age-options button[aria-checked=true] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
 
 .sv-notice { padding: 14px 20px; border-radius: 16px; background: #FFF7E8; color: #7a5410; font-size: 13px; }
 
@@ -96,7 +92,7 @@
   .sv-part-icon { width: 44px; height: 44px; border-radius: 14px; }
   .sv-part-card h1 { font-size: 20px; }
   .sv-chip { grid-column: 2; justify-self: start; }
-  .sv-question, .sv-age-card { padding: 24px 18px; border-radius: 24px; }
+  .sv-question { padding: 24px 18px; border-radius: 24px; }
   .sv-qtext { font-size: 17px; }
   .sv-dot { width: calc(var(--dot) * .86); height: calc(var(--dot) * .86); margin-block: calc((38px - var(--dot) * .86) / 2); }
   .sv-scale-dots::before { top: 19px; }
