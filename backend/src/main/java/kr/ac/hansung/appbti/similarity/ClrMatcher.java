@@ -155,7 +155,7 @@ public final class ClrMatcher {
         }
         // 가까운 항목은 상대 비중(CLR 차이)이 작은 절반 안에 있고, 화면의 일수·시간도 close_value_ratio배 안인 항목만 고른다.
         // 그런 항목이 없으면 CLR 차이가 작은 순서로 고르되 closestMode=values로 알려 화면이 '항목별 이용 수치'로 보여 주게 한다.
-        double closeRatio = settings.close_value_ratio() == null ? 1.25 : settings.close_value_ratio();
+        double closeRatio = settings.close_value_ratio();
         Comparator<Evidence> byDifference = Comparator.comparingDouble(Evidence::difference).thenComparing(Evidence::questionId);
         var closerHalf = evidence.stream().sorted(byDifference).limit((evidence.size() + 1) / 2).toList();
         var bothClose = closerHalf.stream().filter(e -> valueClose(e, closeRatio)).limit(3).toList();

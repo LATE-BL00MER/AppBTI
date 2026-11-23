@@ -280,7 +280,7 @@ days_scale: 7                  # 일수 응답 ÷ 7
 near_tie_ratio: 0.05           # (2위 거리 − 1위 거리) ÷ 2위 거리 < 0.05 → 근소
 similar_difference: 0.1        # 근거 direction=similar 기준
 flat_pattern_ratio: null       # TODO(확인 필요): 패턴 불명확 기준
-close_value_ratio: 1.25        # '가까운 항목'은 화면 수치도 이 배수 안이어야 함 (TODO: 우서현 확정)
+close_value_ratio: 1.25        # 필수, 1보다 커야 함. '가까운 항목'은 화면 수치도 이 배수 안이어야 함 (TODO: 우서현 확정)
 time_choice_edges: [3, 10, 30, 60]   # 시간 선택지 구간 경계(분). 근거의 집단 시간을 선택지 구간으로 표시할 때 사용 (후자 버전 [15, 30, 45, 90])
 ```
 
