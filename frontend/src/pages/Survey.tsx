@@ -36,7 +36,8 @@ export default function Survey() {
 }
 
 function SurveyForm({ data }: { data: SurveyQuestions }) {
-  const { meta, draft, setAnswer, setAgeGroup } = useApp();
+  // 연령대 선택은 결과 화면의 '내 연령대 통계와 견줘 보기'에서만 받는다(선택 사항). 결과에서 고른 값이 있으면 그대로 보낸다.
+  const { draft, setAnswer } = useApp();
   const navigate = useNavigate();
   const parts = useMemo(() => buildParts(data.questions), [data.questions]);
   const [step, setStep] = useState(0);
@@ -97,7 +98,7 @@ function SurveyForm({ data }: { data: SurveyQuestions }) {
 
     {step === 0 && <p className="sv-tip" role="note">
       <span aria-hidden="true">✦</span>
-      <span>정답은 없어요. 최근 7일을 떠올리며 가장 가까운 답을 골라주세요. 쓰지 않는 서비스는 ‘사용 안 함’을 눌러주세요.
+      <span>정확하지 않아도 괜찮아요. 최근 7일을 떠올리며 가장 가까운 답을 골라 주세요. 쓰지 않는 서비스는 ‘사용 안 함’을 눌러주세요.
         응답은 이 탭에만 잠시 보관하고 서버에 저장하지 않아요.</span>
     </p>}
 
@@ -111,17 +112,6 @@ function SurveyForm({ data }: { data: SurveyQuestions }) {
       })}
     </div>
 
-    {isLast && meta && <section className="sv-age-card" aria-labelledby="age-title">
-      <div>
-        <p className="sv-eyebrow">선택 사항</p>
-        <h2 id="age-title">내 연령대도 알려주실래요?</h2>
-        <p>고르면 결과에서 같은 연령대 이용자 통계와 응답을 견줘 볼 수 있어요. 비슷한 연령대 순위를 정하는 데는 쓰지 않고, 서버에 저장하지도 않아요.</p>
-      </div>
-      <div className="sv-age-options" role="radiogroup" aria-labelledby="age-title">
-        <button type="button" role="radio" aria-checked={draft.ageGroup === null} onClick={() => setAgeGroup(null)}>선택 안 함</button>
-        {meta.ageGroups.map(age => <button type="button" role="radio" key={age.id} aria-checked={draft.ageGroup === age.id} onClick={() => setAgeGroup(age.id)}>{age.label}</button>)}
-      </div>
-    </section>}
 
     {isLast && answeredCount < data.minimumItems && <p className="sv-notice" role="status">
       지금은 이용한다고 답한 문항이 {answeredCount}개예요. {data.minimumItems}개 이상이어야 비슷한 연령대를 찾을 수 있고, 적으면 결과 대신 세대별 탐색을 안내해요.

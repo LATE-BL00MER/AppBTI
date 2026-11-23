@@ -13,7 +13,11 @@ import './result.css';
 export default function Result() {
   const { draft } = useApp();
   const state = useLocation().state as { result?: SurveyResult; dataset?: string } | null;
-  const initial = state?.result && state.dataset === draft.dataset ? state.result : null;
+  // 방문 기록의 결과는 제출 시점 것이라, 이후 결과 화면에서 고른 연령대(또래 비교)와 다를 수 있다.
+  // 지금 고른 연령대와 맞지 않으면 쓰지 않고 다시 요청한다(뒤로 가기로 돌아왔을 때 비교가 비어 보이던 문제).
+  const stateAge = state?.result?.peerComparison?.ageGroup.id ?? null;
+  const initial = state?.result && state.dataset === draft.dataset
+    && (stateAge === draft.ageGroup || state.result.status === 'insufficient') ? state.result : null;
   const [result, setResult] = useState<SurveyResult | null>(initial);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -39,7 +43,7 @@ export default function Result() {
   return <Report result={result} busy={busy} error={error} onPickAge={fetchResult} />;
 }
 
-function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy: boolean; error: string | null; onPickAge: (age: string) => void }) {
+function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy: boolean; error: string | null; onPickAge: (age: string | null) => void }) {
   const { meta, draft, setAgeGroup, resetSurvey } = useApp();
   const navigate = useNavigate();
   const period = result.referenceMonths.length === 2 ? `${monthLabel(result.referenceMonths[0])} ~ ${monthLabel(result.referenceMonths[1])}` : '';
@@ -107,9 +111,10 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
         </ol>
       </section>
 
-      <section className="rs-card" aria-labelledby="peer-title">
+      <section className="rs-card rs-peer-card" aria-labelledby="peer-title">
         {peer ? <>
-          <div className="rs-card-head"><h2 id="peer-title">{peer.ageGroup.label} 이용자 통계와 견줘 보면</h2></div>
+          <div className="rs-card-head"><h2 id="peer-title">내 연령대 통계와 견줘 보면</h2><span className="rs-chip">선택 사항</span></div>
+          {meta && <AgePicker current={draft.ageGroup} ages={meta.ageGroups} busy={busy} label="내 연령대" onPick={age => { setAgeGroup(age); onPickAge(age); }} />}
           {!peer.matchesStated && peer.statedDiffers && <p className="rs-callout">{peer.statedDiffers}</p>}
           {peer.more.length + peer.less.length === 0
             ? <p className="rs-muted">{peer.ageGroup.label} 이용자 통계와 크게 다른 항목은 없었어요.</p>
@@ -119,12 +124,11 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
             </ul>}
           {peer.suggestion && <p className="rs-suggestion"><span aria-hidden="true">✦</span>{peer.suggestion.message}</p>}
           <p className="rs-note">{peer.note}</p>
-          {meta && <AgePicker current={draft.ageGroup} ages={meta.ageGroups} busy={busy} label="다른 연령대와 견주기" onPick={age => { setAgeGroup(age); onPickAge(age); }} />}
         </> : <>
           <div className="rs-card-head"><h2 id="peer-title">내 연령대 통계와 견줘 보기</h2><span className="rs-chip">선택 사항</span></div>
-          <p className="rs-muted">연령대를 고르면 그 연령대 이용자 통계와 비교해 어느 쪽으로 더·덜 치우쳐 쓰는지 알려 드려요. 순위 계산에는 쓰지 않고 저장하지 않아요.</p>
-          {meta && <AgePicker current={draft.ageGroup} ages={meta.ageGroups} busy={busy} onPick={age => { setAgeGroup(age); onPickAge(age); }} />}
-          {draft.ageGroup && !busy && <p className="rs-note">비교할 수 있는 문항이 부족해 이 연령대와의 비교를 만들지 못했어요.</p>}
+          {meta && <AgePicker current={draft.ageGroup} ages={meta.ageGroups} busy={busy} label="내 연령대" onPick={age => { setAgeGroup(age); onPickAge(age); }} />}
+          <p className="rs-note rs-peer-foot">연령대를 고르면 그 연령대 이용자 통계와 비교해 어느 쪽으로 더·덜 치우쳐 쓰는지 알려 드려요. 순위 계산에는 쓰지 않고 저장하지 않아요.</p>
+          {draft.ageGroup && !busy && !error && <p className="rs-note">이 연령대와의 비교를 불러오지 못했어요. 연령대를 다시 골라 주세요.</p>}
         </>}
         {error && <p className="inline-error" role="alert">{error}</p>}
       </section>
@@ -190,9 +194,11 @@ function PairBars({ item, group }: { item: Evidence; group: string }) {
   </dl>;
 }
 
-function AgePicker({ current, ages, busy, label, onPick }: { current: string | null; ages: { id: string; label: string }[]; busy: boolean; label?: string; onPick: (id: string) => void }) {
+// 설문에서 묻던 '내 연령대'를 결과 화면에서 고른다. '선택 안 함'이면 또래 비교 없이 다시 요청한다.
+function AgePicker({ current, ages, busy, label, onPick }: { current: string | null; ages: { id: string; label: string }[]; busy: boolean; label?: string; onPick: (id: string | null) => void }) {
   return <div className="rs-age" role="group" aria-label={label ?? '비교할 연령대 고르기'}>
     {label && <span className="rs-age-label">{label}</span>}
+    <button type="button" aria-pressed={current === null} disabled={busy} onClick={() => onPick(null)}>선택 안 함</button>
     {ages.map(age => <button key={age.id} type="button" aria-pressed={current === age.id} disabled={busy} onClick={() => onPick(age.id)}>{age.label}</button>)}
     {busy && <span className="rs-muted" role="status">불러오는 중…</span>}
   </div>;
