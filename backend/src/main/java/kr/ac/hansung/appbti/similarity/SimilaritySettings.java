@@ -19,7 +19,8 @@ public record SimilaritySettings(boolean enabled, String method, String normaliz
                                  String tie_policy, String zero_days_policy, Object types,
                                  Integer minimum_items, String clr_scope, String clr_blocks,
                                  List<Double> time_choice_minutes, Double days_scale, Double near_tie_ratio,
-                                 Double similar_difference, Double flat_pattern_ratio) {
+                                 Double similar_difference, Double flat_pattern_ratio, Double close_value_ratio,
+                                 List<Double> time_choice_edges) {
     public static final String CLR_NEAREST = "clr_nearest";
 
     // 활성 설정이면 방식별 필수 값을 요청 처리 전에 검증한다.
@@ -31,7 +32,9 @@ public record SimilaritySettings(boolean enabled, String method, String normaliz
                     || time_choice_minutes.stream().anyMatch(m -> m == null || !(m > 0) || !Double.isFinite(m))
                     || days_scale == null || !(days_scale >= 1) || near_tie_ratio == null || !(near_tie_ratio >= 0)
                     || similar_difference == null || !(similar_difference >= 0)
-                    || (flat_pattern_ratio != null && !(flat_pattern_ratio >= 0))) {
+                    || (flat_pattern_ratio != null && !(flat_pattern_ratio >= 0))
+                    || (close_value_ratio != null && !(close_value_ratio > 1))
+                    || (time_choice_edges != null && !validEdges(time_choice_edges, time_choice_minutes.size()))) {
                 throw new IllegalArgumentException("clr_nearest 설정의 최소 문항·CLR 범위·시간 대표 분·일수 척도·근소 기준을 확인하세요.");
             }
         } else if (enabled) {
@@ -54,7 +57,16 @@ public record SimilaritySettings(boolean enabled, String method, String normaliz
     public SimilaritySettings(boolean enabled, String method, String normalization, Map<String, Double> weights,
                               Integer minimum_categories, String tie_policy, String zero_days_policy, Object types) {
         this(enabled, method, normalization, weights, minimum_categories, tie_policy, zero_days_policy, types,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
+    }
+
+    // 선택지 경계는 선택지 수보다 하나 적고, 양수이며 오름차순이어야 한다.
+    private static boolean validEdges(List<Double> edges, int choices) {
+        if (edges.size() != choices - 1) return false;
+        for (int i = 0; i < edges.size(); i++) {
+            if (edges.get(i) == null || !(edges.get(i) > 0) || (i > 0 && !(edges.get(i) > edges.get(i - 1)))) return false;
+        }
+        return true;
     }
 
     // API v2 매칭 방식인지 알려 준다.
