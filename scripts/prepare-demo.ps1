@@ -14,6 +14,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw '기본 데이터 수용 검사 실패' }
     & $python -m appbti_pipeline --input ../data/mock/with_time --out ../data/processed/mock-time --codebook ../config/codebook.mock.yaml
     if ($LASTEXITCODE -ne 0) { throw '시간 포함 데이터 수용 검사 실패' }
+    foreach ($name in @('mock', 'mock-time')) {
+        $directory = "../data/processed/$name"
+        & $python -m appbti_pipeline.site_data --input "$directory/clean.csv" --profiles "$directory/profiles.json" --out $directory --codebook ../config/codebook.mock.yaml
+        if ($LASTEXITCODE -ne 0) { throw '목업 웹 분석 파일 생성 실패' }
+    }
 } finally { Pop-Location }
 
 $env:GRADLE_USER_HOME = Join-Path $root '.cache/gradle'

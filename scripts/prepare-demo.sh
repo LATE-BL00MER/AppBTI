@@ -28,15 +28,14 @@ if [[ ! -x "$python" ]]; then
 fi
 
 if [[ "$use_real" == true ]]; then
-    has_csv=false
+    real_inputs=()
     for csv in "$root"/data/raw/real/*.[cC][sS][vV]; do
         if [[ -f "$csv" ]]; then
-            has_csv=true
-            break
+            real_inputs+=("$csv")
         fi
     done
-    if [[ "$has_csv" == false ]]; then
-        fail 'data/raw/real/에 CSV가 없습니다. 실제 데이터는 저장소 밖 ~/appbti-data/raw/real/에 두고 Orca 설정 스크립트로 data/raw/에 복사한다(AGENTS.md 12장).'
+    if [[ "${#real_inputs[@]}" -ne 1 ]]; then
+        fail 'data/raw/real/에 실제 원본 CSV를 하나만 두세요.'
     fi
 fi
 
@@ -56,14 +55,22 @@ run_step '기본 데이터 수용 검사' "$root/pipeline" "$python" -m appbti_p
     --input ../data/mock/basic --out ../data/processed/mock --codebook ../config/codebook.mock.yaml
 run_step '시간 포함 데이터 수용 검사' "$root/pipeline" "$python" -m appbti_pipeline \
     --input ../data/mock/with_time --out ../data/processed/mock-time --codebook ../config/codebook.mock.yaml
+for dataset in mock mock-time; do
+    output="../data/processed/$dataset"
+    run_step '목업 웹 분석 생성' "$root/pipeline" "$python" -m appbti_pipeline.site_data \
+        --input "$output/clean.csv" --profiles "$output/profiles.json" --out "$output" --codebook ../config/codebook.mock.yaml
+done
 
 if [[ "$use_real" == true ]]; then
     # 실제 데이터 수치가 터미널 출력이나 로그에 남지 않도록 한다.
     printf '%s\n' '실제 데이터 수용 검사 진행 중…'
     if ! (cd -- "$root/pipeline" && "$python" -m appbti_pipeline \
-        --input ../data/raw/real --out ../data/processed/real --codebook ../config/codebook.yaml) >/dev/null 2>&1; then
+        --input "${real_inputs[0]}" --out ../data/processed/real --codebook ../config/codebook.yaml) >/dev/null 2>&1; then
         fail '실제 데이터 수용 검사 실패. 코드북 설정과 data/processed/real/validation_report.json을 로컬에서 확인하세요.'
     fi
+    run_step '실제 웹 분석 생성' "$root/pipeline" "$python" -m appbti_pipeline.site_data \
+        --input ../data/processed/real/clean.csv --profiles ../data/processed/real/profiles.json \
+        --out ../data/processed/real --codebook ../config/codebook.yaml
 fi
 
 export GRADLE_USER_HOME="$root/.cache/gradle"

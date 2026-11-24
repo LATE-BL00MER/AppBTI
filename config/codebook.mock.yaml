@@ -2,6 +2,10 @@
 extends: codebook.yaml
 is_mock: true
 source: "가상 통계 · 2025년 1~6월 · 전국 설정 · A~F 가상 6집단"
+composition_index:
+  reference_minor_code: message
+home_overview:
+  minor_codes: [message, community, video, music, learn, language, news, shopping]
 # 실제 코드북의 대분류 목록이 목업 시연으로 상속되지 않게 고정한다.
 major_categories:
   - 교육

@@ -6,6 +6,7 @@ import pandas as pd
 import yaml
 
 REQUIRED = {"month", "age_group", "major", "minor_name", "uu", "avg_days"}
+TIME_UNIT_TO_MINUTES = {"초": 1 / 60, "분": 1, "시간": 60, "seconds": 1 / 60, "minutes": 1, "hours": 60}
 
 
 def load_codebook(path: Path) -> dict:
@@ -51,9 +52,10 @@ def summarize_excluded(dropped: pd.DataFrame, codebook: dict) -> list[dict]:
 
 
 def read_source(folder: Path, codebook: dict) -> pd.DataFrame:
-    files = sorted(p for p in folder.iterdir() if p.suffix.lower() in {".csv", ".xlsx"} and not p.name.startswith("~$"))
+    candidates = [folder] if folder.is_file() else folder.iterdir()
+    files = sorted(p for p in candidates if p.is_file() and p.suffix.lower() in {".csv", ".xlsx"} and not p.name.startswith("~$"))
     if not files:
-        raise ValueError("입력 폴더에 CSV/XLSX 원본이 없습니다. 원본 버전별 폴더를 지정하세요.")
+        raise ValueError("CSV/XLSX 원본 파일이나 원본 버전별 폴더를 지정하세요.")
     frames, dropped = [], []
     age_ids = {a["label"]: a["id"] for a in codebook["age_groups"]}
     for path in files:

@@ -1,6 +1,7 @@
 """집단 지표, 결측, 시간 정의, 어댑터 및 수용 검사에 대한 회귀 검증."""
 
 from copy import deepcopy
+from math import prod
 from pathlib import Path
 
 import pandas as pd
@@ -60,12 +61,20 @@ def test_suppressed_and_missing_age_do_not_become_zero(frame, book):
 
 
 def test_time_is_optional_and_units_are_converted(frame, book):
-    assert build(frame, book)["meta"]["metrics"]["dailyTime"] is False
+    untimed = build(frame, book)
+    assert untimed["meta"]["metrics"]["dailyTime"] is False
+    assert all(row["ageRelativeDays"] is None and row["ageRelativeTime"] is None for row in untimed["profiles"])
     timed = read_source(ROOT / "data/mock/with_time", book)
+    complete = rows(build(timed, book))
+    for metric in ("ageRelativeDays", "ageRelativeTime"):
+        assert prod(row[metric] for row in complete) == pytest.approx(1, abs=0.00001)
     original = float(timed.loc[0, "avg_daily_time"])
     timed.loc[0, "time_unit"] = "미지원"
     assert validate(timed, book)["warnings"]
-    assert build(timed, book)["profiles"][0]["avgDailyTime"] is None
+    incomplete = build(timed, book)
+    assert incomplete["profiles"][0]["avgDailyTime"] is None
+    assert all(row["ageRelativeDays"] is None and row["ageRelativeTime"] is None
+               for row in rows(incomplete, minor=timed.loc[0, "minor_code"]))
     timed.loc[0, "time_unit"] = "초"
     assert build(timed, book)["profiles"][0]["avgDailyTime"] == pytest.approx(original / 60, abs=0.00001)
     book["metrics"]["daily_time"]["denominator"] = None
@@ -120,11 +129,13 @@ def test_duplicate_is_fatal(frame, book):
 
 def test_xlsx_and_name_mapping_without_codes(frame, book, tmp_path):
     renamed = deepcopy(book)
-    renamed["columns"]["다른 기준월"] = renamed["columns"].pop("기준월")
-    source = pd.read_csv(ROOT / "data/mock/basic/mock_usage.csv", encoding="utf-8-sig")
-    source = source.drop(columns="중분류 코드").rename(columns={"기준월": "다른 기준월"})
+    renamed["columns"]["다른 기준월"] = "month"
+    source = pd.read_csv(ROOT / "data/mock/basic/mock_usage.csv", encoding="utf-8-sig", dtype=str)
+    source = source.rename(columns=book["columns"])
+    source = source.drop(columns="minor_code").rename(columns={"month": "다른 기준월"})
     source.to_excel(tmp_path / "mock_test.xlsx", index=False)
     loaded = read_source(tmp_path, renamed)
+    assert loaded["month"].tolist() == frame["month"].tolist()
     assert loaded["minor_code"].tolist() == frame["minor_code"].tolist()
     assert validate(loaded, renamed)["valid"]
 

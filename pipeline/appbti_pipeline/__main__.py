@@ -11,7 +11,7 @@ from .validate import validate
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="AppBTI 집단 Profile 파이프라인")
-    parser.add_argument("--input", type=Path, required=True, help="원본 버전별 CSV/XLSX 폴더")
+    parser.add_argument("--input", type=Path, required=True, help="원본 CSV/XLSX 파일 또는 버전별 폴더")
     parser.add_argument("--out", type=Path, required=True, help="산출물 폴더")
     parser.add_argument("--codebook", type=Path, default=Path(__file__).resolve().parents[2] / "config/codebook.yaml")
     args = parser.parse_args()

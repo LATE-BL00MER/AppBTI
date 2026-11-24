@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from .adapter import TIME_UNIT_TO_MINUTES
+
 CLEAN_COLUMNS = ["month", "age_group", "age_label", "major", "minor_code", "minor_name",
                  "uu", "avg_days", "avg_daily_time", "time_unit", "status"]
 
@@ -29,7 +31,13 @@ def clean_table(frame: pd.DataFrame, codebook: dict) -> pd.DataFrame:
     age_rank = {a["id"]: i for i, a in enumerate(codebook["age_groups"])}
     minor_rank = {c["code"]: i for i, c in enumerate(codebook["minor_categories"])}
     labels = {a["id"]: a["label"] for a in codebook["age_groups"]}
-    table = frame.assign(age_label=frame["age_group"].map(labels), _age=frame["age_group"].map(age_rank), _minor=frame["minor_code"].map(minor_rank))
+    minutes = pd.to_numeric(frame["avg_daily_time"], errors="coerce") * frame["time_unit"].map(TIME_UNIT_TO_MINUTES)
+    time = codebook["metrics"]["daily_time"]
+    available = time["enabled"] and time.get("definition") and time.get("denominator") and time.get("source_unit") in TIME_UNIT_TO_MINUTES
+    minutes = minutes.where((frame["status"] == "normal") & bool(available))
+    table = frame.assign(age_label=frame["age_group"].map(labels), _age=frame["age_group"].map(age_rank),
+                         _minor=frame["minor_code"].map(minor_rank), avg_daily_time=minutes,
+                         time_unit=pd.Series("minutes", index=frame.index).where(minutes.notna()))
     return table.sort_values(["month", "_age", "_minor"])[CLEAN_COLUMNS]
 
 
