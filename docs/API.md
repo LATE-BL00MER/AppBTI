@@ -10,6 +10,8 @@
 | 메서드·경로 | BE | FE | v1 대비 | 쓰는 화면 |
 |---|---|---|---|---|
 | GET `/meta` | 신진용 | 심유진 | **변경** (`survey` 값, `metrics`) | 공통(배지·출처), 홈 소개 문구 |
+| GET `/insights` | — | — | **신규** | 홈과 인사이트 리포트 |
+| GET `/findings` | — | — | **신규** | 분야별 연령대 패턴과 데이터 안내 |
 | GET `/survey/questions` | 신진용 | 심유진 | **변경** | 설문 |
 | POST `/survey/result` | 신진용 | 심유진 | **변경** | 결과 |
 | GET `/profiles?month=` | 임기범 | 심유진 | 유지 | 탐색(두 연령대 비교) |
@@ -25,6 +27,14 @@
 2. 설문: `GET /survey/questions` → 응답 모으기 → `POST /survey/result`
 3. 결과: 2번 응답 하나로 화면 전체를 그린다(추가 호출 없음).
 4. 탐색: `GET /explore/ranking` + `GET /profiles/trend` + (두 연령대 비교 시) `GET /profiles`
+5. 인사이트: 홈과 리포트는 `GET /insights`, 분야별 연령대 패턴은 `GET /findings`를 읽는다.
+
+### 웹 분석 산출물
+
+Python의 `appbti_pipeline.site_data`가 같은 집계에서 생성한 `clean.csv`와 `profiles.json`으로 웹 분석 산출물을 만든다.
+두 API는 요청한 `dataset`에 맞는 `insights.json`과 `findings.json`을 반환한다.
+산출물이 없으면 각각 `INSIGHTS_UNAVAILABLE`, `FINDINGS_UNAVAILABLE` 코드로 HTTP 503을 반환한다.
+실제 데이터 산출물은 로컬에서 준비한다.
 
 ### 데이터 종류에 따른 응답 형식
 
