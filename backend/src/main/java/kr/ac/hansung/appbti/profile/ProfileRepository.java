@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +35,7 @@ public class ProfileRepository {
         if (datasets.isEmpty()) log.warn("적재한 집단 통계가 없습니다. 조회 API는 503을 반환합니다.");
     }
 
+    // 산출물 파일 하나를 읽어 데이터 버전 이름으로 등록한다.
     private void load(ObjectMapper mapper, String name, Path path) throws IOException {
         if (!Files.isRegularFile(path)) return;
         ProfileData data = mapper.readValue(path.toFile(), ProfileData.class);
@@ -48,19 +48,22 @@ public class ProfileRepository {
                 data.meta().months().getFirst(), data.meta().latestMonth());
     }
 
+    // 데이터 버전 이름으로 적재한 산출물을 찾는다.
     public ProfileData get(String dataset) {
-        if (datasets.isEmpty()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+        if (datasets.isEmpty()) throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "PROFILES_UNAVAILABLE",
                 "집단 통계를 준비하지 못했습니다. README의 목업 파이프라인을 먼저 실행하세요.");
         ProfileData data = datasets.get(dataset);
-        if (data == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "제공하지 않는 데이터 버전입니다.");
+        if (data == null) throw new ApiException(HttpStatus.NOT_FOUND, "DATASET_NOT_FOUND", "제공하지 않는 데이터 버전입니다.");
         return data;
     }
 
+    // 적재한 데이터 버전 이름 목록을 돌려준다.
     public List<String> availableDatasets() { return List.copyOf(datasets.keySet()); }
 
+    // 요청한 기준월을 검사하고, 생략하면 최신월을 돌려준다.
     public String month(ProfileData data, String requested) {
         String month = requested == null ? data.meta().latestMonth() : requested;
-        if (!data.meta().months().contains(month)) throw new IllegalArgumentException("제공하지 않는 기준월입니다.");
+        if (!data.meta().months().contains(month)) throw ApiException.badRequest("INVALID_MONTH", "제공하지 않는 기준월입니다.");
         return month;
     }
 }

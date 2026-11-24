@@ -201,6 +201,7 @@ python -m appbti_pipeline --input ../data/raw/real --out ../data/processed/real 
 | `appbti.similarity-path` | `../config/similarity.yaml` | `APPBTI_SIMILARITY_PATH` |
 | `appbti.mock-similarity-path` | `../config/similarity.mock.yaml` | `APPBTI_MOCK_SIMILARITY_PATH` |
 | `appbti.survey-questions-path` | `../config/survey_questions.yaml` | `APPBTI_SURVEY_QUESTIONS_PATH` |
+| `appbti.mock-survey-questions-path` | `../config/survey_questions.mock.yaml` | `APPBTI_MOCK_SURVEY_QUESTIONS_PATH` |
 
 백엔드는 기동 시 적재한 산출물 경로와 실제/목업 여부를 로그에 남긴다. 실제 산출물을 찾지 못해 목업으로 대체하면 `WARN` 로그가 나온다.
 

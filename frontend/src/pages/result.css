@@ -1,0 +1,160 @@
+/* 결과 v2 — Figma「결과 리포트」(48-868)·「상세 분석」(48-1283)의 카드 구성을 따른다.
+   AGENTS.md 10장에 따라 디지털 나이·% 일치율·성향 스펙트럼·시간대 분석은 넣지 않고, 거리 숫자 대신 순위로 보여 준다. */
+.rs-page { width: min(1120px, calc(100% - 48px)); margin-inline: auto; padding-block: 24px 72px; display: flex; flex-direction: column; gap: 24px; }
+.rs-topline { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: var(--muted); }
+.rs-status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: var(--pill-radius); background: var(--brand-soft); color: var(--brand); font-weight: 650; }
+.rs-status span { font-size: 8px; }
+
+.rs-card { padding: 28px 32px; border-radius: var(--card-radius); background: var(--paper); box-shadow: var(--card-shadow); min-width: 0; }
+.rs-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.rs-card-head h2 { font-size: 19px; }
+.rs-chip { flex-shrink: 0; padding: 4px 12px; border-radius: var(--pill-radius); background: var(--surface); font-size: 11px; font-weight: 650; color: var(--brand); }
+.rs-muted { font-size: 13px; color: var(--muted); }
+.rs-note { margin-top: 14px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+/* 내 연령대 카드: 고르기 전 안내 문장은 카드 맨 아래에 둔다(옆 순위 카드와 높이가 같아 아래 여백이 큼). */
+.rs-peer-card { display: flex; flex-direction: column; }
+.rs-peer-foot { margin-top: auto; padding-top: 16px; }
+.rs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+
+.rs-hero { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 32px; padding: 36px 40px; border-radius: var(--card-radius); color: #fff;
+  background: radial-gradient(ellipse at 85% 20%, rgb(255 255 255 / 14%), transparent 50%), linear-gradient(135deg, #2f7a55 0%, #006C48 55%, #0b5a3e 100%); box-shadow: 0 12px 32px rgb(0 108 72 / 22%); }
+.rs-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .05em; opacity: .85; }
+.rs-match { margin-top: 8px; font-size: clamp(36px, 6vw, 52px); font-weight: 750; letter-spacing: -.04em; line-height: 1.15; }
+.rs-sentence { margin-top: 14px; font-size: 17px; font-weight: 550; }
+.rs-sub { margin-top: 6px; font-size: 14px; opacity: .9; }
+.rs-type { margin-top: 16px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.rs-hero-side { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px; border-radius: 24px; background: rgb(255 255 255 / 12%); text-align: center; font-size: 13px; }
+.rs-hero-rank { position: relative; display: grid; place-items: center; width: 96px; height: 96px; font-size: 26px; font-weight: 750; }
+.rs-hero-rank > span { position: relative; }
+.rs-hero-rank svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+/* 굵기는 지름의 6.25%: 데스크톱 96px에서 6px, 모바일 64px에서 4px(이전 테두리 굵기와 같음). */
+.rs-hero-rank circle { fill: none; stroke-width: 6.25; }
+.rs-ring-track { stroke: rgb(255 255 255 / 22%); }
+.rs-ring-fill { stroke: rgb(255 255 255 / 85%); stroke-linecap: round; transition: stroke-dasharray .4s ease; }
+.rs-hero-rank small { font-size: 14px; font-weight: 600; margin-left: 2px; }
+
+.rs-ranking { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rs-ranking li { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px; border-radius: 16px; background: #F6F8FB; }
+.rs-ranking li.best { background: var(--brand-soft); box-shadow: inset 0 0 0 1px rgb(0 108 72 / 30%); }
+.rs-ranking li.near { background: #F0F5F2; }
+.rs-rank-num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #E3E8EF; font-size: 13px; font-weight: 700; color: var(--muted); }
+.rs-ranking li.best .rs-rank-num { background: var(--brand); color: #fff; }
+.rs-rank-label { font-size: 15px; font-weight: 650; }
+.rs-rank-label { min-width: 72px; }
+.rs-rank-bar { flex: 1; height: 10px; border-radius: var(--pill-radius); background: #E6EBF1; overflow: hidden; }
+.rs-rank-bar i { display: block; height: 100%; border-radius: inherit; background: #9FCBB4; transition: width .25s ease; }
+.rs-ranking li.best .rs-rank-bar i { background: var(--brand); }
+.rs-ranking li.near .rs-rank-bar i { background: var(--brand-light); }
+/* 표시 칸을 모든 줄에 같은 너비로 둬서 막대 칸 길이가 같게 한다(막대끼리 길이 비교가 되도록). */
+.rs-ranking .rs-tags { margin-left: 0; flex: 0 0 92px; justify-content: flex-end; }
+.rs-tag { padding: 2px 10px; border-radius: var(--pill-radius); background: #E9EDF2; font-size: 11px; font-weight: 650; color: #4a5561; }
+.rs-tag.brand { background: var(--brand); color: #fff; }
+.rs-tags { margin-left: auto; display: flex; gap: 6px; }
+.rs-tag.more { background: #FDEDEA; color: #A23B2A; }
+.rs-tag.less { background: #EAF1FB; color: #2D5FA8; }
+
+.rs-callout { margin: 12px 0; padding: 14px 18px; border-radius: 16px; background: #F4EFF8; color: #4b2f63; font-size: 14px; }
+.rs-peer-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rs-peer-list li { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: #F6F8FB; font-size: 14px; line-height: 1.6; }
+.rs-dir { flex-shrink: 0; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 700; }
+.rs-dir.more { background: #FDEDEA; color: #A23B2A; }
+.rs-dir.less { background: #EAF1FB; color: #2D5FA8; }
+.rs-suggestion { display: flex; gap: 10px; margin-top: 14px; padding: 14px 18px; border-radius: 16px; background: var(--brand-soft); color: var(--brand); font-size: 14px; font-weight: 600; }
+
+.rs-age { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.rs-age-label { width: 100%; font-size: 12px; color: var(--muted); }
+.rs-age button { min-height: 38px; padding: 6px 14px; border: 1px solid var(--line); border-radius: var(--pill-radius); background: #fff; font-size: 13px; font-weight: 600; }
+.rs-age button[aria-pressed=true] { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+.rs-age button:disabled { opacity: .6; }
+
+.rs-evidence ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.rs-evidence li { padding: 14px 16px; border-radius: 18px; background: #F6F8FB; }
+.rs-evidence.similar li { background: #F1F8F4; }
+.rs-evidence.different li { background: #F5F1FA; }
+.rs-ev-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; }
+.rs-ev-title strong { font-size: 15px; }
+.rs-ev-title > span:not(.rs-tag) { font-size: 12px; color: var(--muted); }
+.rs-ev-title .rs-tag { margin-left: auto; }
+.rs-bars { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; }
+.rs-bars > div { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 10px; }
+.rs-bars dt { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-bars dd { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(64px, max-content); align-items: center; gap: 10px; }
+.rs-bar { display: block; height: 10px; border-radius: var(--pill-radius); background: #E6EBF1; overflow: hidden; }
+.rs-bar i { display: block; height: 100%; border-radius: inherit; background: #8CCBAA; }
+.rs-bar i.me { background: var(--brand); }
+.rs-evidence.different .rs-bar i.me { background: #5E4A86; }
+.rs-bars b { text-align: right; font-size: 14px; font-variant-numeric: tabular-nums; }
+
+.rs-method summary { cursor: pointer; font-size: 15px; font-weight: 650; }
+.rs-method p { margin-top: 12px; font-size: 13px; color: #3c4652; line-height: 1.75; }
+.rs-excluded { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.rs-excluded li { display: flex; gap: 8px; padding: 6px 12px; border-radius: var(--pill-radius); background: #F6F8FB; font-size: 12px; }
+.rs-excluded span { color: var(--muted); }
+
+.rs-insufficient { text-align: center; padding-block: 48px; }
+.rs-insufficient-symbol { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: var(--surface); font-size: 24px; color: var(--brand); }
+.rs-insufficient h1 { font-size: 26px; }
+.rs-insufficient > p { margin-top: 10px; color: var(--muted); font-size: 14px; }
+.rs-count { display: inline-flex; flex-direction: column; gap: 4px; margin-top: 20px; padding: 16px 28px; border-radius: 20px; background: var(--surface); }
+.rs-count strong { font-size: 28px; color: var(--brand); }
+.rs-count strong span { font-size: 14px; color: var(--muted); }
+.rs-count > span { font-size: 12px; color: var(--muted); }
+.rs-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.rs-actions.bottom { margin-top: 0; }
+.rs-source { text-align: center; }
+
+@media (max-width: 860px) {
+  .rs-grid { grid-template-columns: minmax(0, 1fr); }
+  .rs-hero { grid-template-columns: minmax(0, 1fr); padding: 28px; }
+  .rs-hero-side { flex-direction: row; justify-content: flex-start; }
+  .rs-hero-rank { width: 64px; height: 64px; font-size: 18px; }
+  .rs-hero-rank small { font-size: 12px; }
+}
+@media (max-width: 600px) {
+  .rs-page { width: calc(100% - 32px); gap: 18px; }
+  .rs-card { padding: 22px 18px; border-radius: 24px; }
+  .rs-hero { padding: 24px 20px; border-radius: 24px; }
+  .rs-sentence { font-size: 15px; }
+  .rs-actions .button { flex: 1 1 100%; }
+}
+
+/* 점 두 개 막대: 가운데가 '평소(자기 평균)'. 나(●)와 연령대(◆)의 위치, 그 사이 선이 차이다. */
+.rs-scale { padding: 16px 22px; border-radius: 20px; background: var(--paper); box-shadow: var(--card-shadow); font-size: 13px; color: var(--muted); line-height: 1.7; }
+.rs-scale strong { display: block; color: var(--ink); font-size: 15px; }
+.rs-legend { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.rs-legend .me { color: var(--brand); }
+.rs-legend .group { color: #C27A1A; margin-left: 10px; }
+/* 범례도 속이 빈 마름모(◇)로 맞춘다. */
+.rs-dot { margin-top: 14px; }
+.rs-dot-track { position: relative; display: block; height: 10px; border-radius: var(--pill-radius); background: #E6EBF1; }
+.rs-dot-mid { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; background: #9AA5B1; border-radius: 1px; }
+.rs-dot-track i { position: absolute; top: 2px; bottom: 2px; border-radius: var(--pill-radius); background: #8CCBAA; }
+.rs-dot-track i.more { background: #E4A194; }
+.rs-dot-track i.less { background: #93B4E3; }
+.rs-dot-track b { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; box-shadow: 0 0 0 2px var(--paper); }
+.rs-dot-track b.me { border-radius: 50%; background: var(--brand); }
+.rs-dot-track b.group { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: transparent; border: 3px solid #E8A23A; box-shadow: none; transform: rotate(45deg); border-radius: 3px; }
+.rs-dot-scale { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--muted); }
+.rs-ev-raw { margin-top: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 응답 패턴 지도 */
+.rs-map { display: block; width: 100%; height: auto; margin-top: 8px; background: #F7F9FC; border-radius: 20px; }
+.rs-map line { stroke-width: 2; stroke-dasharray: 5 5; }
+.rs-map line.top { stroke: var(--brand); }
+.rs-map line.focus { stroke: #E8A23A; }
+.rs-map-age circle { fill: #B8C2CF; stroke: #fff; stroke-width: 2; }
+.rs-map-age.top circle { fill: var(--brand); }
+.rs-map-age.focus circle { fill: #E8A23A; }
+.rs-map-age text { font-size: 13px; font-weight: 600; fill: #4a5561; }
+.rs-map-age.top text { fill: var(--brand); font-weight: 750; }
+.rs-map-me path { fill: #151C22; stroke: #fff; stroke-width: 2; }
+.rs-map-me text { font-size: 13px; font-weight: 750; fill: #151C22; }
+.rs-map-legend { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.rs-map-legend .me { color: #151C22; } .rs-map-legend .top { color: var(--brand); } .rs-map-legend .focus { color: #E8A23A; } .rs-map-legend .other { color: #B8C2CF; }
+.rs-map-legend span:not(:first-child) { margin-left: 8px; }
+
+/* 비슷한·먼 항목 토글 */
+/* 펼침 표시는 '결과는 어떻게 계산했나요?'처럼 브라우저 기본 삼각형을 쓴다(display를 flex로 바꾸면 기본 삼각형이 사라진다). */
+.rs-items-toggle > summary { cursor: pointer; font-size: 16px; font-weight: 700; }
+.rs-items-toggle > .rs-grid { margin-top: 18px; }
+.rs-items-toggle .rs-card { box-shadow: none; background: #FAFBFD; }

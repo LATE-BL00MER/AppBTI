@@ -12,3 +12,7 @@ appbti:
   mock-similarity-path: ${APPBTI_MOCK_SIMILARITY_PATH:../config/similarity.mock.yaml}
   # 실제 설문 문항 설정. 없으면 /meta.survey의 문항 수·기간은 null이다.
   survey-questions-path: ${APPBTI_SURVEY_QUESTIONS_PATH:../config/survey_questions.yaml}
+  # 목업 데이터 설문 문항(v2, 가상 중분류). 없으면 목업 설문을 제공하지 않는다.
+  mock-survey-questions-path: ${APPBTI_MOCK_SURVEY_QUESTIONS_PATH:../config/survey_questions.mock.yaml}
+  # 또래 비교 기준값·문장 템플릿. 없으면 peerComparison을 만들지 않는다.
+  peer-messages-path: ${APPBTI_PEER_MESSAGES_PATH:../config/peer_messages.yaml}

@@ -114,3 +114,17 @@
 5. 전원: 상세 분석은 결과에 통합하고, 디지털 나이·7단계 성향 척도·앱 사용 기록·근거 없는 수치를 제거하는 수정 범위 확인.
 
 유진의 남은 회의 전 행동: 위 요약을 단톡에 공유하고 신진용·임기범의 11/10 API JSON 초안을 받아 회의에 준비한다. 메시지 전송은 자동으로 수행하지 않았다.
+
+
+## 2026-11-22 설문·결과 v2 전환 (브랜치 `feat/yujin-frontend-v2`)
+
+- 기준: `docs/API.md` v2(PR #25·#26), Figma 설문 검사(48-460)·결과 리포트(48-868)·상세 분석(48-1283).
+- `api/types.ts`·`client.ts`: v2 타입(문항 `metric`·`answerFormats`, 응답 `answered/not_used/unknown`, `rankings`·`nearTie`·`patternClarity`·`peerComparison`·`statedDiffers`), 오류 `{status, code, message}`를 `ApiError`로 전달.
+- `state.tsx`: 응답을 문항 ID별 v2 형식으로 탭에만 보관(`appbti:draft:v2`). 선택 연령대 `ageGroup`은 저장하지 않고 요청에만 쓴다.
+- 설문: 일수 문항은 7점 원형 척도, 시간 문항은 5지선다 목록. 모든 문항에 '사용 안 함'·'잘 모르겠음', 미리 선택 없음. 답 형식별 파트(일수 → 시간 5문항씩), 상단 진행률, 하단 파트 트래커, 마지막 파트에 연령대 선택(선택 사항). 답하지 않은 문항은 보내지 않는다(서버가 `unknown`으로 처리).
+- 결과: 1위 연령대 + 근소 시 2위("○○와/과도 비슷합니다"), 패턴 불명확 문구, 6개 연령대 순위(거리 숫자 없음), 닮은·다른 항목(단위 표시, 상대 치우침 안내), 또래 비교는 서버 `message`·`statedDiffers`·`note`를 그대로 표시, 결과 화면에서 연령대를 고르면 다시 요청. 비교 불가는 `reason` + `nextAction` 탐색 안내.
+- Figma에서 뺀 것(AGENTS.md 10장): 디지털 나이, % 일치율, 성향 스펙트럼, 시간대·푸시·동기화 분석, 공유 버튼, 근거 없는 수치.
+- 홈: v1 '예시 응답으로 결과 체험'은 v2 설문과 맞지 않아 뺐다. TODO(확인 필요): 홈 Figma 교체 때 다시 둘지 결정.
+- 확인: `tsc --noEmit`·`vite build` 통과. `docs/examples` 가상 응답을 돌려주는 임시 API로 1440·390px 설문 3파트·결과·연령대 미선택·비교 불가 화면 확인, 390px 가로 넘침 없음, 콘솔 오류 없음.
+- 미확인: 실제 Spring 백엔드(v2 JAR) 연동. 이 환경에서 Gradle 다운로드가 막혀 JAR을 새로 만들지 못했다. Windows에서 `scripts/prepare-demo` 후 확인 필요.
+- 남은 일: 데이터 안내(AboutData)의 v1 문구(0일 정책·월평균 이용일수 설문), 홈·탐색 Figma 교체, 탐색 랭킹 `basis` 선택.

@@ -7,16 +7,24 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# 가상 원본은 기존 목업 형식(한글 열)으로만 쓴다. 코드북 columns에는 같은 필드의 별칭
+# (LG U+ 원본 열, 정제 CSV 표준 열)이 함께 있어 그대로 쓰면 열이 중복되고 값이 없는 열(age_label)에서 멈춘다.
+MOCK_COLUMNS = ["기준월", "연령대(6구간)", "대분류명", "중분류 코드", "중분류명", "월간 유니크 이용자수",
+                "월간 평균 이용일수", "일평균 이용시간", "시간 단위", "데이터 상태", "비고"]
+
 
 def generate() -> None:
     base = yaml.safe_load((ROOT / "config/codebook.yaml").read_text(encoding="utf-8"))
     mock = yaml.safe_load((ROOT / "config/codebook.mock.yaml").read_text(encoding="utf-8"))
+    missing = [name for name in MOCK_COLUMNS if name not in base["columns"]]
+    if missing:
+        raise KeyError(f"codebook.yaml columns에 목업 열이 없습니다: {missing}")
     # 항목마다 봉우리가 다른 단순 패턴. 어떤 실제 세대의 특징도 가정하지 않는다.
     peaks = [0, 1, 0, 1, 3, 4, 2, 3, 2, 1, 5, 4]
     for with_time in (False, True):
         folder = ROOT / "data/mock" / ("with_time" if with_time else "basic")
         folder.mkdir(parents=True, exist_ok=True)
-        columns = dict(base["columns"])
+        columns = {name: base["columns"][name] for name in MOCK_COLUMNS}
         if not with_time:
             columns = {k: v for k, v in columns.items() if v not in ("avg_daily_time", "time_unit")}
         with (folder / "mock_usage.csv").open("w", encoding="utf-8-sig", newline="") as stream:
