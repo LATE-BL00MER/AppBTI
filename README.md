@@ -67,7 +67,37 @@ uv venv pipeline/.venv --python 3.11 --cache-dir .cache/uv
 uv pip install --python pipeline/.venv/Scripts/python.exe -r pipeline/requirements-dev.txt --cache-dir .cache/uv
 ```
 
-가상 원본 두 종류, 산출물과 실행용 백엔드 JAR을 준비한다.
+### 한 번에 미리보기
+
+처음 한 번 프론트엔드 의존성을 설치한 다음 실행한다. 브라우저가 열리고 터미널에 접속 주소가 나온다.
+
+```powershell
+npm.cmd --prefix frontend ci
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-insights-preview.ps1 -Mock
+```
+
+실제 집계로 보려면 승인된 원본 하나를 로컬 `data/raw/real/`에 두고 `-Mock` 없이 실행한다.
+원본 위치를 직접 지정하거나 다시 정제하려면 `-RawInput`에 CSV 또는 XLSX 파일 경로를 전달한다.
+같은 집계에서 생성한 `clean.csv`와 `profiles.json`이 있다면 `-CleanCsv`, `-ProfilesJson`으로 경로를 지정할 수 있다.
+스크립트는 `insights.json`과 `findings.json`을 준비한 뒤 저장소의 Spring 백엔드와 Vite를 실행한다.
+실제 원본과 모든 실제 산출물은 로컬에 둔다.
+
+#### pull 받은 뒤 실제 데이터로 다시 실행할 때
+
+`-Mock` 없이 실행하면 `data/processed/real/`에 이미 있는 `clean.csv`와 `profiles.json`을 **다시 정제하지 않고 그대로 쓴다.**
+`insights.json`과 `findings.json`만 새로 만든다.
+pull로 파이프라인 정제 코드(`pipeline/appbti_pipeline/`)가 바뀌었다면 예전 정제 결과로 화면이 뜨거나 "분석 결과를 다시 생성해 주세요"가 나올 수 있다.
+이때는 `-RawInput`으로 원본을 지정해 처음부터 다시 정제한다. 이미 떠 있는 미리보기 서버는 먼저 종료한다.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-insights-preview.ps1 -RawInput "data/raw/real/<원본 파일 이름>.csv"
+```
+
+`data/processed/real/` 폴더를 비운 뒤 `-RawInput` 없이 실행해도 원본부터 다시 정제한다.
+
+### 별도 터미널에서 실행
+
+가상 원본 두 종류, 프로필과 웹 분석 산출물, 실행용 백엔드 JAR을 준비한다.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-demo.ps1
@@ -79,14 +109,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/prepare-demo.ps1
 cd pipeline
 ./.venv/Scripts/python.exe -m appbti_pipeline --input ../data/mock/basic --out ../data/processed/mock --codebook ../config/codebook.mock.yaml
 ./.venv/Scripts/python.exe -m appbti_pipeline --input ../data/mock/with_time --out ../data/processed/mock-time --codebook ../config/codebook.mock.yaml
-./.venv/Scripts/python.exe -m pytest --basetemp ../.cache/pytest-pipeline
+foreach ($dataset in @('mock', 'mock-time')) {
+    $output = "../data/processed/$dataset"
+    ./.venv/Scripts/python.exe -m appbti_pipeline.site_data --input "$output/clean.csv" --profiles "$output/profiles.json" --out $output --codebook ../config/codebook.mock.yaml
+}
 ```
 
 백엔드와 프론트엔드는 각각 별도 터미널에서 실행한다.
 
 ```powershell
 cd backend
-java -jar build/libs/appbti-backend-0.1.0-SNAPSHOT.jar
+java -jar build/libs/appbti-backend-0.1.0-SNAPSHOT.jar --server.address=127.0.0.1
 ```
 
 ```powershell
@@ -128,7 +161,7 @@ pipeline/.venv/bin/python -m pip install -r pipeline/requirements-dev.txt
 
 ```bash
 cd backend
-java -jar build/libs/appbti-backend-0.1.0-SNAPSHOT.jar
+java -jar build/libs/appbti-backend-0.1.0-SNAPSHOT.jar --server.address=127.0.0.1
 ```
 
 ```bash
@@ -137,11 +170,10 @@ npm run dev
 ```
 
 브라우저에서 `http://127.0.0.1:5173`을 연다. 백엔드는 8080 포트를 사용한다.
-`--real` 산출물을 사용하려면 백엔드 실행 시
-`APPBTI_PROFILES_PATH=../data/processed/real/profiles.json java -jar build/libs/appbti-backend-0.1.0-SNAPSHOT.jar`로 지정한다.
+백엔드는 기본 경로의 실제 산출물이 있으면 그 파일을 먼저 읽는다. 실제 산출물이 없으면 가상 산출물을 사용한다.
 
 두 서버가 목업 데이터로 실행 중일 때 저장소 루트의 세 번째 터미널에서 다음 검증을 실행한다.
-두 목업 버전의 설문·결과·결측 처리와 Vite 프록시를 실제 HTTP 요청 26개로 확인한다.
+두 목업 버전의 분석·설문·결측 처리와 Vite 프록시를 HTTP 요청으로 확인한다.
 실제 데이터용 검증은 아니므로 실제 산출물을 사용하는 서버에서는 실행하지 않는다.
 
 ```bash
@@ -182,14 +214,17 @@ PR에서는 GitHub Actions가 같은 검사를 한다.
 ```bash
 cd pipeline
 python -m appbti_pipeline --input ../data/raw/real --out ../data/processed/real --codebook ../config/codebook.yaml
+python -m appbti_pipeline.site_data --input ../data/processed/real/clean.csv --profiles ../data/processed/real/profiles.json --out ../data/processed/real --codebook ../config/codebook.yaml
 ```
 
-`config/codebook.yaml`은 희망 제공 컬럼 매핑을 담는다. 제공처의 연령대 6구간과
-중분류 정의는 아직 비워두었다. 평균 이용일수 분모와 시간 지표의 단위·정의·분모는
-`TODO(확인 필요)`로 표시했고, 관련 기능 플래그는 기본적으로 껐다.
-`config/similarity.yaml`의 방식·가중치·최소 비교 개수·0일 처리도 미확정 상태다.
-실제 데이터용 설정은 정의 확인 전까지 비활성화한다. 시연용으로 활성화한 값은
-`codebook.mock.yaml`, `similarity.mock.yaml`에만 있다. 코드북 확장 설정은 원본 컬럼 매핑을 상속한다.
+`config/codebook.yaml`은 원본 컬럼 매핑, 여섯 연령대, 중분류 및 지표 정의를 담는다.
+실제 설문은 `config/survey_questions.yaml`의 14문항과 `config/similarity.yaml`의 CLR 비교 설정을 사용한다.
+시간 비교는 현재 미리보기와 같은 이용일 기준 설정을 사용한다. 이용시간의 하루 기준은 데이터 안내에서 설명한다.
+가상 데이터는 별도 목업 코드북과 설문 설정을 사용한다.
+
+`profiles.json`에는 탐색 지표와 설문 비교 기준값이 들어간다.
+`insights.json`은 홈과 인사이트 리포트에서, `findings.json`은 분야별 연령대 패턴과 데이터 안내에서 읽는다.
+한 데이터 버전의 산출물은 같은 폴더에 두고 모두 함께 갱신한다.
 
 백엔드 `application.yaml`은 다음 경로를 받는다.
 
@@ -198,6 +233,12 @@ python -m appbti_pipeline --input ../data/raw/real --out ../data/processed/real 
 | `appbti.profiles-path` | `../data/processed/real/profiles.json` | `APPBTI_PROFILES_PATH` |
 | `appbti.mock-profiles-path` | `../data/processed/mock/profiles.json` | `APPBTI_MOCK_PROFILES_PATH` |
 | `appbti.mock-time-profiles-path` | `../data/processed/mock-time/profiles.json` | `APPBTI_MOCK_TIME_PROFILES_PATH` |
+| `appbti.insights-path` | `../data/processed/real/insights.json` | `APPBTI_INSIGHTS_PATH` |
+| `appbti.mock-insights-path` | `../data/processed/mock/insights.json` | `APPBTI_MOCK_INSIGHTS_PATH` |
+| `appbti.mock-time-insights-path` | `../data/processed/mock-time/insights.json` | `APPBTI_MOCK_TIME_INSIGHTS_PATH` |
+| `appbti.findings-path` | `../data/processed/real/findings.json` | `APPBTI_FINDINGS_PATH` |
+| `appbti.mock-findings-path` | `../data/processed/mock/findings.json` | `APPBTI_MOCK_FINDINGS_PATH` |
+| `appbti.mock-time-findings-path` | `../data/processed/mock-time/findings.json` | `APPBTI_MOCK_TIME_FINDINGS_PATH` |
 | `appbti.similarity-path` | `../config/similarity.yaml` | `APPBTI_SIMILARITY_PATH` |
 | `appbti.mock-similarity-path` | `../config/similarity.mock.yaml` | `APPBTI_MOCK_SIMILARITY_PATH` |
 | `appbti.survey-questions-path` | `../config/survey_questions.yaml` | `APPBTI_SURVEY_QUESTIONS_PATH` |
@@ -221,7 +262,7 @@ frontend: npm run build
 ```
 
 로컬 서버 둘을 실행한 상태에서 `python scripts/check_demo.py`로 Vite 프록시와 두 목업 버전의
-실제 HTTP 응답 26개를 확인할 수 있다. 외부 서비스나 Claude는 호출하지 않는다.
+HTTP 응답을 확인할 수 있다.
 
 AI 에이전트 작업 지침은 `AGENTS.md`(공통 기준)와 `CLAUDE.md`(Claude Code 진입점)에 있다.
 Claude Code, Codex 어느 쪽으로도 구현·리뷰를 할 수 있으며, 역할은 `AGENTS.md`의 작업 모드가 정한다.
