@@ -1,6 +1,7 @@
 /* 설문 v2 — Figma「AppBTI 최종 통합 · 설문 검사」(node 48-460) 기준.
    진행바 → 파트 카드 → 안내 → 문항 카드(일수: 7점 원형 척도 / 시간: 5지선다 목록) → 이전·다음 → 파트 트래커. */
 .sv-page { width: min(896px, calc(100% - 48px)); margin-inline: auto; padding-block: 16px 72px; display: flex; flex-direction: column; gap: 28px; }
+.sv-pattern-origin { align-self: flex-start; margin-bottom: -8px; }
 
 .sv-progress { position: sticky; top: 0; z-index: 5; padding: 14px 4px 12px; background: rgb(246 249 255 / 94%); backdrop-filter: blur(6px); }
 /* 파트를 넘길 때 제목이 위에 고정된 진행 막대에 가리지 않게 한다. */

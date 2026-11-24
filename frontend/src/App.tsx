@@ -8,14 +8,20 @@ import { lazy, Suspense } from 'react';
 import { Loading } from './components/Common';
 import AboutData from './pages/AboutData';
 const Explore = lazy(() => import('./pages/Explore'));
+const AgeExplore = lazy(() => import('./pages/AgeExplore'));
+const InsightsReport = lazy(() => import('./pages/InsightsReport'));
+const MajorPatterns = lazy(() => import('./pages/MajorPatterns'));
 
 export default function App() {
   return (
     <BrowserRouter><AppProvider><AppLayout><Suspense fallback={<Loading />}><Routes>
       <Route path="/" element={<Intro />} />
+      <Route path="/insights" element={<InsightsReport />} />
       <Route path="/survey" element={<Survey />} />
       <Route path="/result" element={<Result />} />
       <Route path="/explore" element={<Explore />} />
+      <Route path="/explore/age" element={<AgeExplore />} />
+      <Route path="/patterns" element={<MajorPatterns />} />
       <Route path="/data" element={<AboutData />} />
       <Route path="*" element={<div className="empty-result"><h1>이 페이지는 찾을 수 없어요.</h1><a className="button primary" href="/">첫 화면으로</a></div>} />
     </Routes></Suspense></AppLayout></AppProvider></BrowserRouter>
