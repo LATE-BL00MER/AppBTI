@@ -423,22 +423,21 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
 .recharts-wrapper { font-size: 12px; }
 .stat-table-wrapper { width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; margin-top: 12px; padding-bottom: 4px; }
 .stat-table-wrapper:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-/* 값 표: 카드 폭으로 늘이면 이름과 숫자 사이가 비므로, 내용에 맞는 크기로 줄여 차트 아래 가운데에 둔다.
-   칸 사이는 고르게 띄우고, 좁은 화면에서는 감싼 영역이 가로로 스크롤된다. */
-.stat-table { width: auto; min-width: min(100%, 28rem); max-width: 100%; margin-inline: auto;
+/* 값 표: 모든 표를 같은 폭(최대 48rem)으로 맞춰 차트 아래 가운데에 둔다. 남는 폭은 칸마다 나눠
+   한 곳만 비지 않게 한다. 좁은 화면에서는 화면 폭에 맞추고, 칸이 많으면 감싼 영역이 가로로 스크롤된다. */
+.stat-table { width: min(100%, 48rem); margin-inline: auto;
   border-collapse: separate; border-spacing: 0; font-size: 12.5px; font-variant-numeric: tabular-nums;
   background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.stat-table td, .stat-table th { text-align: right; padding: 10px 22px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.stat-table th:first-child { text-align: left; padding-right: 32px; }
+/* 글자는 모든 칸에서 가운데 정렬한다. 숫자는 고정폭이라 가운데 정렬해도 자릿수가 크게 흔들리지 않는다. */
+.stat-table td, .stat-table th { text-align: center; padding: 10px 22px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .stat-table tbody tr:last-child > * { border-bottom: 0; }
 .stat-table thead th { font-size: 11.5px; font-weight: 600; color: var(--muted); background: #f5f8f6; }
 .stat-table tbody th { font-weight: 500; }
-/* 긴 문장이 든 열(InsightTable이 stat-text로 표시): 왼쪽 정렬로 줄바꿈한다. */
-.stat-table .stat-text { min-width: 16em; text-align: left; white-space: normal; }
+/* 긴 문장이 든 열(InsightTable이 stat-text로 표시): 줄바꿈을 허용한다. */
+.stat-table .stat-text { min-width: 16em; white-space: normal; }
 @media (max-width: 600px) {
   .stat-table { font-size: 12px; }
   .stat-table td, .stat-table th { padding: 8px 10px; }
-  .stat-table th:first-child { padding-left: 12px; padding-right: 14px; }
 }
 /* 구성비 순위 표: 순위·중분류는 왼쪽, 막대는 남는 폭, 값은 오른쪽 */
 .rank-table { min-width: 0; font-size: 14px; }
