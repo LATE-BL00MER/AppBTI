@@ -53,9 +53,13 @@ export default function InsightsReport() {
       {error ? <ErrorNotice message={error} retry={reload} /> : !data ? <Loading /> : !available ?
         <ErrorNotice message="현재 데이터 범위와 일치하는 분석 결과가 필요해요." retry={reload} /> :
         insightSections.map(({ id, title }) => <article className="insight-card insight-report-card" id={id} key={id}>
-          <h3>{title}</h3><p className="insight-headline">{id === 'frequency_duration' ? data.insights[id].headline : data.spotlights[id]?.headline ?? data.insights[id].headline}</p>
-          <p className="insight-caption">{explanations[id]}</p>
-          <InsightView id={id} document={data} expanded />
+          <h3>{title}</h3>
+          {/* 공통 서비스 카드는 헤드라인이 '강조할 연령대' 선택을 따라 바뀌므로 InsightView 안에서 헤드라인·설명을 그린다. */}
+          {id === 'common_signature' ? <InsightView id={id} document={data} expanded intro={explanations[id]} /> : <>
+            <p className="insight-headline">{id === 'frequency_duration' ? data.insights[id].headline : data.spotlights[id]?.headline ?? data.insights[id].headline}</p>
+            <p className="insight-caption">{explanations[id]}</p>
+            <InsightView id={id} document={data} expanded />
+          </>}
           <details className="insight-table"><summary>어떻게 계산했나요?</summary><p>{data.insights[id].method_note}</p></details>
         </article>)}
     </section>
