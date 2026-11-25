@@ -29,10 +29,6 @@ export default function InsightsReport() {
     <header className="insight-hero">
       <h1>인사이트 리포트</h1>
       <p>같은 서비스를 어떤 연령대가 자주 찾고 오래 쓰는지, 월별 집계에서 그 근거를 비교했어요.</p>
-      <nav aria-label="리포트 목차" className="insight-contents">
-        <a href="#data">데이터 소개</a><a href="#method">분석 방법</a><a href="#findings">발견</a>
-        <a href="#limits">데이터의 한계</a><a href="#survey">선택 설문</a>
-      </nav>
     </header>
     <section id="data" className="insight-story">
       <h2>어떤 데이터를 봤나요?</h2>

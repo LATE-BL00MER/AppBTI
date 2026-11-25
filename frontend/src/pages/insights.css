@@ -30,7 +30,7 @@
 .home-service-values > div:first-child dd { font-size: .84rem; font-weight: 400; }
 .insight-more { display: inline-block; margin-top: 1rem; }
 .insight-card label, .insight-map label, .explore-pickers label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: .9rem; font-weight: 600; }
-.insight-selects, .insight-contents { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.insight-selects { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .insight-selects label { max-width: 100%; min-width: 0; }
 .insight-selects .insight-caption { margin: 0; }
 .insight-distance-list { display: grid; gap: 7px; margin: 12px 0; }

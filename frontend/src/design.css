@@ -715,9 +715,6 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
 }
 .insight-hero h1, .patterns-heading h1 { margin: 0; font-size: 30px; font-weight: 650; letter-spacing: -.035em; line-height: 1.35; }
 .insight-hero p, .patterns-heading p { margin-top: 12px; font-size: 14px; color: var(--muted); }
-.insight-contents { gap: 8px; margin-top: 16px; }
-.insight-contents a { display: inline-flex; align-items: center; min-height: 36px; padding: 6px 14px; border: 1px solid var(--line); border-radius: var(--pill-radius); background: #fff; font-size: 13px; font-weight: 600; color: #4a5561; text-decoration: none; }
-.insight-contents a:hover { color: var(--brand); border-color: var(--brand-light); }
 
 /* 연령대·대분류 선택은 설문 연령대 선택과 같은 알약 버튼으로 통일한다. */
 .explore-pickers .group-picker,
