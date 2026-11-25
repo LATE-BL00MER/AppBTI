@@ -9,7 +9,8 @@ import AdjacentGaps from './AdjacentGaps';
 type Report = InsightsDocument['insights'];
 type Section = typeof insightSections[number]['id'];
 
-export default function InsightView({ id, document, expanded = false }: { id: Section; document: InsightsDocument; expanded?: boolean }) {
+// intro: 리포트에서 헤드라인 아래에 둘 설명. 헤드라인이 화면 안 선택을 따라 바뀌는 카드(공통 서비스)는 헤드라인·설명을 여기서 그린다.
+export default function InsightView({ id, document, expanded = false, intro }: { id: Section; document: InsightsDocument; expanded?: boolean; intro?: string }) {
   const { insights, age_groups: ages } = document;
   const focus = document.spotlights[id];
   if (!expanded && !focus) return null;
@@ -24,7 +25,7 @@ export default function InsightView({ id, document, expanded = false }: { id: Se
     </>;
   }
   if (id === 'frequency_duration') return <FrequencyDuration data={insights.frequency_duration.chart_data} ages={ages} focus={focus} />;
-  return <Signatures data={insights.common_signature.chart_data} ages={ages} expanded={expanded} focus={focus} />;
+  return <Signatures data={insights.common_signature.chart_data} ages={ages} expanded={expanded} focus={focus} intro={intro} />;
 }
 
 function AgeSelect({ ages, value, onChange }: { ages: Age[]; value: string; onChange: (age: string) => void }) {
@@ -96,7 +97,12 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
   </>;
 }
 
-function Signatures({ data, ages, expanded, focus }: { data: Report['common_signature']['chart_data']; ages: Age[]; expanded: boolean; focus: Spotlight | null }) {
+// 대표 서비스 헤드라인을 '두드러진다'고 말할 최소 배수. 파이프라인 insights.py의 VISIBLE_MULTIPLIER와 같다.
+const VISIBLE_MULTIPLIER = 1.05;
+
+function Signatures({ data, ages, expanded, focus, intro }: {
+  data: Report['common_signature']['chart_data']; ages: Age[]; expanded: boolean; focus: Spotlight | null; intro?: string;
+}) {
   const [chosen, setChosen] = useState('');
   const highest = Object.entries(data.signatures).filter(([, rows]) => rows.length)
     .sort(([, a], [, b]) => b[0].multiplier - a[0].multiplier)[0]?.[0] ?? ages[0]?.id;
@@ -104,9 +110,17 @@ function Signatures({ data, ages, expanded, focus }: { data: Report['common_sign
   const all = data.signatures[active] ?? [];
   const representative = data.points.find(row => row.age_group === active && row.minor_code === focus?.minor_code);
   const rows = expanded ? all : representative ? [representative] : [];
+  // 리포트 헤드라인은 고른 연령대의 1위 대표 서비스로 만든다. 문장 형식·기준 배수는 파이프라인(insights.py)과 같다.
+  const top = all[0];
+  const ageLabel = ages.find(age => age.id === active)?.label ?? active;
+  const headline = !top ? `${ageLabel}에서 비교할 대표 서비스가 없어요.`
+    : top.multiplier >= VISIBLE_MULTIPLIER ? `${ageLabel}의 ${top.minor_name} 이용은 다른 연령대보다 두드러져요(약 ${pretty(top.multiplier, '배')}).`
+      : '대표 서비스는 연령대 평균과 비슷하게 나타났어요.';
 
   return <>
-    {expanded && <><AgeSelect ages={ages} value={active} onChange={setChosen} />
+    {expanded && <><p className="insight-headline" aria-live="polite">{headline}</p>
+      {intro && <p className="insight-caption">{intro}</p>}
+      <AgeSelect ages={ages} value={active} onChange={setChosen} />
       {!chosen && representative && !all.some(row => row.minor_code === representative.minor_code) &&
         <p className="insight-caption">홈에서 본 {representative.minor_name} · {pretty(representative.multiplier, '배')}</p>}
       <p className="insight-caption">상대적 두드러짐 · 가운데 1배는 같은 서비스의 여섯 연령대 평균을 뜻해요.</p></>}
