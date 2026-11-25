@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useData } from '../api/client';
 import { matchesInsights, type InsightsDocument } from '../api/insights';
 import { formatNumber, niceAxis } from '../api/numbers';
@@ -122,17 +122,21 @@ export default function Explore() {
         <section className="month-comparison">
           <h3>{title} · {monthLabel(month)}</h3>
           <p>{metric === 'ageShare' ? '이 서비스를 이용한 사람 중 해당 연령대가 차지하는 비중이에요.' : '이 서비스를 이용한 사람 기준 평균이에요.'}</p>
-          <div className="chart-wrap" role="img" aria-label={`${minor.name} ${title}`}>
-            <ResponsiveContainer width="100%" height={240}><BarChart data={bars}>
+          {/* 값은 막대 위에 직접 표시한다. 스크린리더는 aria-label로 같은 값을 읽는다. */}
+          <div className="chart-wrap" role="img"
+            aria-label={`${minor.name} ${title}: ${bars.map(row => `${row.label} ${formatNumber(row.value, unit)}`).join(', ')}`}>
+            <ResponsiveContainer width="100%" height={240}><BarChart data={bars} margin={{ top: 22, right: 4, bottom: 0, left: 0 }}>
               <CartesianGrid vertical={false} stroke="#e8e8e2" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+              {/* 표가 없으므로 좁은 화면에서도 연령대 이름을 하나도 건너뛰지 않는다. */}
+              <XAxis dataKey="label" interval={0} tick={{ fontSize: 10 }} />
               <YAxis {...chartAxis(bars.map(row => row.value))} />
               <Tooltip formatter={tooltip} />
               <Bar dataKey="value" name={title} isAnimationActive={false}>{bars.map((row, index) =>
-                <Cell key={row.id} fill={ageColor(index)} fillOpacity={row.id === chosenAge ? 1 : .35} />)}</Bar>
+                <Cell key={row.id} fill={ageColor(index)} fillOpacity={row.id === chosenAge ? 1 : .35} />)}
+                <LabelList dataKey="value" position="top" formatter={tooltip} fontSize={10.5} fill="#3d4a43" />
+              </Bar>
             </BarChart></ResponsiveContainer>
           </div>
-          <InsightTable headings={['연령대', title]} rows={bars.map(row => [row.label, formatNumber(row.value, unit)])} />
           <Source month={month} />
         </section>
         <section className="month-comparison">
