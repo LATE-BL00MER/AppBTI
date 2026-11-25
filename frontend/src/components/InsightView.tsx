@@ -78,9 +78,8 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
           const kind = days && time ? 'corner' : days || time ? 'edge' : 'center';
           return <div key={time} className={`usage-cell ${kind}${rows.length ? '' : ' empty'}`}>
             <span className="usage-cell-name">{cellName(days, time)}</span>
-            <div className="usage-chips">{rows.map(row => <button key={row.age_group} type="button"
-              className={row.age_group === activeAge ? 'usage-chip active' : 'usage-chip'}
-              aria-pressed={row.age_group === activeAge} onClick={() => setAge(row.age_group)}>{row.name}</button>)}</div>
+            <div className="usage-chips">{rows.map(row => <span key={row.age_group}
+              className={row.age_group === activeAge ? 'usage-chip active' : 'usage-chip'}>{row.name}</span>)}</div>
           </div>;
         })}
       </Fragment>)}
