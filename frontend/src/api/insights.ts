@@ -12,7 +12,9 @@ export interface HomeOverviewData {
   top_users: (Category & { total: number })[];
 }
 type Closest = { age_group: string; closest_age: string; second_age: string; near_tie: boolean };
-export type AgeMap = { age_order: string[]; distance_matrix: number[][] | null; nearest: Closest[]; category_count: number };
+export type AdjacentGap = { left: string; right: string; distance: number };
+export type AgeMap = { age_order: string[]; distance_matrix: number[][] | null; nearest: Closest[]; category_count: number;
+  adjacent?: AdjacentGap[]; largest_adjacent_gap?: AdjacentGap | null };
 
 export interface InsightsDocument {
   schema_version: number;
