@@ -3,7 +3,6 @@ import type { Age, AgeMap } from '../api/insights';
 import { ageColor } from '../ageColors';
 import { formatNumber } from '../api/numbers';
 import { withJosa } from './Common';
-import { InsightTable } from './InsightTable';
 
 export default function PatternMap({ map, ages, matches = [], compact = false, focusAge }: {
   map: AgeMap; ages: Age[]; matches?: string[]; compact?: boolean; focusAge?: string;
@@ -40,7 +39,5 @@ export default function PatternMap({ map, ages, matches = [], compact = false, f
       </div>)}
     </div>
     {nearestMatch && <p className="insight-caption">내 응답과 가장 가까운 연령대 · {matches.map(name).join(' · ')}</p>}
-    {!compact && <InsightTable headings={['순위', '비교 연령대', '비고']}
-      rows={ranks.map(({age}, i) => [formatNumber(i + 1, '위'), name(age), note(age, i)])} />}
   </div>;
 }
