@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useData } from '../api/client';
-import { insightSections, matchesInsights, type InsightsDocument } from '../api/insights';
+import { insightSections, matchesInsights, standoutAge, type InsightsDocument } from '../api/insights';
 import { ErrorNotice, Loading, monthLabel, Source } from '../components/Common';
 import { formatNumber } from '../api/numbers';
 import InsightView from '../components/InsightView';
+import AgeStandout, { standoutSentence } from '../components/AgeStandout';
 import { useApp } from '../state';
 import './insights.css';
 
@@ -48,14 +49,12 @@ export default function InsightsReport() {
       <h2>무엇을 발견했나요?</h2>
       {error ? <ErrorNotice message={error} retry={reload} /> : !data ? <Loading /> : !available ?
         <ErrorNotice message="현재 데이터 범위와 일치하는 분석 결과가 필요해요." retry={reload} /> :
-        insightSections.map(({ id, title }) => <article className="insight-card insight-report-card" id={id} key={id}>
+        insightSections.map(({ id, title }) => id === 'common_signature' ? <AgeExploreBridge key={id} id={id} title={title} explanation={explanations[id]} document={data} /> : <article className="insight-card insight-report-card" id={id} key={id}>
           <h3>{title}</h3>
-          {/* 공통 서비스 카드는 헤드라인이 '강조할 연령대' 선택을 따라 바뀌므로 InsightView 안에서 헤드라인·설명을 그린다. */}
-          {id === 'common_signature' ? <InsightView id={id} document={data} expanded intro={explanations[id]} /> : <>
-            <p className="insight-headline">{id === 'frequency_duration' ? data.insights[id].headline : data.spotlights[id]?.headline ?? data.insights[id].headline}</p>
-            <p className="insight-caption">{explanations[id]}</p>
-            <InsightView id={id} document={data} expanded />
-          </>}
+          {/* 연령대 지도는 고른 기준 연령대에 맞춰 문장이 바뀌므로 InsightView 안에서 그린다. */}
+          {id !== 'generation_map' && <><p className="insight-headline">{data.insights[id].headline}</p>
+            <p className="insight-caption">{explanations[id]}</p></>}
+          <InsightView id={id} document={data} expanded explanation={id === 'generation_map' ? explanations[id] : undefined} />
           <details className="insight-table"><summary>어떻게 계산했나요?</summary><p>{data.insights[id].method_note}</p></details>
         </article>)}
     </section>
@@ -78,4 +77,30 @@ export default function InsightsReport() {
       {meta?.comparisonEnabled && <Link className="button secondary" to="/survey">선택 설문 시작하기</Link>}
     </section>
   </div>;
+}
+
+/**
+ * 세 번째 발견: 처음엔 홈과 같은 연령대(40대)로 보여 주고, 연령대 버튼(20대 미만~60대 이상)으로 바꿔 볼 수 있다.
+ * 자세한 비교는 연령대별 탐색으로 이어 준다.
+ */
+function AgeExploreBridge({ id, title, explanation, document }: { id: string; title: string; explanation: string; document: InsightsDocument }) {
+  const [chosen, setChosen] = useState('');
+  const initial = standoutAge(document);
+  const ageId = chosen || initial?.age.id || document.age_groups[0]?.id || '';
+  const picked = standoutAge(document, ageId);
+  const pick = picked?.age.id === ageId ? picked : null;
+  const label = document.age_groups.find(age => age.id === ageId)?.label ?? '';
+  return <article className="insight-card insight-report-card insight-bridge" id={id}>
+    <h3>{title}</h3>
+    <div className="insight-age-picker" role="group" aria-label="연령대 고르기">
+      {document.age_groups.map(age => <button key={age.id} type="button" aria-pressed={age.id === ageId}
+        onClick={() => setChosen(age.id)}>{age.label}</button>)}
+    </div>
+    {pick ? <>
+      <p className="insight-headline" aria-live="polite">{standoutSentence(pick)}</p>
+      <p className="insight-caption">{explanation}</p>
+      <AgeStandout document={document} pick={pick} />
+    </> : <p className="insight-headline">{label}에서 다른 연령대보다 두드러지는 서비스가 없어요.</p>}
+    <Link className="button primary" to={`/explore/age?age=${encodeURIComponent(ageId)}`}>{label} 연령대별 탐색으로 이어 보기 →</Link>
+  </article>;
 }

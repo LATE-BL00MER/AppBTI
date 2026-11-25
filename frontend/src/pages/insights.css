@@ -135,3 +135,11 @@
 /* 연령대 지도: 이웃한 연령대 차이 중 가장 큰 쌍 강조 */
 .insight-distance-track > span.is-largest { background: var(--brand); }
 .insight-subheading { margin: 20px 0 4px; font-size: 15px; }
+.insight-bridge .button { margin-top: 12px; align-self: flex-start; }
+.insight-common { margin-top: 4px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.insight-common > span { display: block; font-weight: 650; color: var(--ink); }
+/* 리포트 세 번째 발견의 연령대 버튼: 다른 화면의 알약 버튼과 같은 모양 */
+.insight-age-picker { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+.insight-age-picker button { min-height: 40px; padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--pill-radius); background: #fff; font-size: 14px; font-weight: 600; color: #4a5561; }
+.insight-age-picker button:hover:not([aria-pressed=true]) { border-color: var(--brand-light); color: var(--brand); }
+.insight-age-picker button[aria-pressed=true] { border-color: var(--brand); background: var(--brand); color: #fff; }

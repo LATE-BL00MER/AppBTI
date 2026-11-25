@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../api/client';
 import { formatNumber } from '../api/numbers';
-import { insightSections, matchesInsights, type InsightsDocument } from '../api/insights';
+import { insightSections, matchesInsights, standoutAge, type InsightsDocument } from '../api/insights';
 import { ErrorNotice, Loading, monthLabel, Source } from '../components/Common';
+import AgeStandout, { standoutSentence } from '../components/AgeStandout';
+import { ageMapSentence } from '../components/PatternMap';
 import { useApp } from '../state';
 import './insights.css';
 
@@ -35,9 +37,11 @@ export default function Intro() {
       <h2 id="key-insights">데이터에서 발견한 세 가지</h2>
       {error ? <ErrorNotice message={error} retry={reload} /> : !data ? <Loading /> :
         !available ? <ErrorNotice message="새 기준에 맞는 분석 결과를 먼저 만들어 주세요." retry={reload} /> :
-          <div className="insight-grid">{insightSections.map(({ id, title }) => <article className="insight-card" key={id}>
+          <div className="insight-grid">{insightSections.map(({ id, title }) => id === 'common_signature' ? <AgeStandoutCard key={id} title={title} document={data} /> : <article className="insight-card" key={id}>
             <p className="context-label">{title}</p>
-            <h3>{data.spotlights[id]?.headline ?? (id === 'generation_map' ? data.insights[id].headline :
+            <h3>{id === 'generation_map' ? (ageMapSentence(data.insights.generation_map.chart_data, data.age_groups,
+              data.spotlights.generation_map?.age_group ?? data.insights.generation_map.chart_data.age_order[0]) ?? data.insights[id].headline) :
+              data.spotlights[id]?.headline ?? (
               id === 'frequency_duration' ? data.insights[id].headline : '다른 발견과 겹치지 않는 사례가 없어요.')}</h3>
             <MajorServiceValues document={data} insight={id} />
             {id === 'frequency_duration' ?
@@ -53,6 +57,22 @@ export default function Intro() {
       <Link className="button secondary" to="/survey">선택 설문 시작하기</Link>
     </section>}
   </div>;
+}
+
+/**
+ * 연령대별 탐색과 같은 기준(기타 분류 제외, 연령대 안 상대적 두드러짐 순)으로
+ * 1위 배수가 가장 큰 연령대를 골라 그 연령대의 TOP 3를 보여 준다.
+ */
+function AgeStandoutCard({ title, document }: { title: string; document: InsightsDocument }) {
+  const pick = standoutAge(document);
+  return <article className="insight-card">
+    <p className="context-label">{title}</p>
+    {pick ? <>
+      <h3>{standoutSentence(pick)}</h3>
+      <AgeStandout document={document} pick={pick} />
+      <Link className="text-link insight-more" to="/insights#common_signature">자세히 보기 <span className="sr-only">· {title}</span>↗</Link>
+    </> : <h3>연령대별로 두드러지는 서비스가 없어요.</h3>}
+  </article>;
 }
 
 function MajorServiceValues({ document, insight }: { document: InsightsDocument; insight: keyof InsightsDocument['insights'] }) {
