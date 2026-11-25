@@ -4,26 +4,19 @@ import { InsightTable } from './InsightTable';
 import { formatNumber as pretty } from '../api/numbers';
 import RatioBars from './RatioBars';
 import PatternMap from './PatternMap';
-import AdjacentGaps from './AdjacentGaps';
 
 type Report = InsightsDocument['insights'];
 type Section = typeof insightSections[number]['id'];
 
 // intro: 리포트에서 헤드라인 아래에 둘 설명. 헤드라인이 화면 안 선택을 따라 바뀌는 카드(공통 서비스)는 헤드라인·설명을 여기서 그린다.
-export default function InsightView({ id, document, expanded = false, intro }: { id: Section; document: InsightsDocument; expanded?: boolean; intro?: string }) {
+// explanation: 연령대 지도처럼 고른 기준에 맞춰 문장이 바뀌는 카드에서 쓰는 설명.
+export default function InsightView({ id, document, expanded = false, intro, explanation }: { id: Section; document: InsightsDocument; expanded?: boolean; intro?: string; explanation?: string }) {
   const { insights, age_groups: ages } = document;
   const focus = document.spotlights[id];
   if (!expanded && !focus) return null;
-  if (id === 'generation_map') {
-    const map = insights.generation_map.chart_data;
-    // 헤드라인은 이웃한 연령대 쌍을 비교하므로 그래프도 같은 기준을 먼저 보여 준다. 산출물에 쌍 정보가 없으면 예전 그래프를 쓴다.
-    if (!map.adjacent?.length) return <PatternMap map={map} ages={ages} compact={!expanded} focusAge={focus?.age_group} />;
-    return <>
-      <AdjacentGaps map={map} ages={ages} />
-      {expanded && <><h4 className="insight-subheading">연령대를 골라 가까운 순서 보기</h4>
-        <PatternMap map={map} ages={ages} focusAge={focus?.age_group} /></>}
-    </>;
-  }
+  // 연령대 지도: 고른 기준 연령대에 맞춰 문장과 막대가 함께 바뀐다(홈은 대표 연령대 기준).
+  if (id === 'generation_map') return <PatternMap map={insights.generation_map.chart_data} ages={ages} compact={!expanded} focusAge={focus?.age_group}
+    overall={expanded ? insights.generation_map.headline : undefined} explanation={expanded ? explanation : undefined} />;
   if (id === 'frequency_duration') return <FrequencyDuration data={insights.frequency_duration.chart_data} ages={ages} focus={focus} />;
   return <Signatures data={insights.common_signature.chart_data} ages={ages} expanded={expanded} focus={focus} intro={intro} />;
 }
@@ -121,8 +114,6 @@ function Signatures({ data, ages, expanded, focus, intro }: {
     {expanded && <><p className="insight-headline" aria-live="polite">{headline}</p>
       {intro && <p className="insight-caption">{intro}</p>}
       <AgeSelect ages={ages} value={active} onChange={setChosen} />
-      {!chosen && representative && !all.some(row => row.minor_code === representative.minor_code) &&
-        <p className="insight-caption">홈에서 본 {representative.minor_name} · {pretty(representative.multiplier, '배')}</p>}
       <p className="insight-caption">상대적 두드러짐 · 가운데 1배는 같은 서비스의 여섯 연령대 평균을 뜻해요.</p></>}
     {rows.length === 0 ? <p>이 연령대의 대표 사례가 없어요.</p> : <>
       <RatioBars label="대표 서비스별 상대적 두드러짐" rows={rows.map(row =>

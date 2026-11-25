@@ -195,6 +195,7 @@ function ReportBridge({ result }: { result: SurveyResult }) {
       const near = data.insights.generation_map.chart_data.nearest.find(item => item.age_group === match.id);
       return near ? `내 응답과 가장 비슷한 ${withJosa(match.label, '는', '은')} 연령대 지도에서 ${withJosa(ageName(near.closest_age), '와', '과')} 가장 가까워요.` : '';
     }
+    if (id === 'common_signature') return `${match.label}에서 유독 많이 쓰는 서비스는 연령대별 탐색에서 이어서 볼 수 있어요.`;
     const spot = data.spotlights[id];
     if (!spot) return '';
     if (spot.minor_code && answered.has(spot.minor_code)) return `${withJosa(answered.get(spot.minor_code)!, '는', '은')} 내가 답한 문항에도 있어요. 아래 ‘비슷한 항목과 다른 항목’에서 내 응답을 확인해 보세요.`;
@@ -208,7 +209,8 @@ function ReportBridge({ result }: { result: SurveyResult }) {
     <ul className="rs-bridge-list">
       {lines.map(({ id, title, line }) => <li key={id}>
         <span>{line}</span>
-        <Link className="text-link" to={`/insights#${id}`}>{title} ↗</Link>
+        <Link className="text-link" to={id === 'common_signature' ? `/explore/age?age=${encodeURIComponent(match.id)}` : `/insights#${id}`}>
+          {id === 'common_signature' ? '연령대별 탐색' : title} ↗</Link>
       </li>)}
     </ul>
   </section>;
