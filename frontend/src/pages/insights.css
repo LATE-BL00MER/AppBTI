@@ -140,3 +140,62 @@
 .insight-age-picker button { min-height: 40px; padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--pill-radius); background: #fff; font-size: 14px; font-weight: 600; color: #4a5561; }
 .insight-age-picker button:hover:not([aria-pressed=true]) { border-color: var(--brand-light); color: var(--brand); }
 .insight-age-picker button[aria-pressed=true] { border-color: var(--brand); background: var(--brand); color: #fff; }
+
+/* 홈 카드 예시 자동 넘김(components/AutoCycle.tsx): 바뀐 예시는 살짝 올라오며 나타나고, 막대는 다시 차오른다. */
+.cycle-body { animation: cycle-in .55s cubic-bezier(.16, 1, .3, 1); }
+.cycle-body .ratio-track > i, .cycle-body .insight-distance-track > span { animation: cycle-grow .8s cubic-bezier(.16, 1, .3, 1) .1s backwards; transform-origin: left center; }
+.cycle-body .ratio-track > i.below { transform-origin: right center; }
+@keyframes cycle-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes cycle-grow { from { transform: scaleX(0); } }
+.cycle-controls { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 14px; }
+.cycle-controls + .insight-more { margin-top: 0; }
+.cycle-toggle { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: #fff; color: #4a5561; font-size: 9px; letter-spacing: -1px; }
+.cycle-toggle:hover { border-color: var(--brand-light); color: var(--brand); }
+.cycle-dots { display: flex; align-items: center; }
+/* 누르기 쉬운 크기(24px)를 두고 안쪽에 작은 점을 그린다. 지금 예시는 길쭉한 점으로 표시한다. */
+.cycle-dots button { display: grid; place-items: center; width: 24px; height: 28px; padding: 0; border: 0; background: none; }
+.cycle-dots button::before { content: ''; width: 7px; height: 7px; border-radius: 4px; background: #c9d2cd; transition: width .3s ease, background .3s ease; }
+.cycle-dots button:hover::before { background: var(--brand-light); }
+.cycle-dots button[aria-current]::before { width: 18px; background: var(--brand); }
+@media (prefers-reduced-motion: reduce) {
+  .cycle-body, .cycle-body .ratio-track > i, .cycle-body .insight-distance-track > span { animation: none; }
+  .cycle-dots button::before { transition: none; }
+}
+
+/* 홈 세 카드를 같은 틀로 맞춘다: 제목 3줄·설명 2줄 높이를 확보하고, 그림 상자는 남는 높이를 채워 세 카드가 같은 높이가 된다. */
+.home-card .home-card-body { display: flex; flex-direction: column; flex: 1 0 auto; }
+/* 홈 카드 제목은 짧게 2줄 안에서, 리포트 제목보다 작고 가볍게 쓴다. 자세한 숫자는 아래 그림 상자가 맡는다. */
+.insight-card .home-card-title { min-height: calc(1.45em * 2); margin: .35em 0 .4em; font-size: clamp(17px, 1.45vw, 20px); font-weight: 600; line-height: 1.45; letter-spacing: -.01em; }
+.home-card-caption { min-height: calc(1.5em * 2); margin: 0 0 12px; line-height: 1.5; }
+.home-card-visual { display: flex; flex-direction: column; justify-content: center; flex: 1 0 auto; min-height: 232px;
+  padding: 16px 18px; border-radius: var(--radius); background: #f5f7f9; }
+.home-card-visual .insight-map, .home-card-visual .insight-distance-list, .home-card-visual .ratio-bars { margin: 0; }
+/* 작은 분류판 + 값 */
+.usage-mini { display: flex; align-items: center; gap: 22px; }
+.usage-mini-board { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto auto; column-gap: 6px; row-gap: 2px; font-size: .68rem; color: var(--muted); }
+.usage-mini-y { grid-column: 1; align-self: start; justify-self: end; }
+.usage-mini-y.bottom { grid-row: 2; align-self: end; }
+.usage-mini-grid { grid-column: 2; grid-row: 1 / span 2; display: grid; grid-template-columns: repeat(3, 26px); grid-auto-rows: 26px; gap: 3px; }
+.usage-mini-grid i { border-radius: 6px; background: #e3e9e5; }
+.usage-mini-grid i.on { background: var(--brand); }
+.usage-mini-x { grid-column: 2; display: flex; justify-content: space-between; }
+.home-card-visual .home-service-values { flex: 1; margin: 0; padding: 0; background: none; }
+.home-card-visual .home-service-values dd { font-size: 1.25rem; }
+.usage-mini-note { margin: 14px 0 0; font-size: .8rem; }
+
+/* 한국어 줄바꿈: 단어 중간에서 끊지 않고, 제목은 줄 길이를 고르게 나눈다. */
+.insight-card h3, .insight-headline, .insight-caption, .insight-hero p, .home-value { word-break: keep-all; overflow-wrap: break-word; }
+.insight-card h3, .insight-headline { text-wrap: balance; }
+.insight-caption, .home-value { text-wrap: pretty; }
+
+/* 홈 카드 전체가 리포트로 가는 링크다(Intro.tsx CardLink). 넘김 버튼만 링크 위에 올린다. */
+/* 나타나기 애니메이션(.reveal)이 transform을 쓰므로 마우스 효과는 그림자와 테두리로만 준다. */
+.home-card { position: relative; cursor: pointer; }
+.insight-grid > .home-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; border: 1px solid transparent; box-shadow: 0 0 0 rgb(20 40 30 / 0%); transition: box-shadow .2s ease, border-color .2s ease; pointer-events: none; }
+.home-card-link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.home-card .cycle-controls { position: relative; z-index: 2; cursor: default; }
+.insight-grid > .home-card:hover::after { border-color: var(--brand-light); box-shadow: 0 12px 30px rgb(20 40 30 / 12%); }
+.home-card:has(.home-card-link:focus-visible) { outline: 3px solid var(--brand-light); outline-offset: 3px; }
+.home-card-link:focus-visible { outline: none; }
+.home-card .cycle-controls { padding-bottom: 2px; }
+@media (prefers-reduced-motion: reduce) { .insight-grid > .home-card::after { transition: none; } }

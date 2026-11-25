@@ -73,7 +73,7 @@ export default function InsightsReport() {
       <Link className="text-link" to="/data">데이터 범위와 비교 기준 보기 ↗</Link>
     </section>
     <section id="survey" className="insight-invite">
-      <div><h2>내 습관도 이 지도 위에 찍어보기</h2><p>연령대 평균에 가려진 개인 차이를 선택 설문으로 보완해요. 최근 7일 이용 습관을 답하면 어느 연령대 패턴과 가까운지, 내 연령대 통계와는 얼마나 다른지 볼 수 있어요.</p></div>
+      <div><h2>내 습관도 연령대별 패턴과 비교해 보기</h2><p>연령대 평균에 가려진 개인 차이를 선택 설문으로 보완해요. 최근 7일 이용 습관을 답하면 어느 연령대 패턴과 가까운지, 내 연령대 통계와는 얼마나 다른지 볼 수 있어요.</p></div>
       {meta?.comparisonEnabled && <Link className="button secondary" to="/survey">선택 설문 시작하기</Link>}
     </section>
   </div>;

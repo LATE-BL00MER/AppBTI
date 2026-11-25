@@ -24,3 +24,6 @@ export function withJosa(word: string, withoutFinal: string, withFinal: string) 
   const hasFinal = code >= 0 && code <= 11171 && code % 28 !== 0;
   return `${word}${hasFinal ? withFinal : withoutFinal}`;
 }
+
+/** 줄바꿈에서 갈라지면 안 되는 말('20대 미만', '약 1.7배')의 띄어쓰기를 줄바꿈 없는 공백으로 바꾼다. */
+export const keepTogether = (text: string) => text.replace(/ /g, '\u00A0');
