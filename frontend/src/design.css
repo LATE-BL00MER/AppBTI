@@ -423,11 +423,13 @@ summary { cursor: pointer; font-weight: 550; min-height: 32px; padding-block: 4p
 .recharts-wrapper { font-size: 12px; }
 .stat-table-wrapper { width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; margin-top: 12px; padding-bottom: 4px; }
 .stat-table-wrapper:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.stat-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.stat-table-wide { min-width: 34rem; }
-.stat-table td, .stat-table th { text-align: right; padding: 12px 8px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
-.stat-table thead th { font-weight: 400; color: var(--muted); }
-.stat-table th:first-child { text-align: left; padding-left: 8px; }
+/* 값 표: 화면 폭으로 늘이지 않고 내용 폭에 맞춰 칸을 붙인다. 좁은 화면에서는 감싼 영역이 가로로 스크롤된다. */
+.stat-table { width: auto; border-collapse: separate; border-spacing: 0; font-size: 12.5px; font-variant-numeric: tabular-nums;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.stat-table td, .stat-table th { text-align: right; padding: 9px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.stat-table tbody tr:last-child > * { border-bottom: 0; }
+.stat-table thead th { font-size: 11.5px; font-weight: 600; color: var(--muted); background: #f5f8f6; }
+.stat-table th:first-child { text-align: left; padding-right: 24px; }
 .stat-table tbody th { font-weight: 500; }
 /* 구성비 순위 표: 순위·중분류는 왼쪽, 막대는 남는 폭, 값은 오른쪽 */
 .rank-table { min-width: 0; font-size: 14px; }
