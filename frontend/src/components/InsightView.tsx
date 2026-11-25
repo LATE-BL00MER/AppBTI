@@ -139,10 +139,7 @@ function Signatures({ data, ages, expanded, focus }: { data: Report['common_sign
       {expanded && <InsightTable headings={['대표 카테고리', '상대적 두드러짐', '이용일수', '이용시간']}
         rows={rows.map(row => [row.minor_name, pretty(row.multiplier, '배'), pretty(row.days_multiplier, '배'), pretty(row.time_multiplier, '배')])} />}
     </>}
-    {expanded && data.common.length > 0 && <>
-      <p className="insight-caption">연령대 간 편차가 작은 공통 사례 · {data.common.map(item => item.minor_name).join(' · ')}</p>
-      <InsightTable headings={['공통 카테고리', '연령대 간 패턴 편차']} summary="공통 사례 표로 보기"
-        rows={data.common.map(row => [row.minor_name, pretty(row.clr_stddev)])} />
-    </>}
+    {expanded && data.common.length > 0 &&
+      <p className="insight-caption">연령대 간 편차가 작은 공통 사례 · {data.common.map(item => item.minor_name).join(' · ')}</p>}
   </>;
 }

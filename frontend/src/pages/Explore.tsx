@@ -138,13 +138,11 @@ export default function Explore() {
         <section className="month-comparison">
           <h3>{metric === 'ageShare' ? '기준 서비스 대비 구성 지수' : '상대적 두드러짐'}</h3>
           {metric === 'ageShare' ? <p>같은 월·연령대에서 이 서비스의 구성비를 {analysis?.composition_index?.reference.name ?? '기준 서비스'}의 구성비와 견준 값이에요.</p> : <RelativeUsageNote />}
-          {ratioRows.some(row => row.value != null) ? <><RatioBars rows={ratioRows} label="연령대별 상대 비교" />
-            <InsightTable headings={['연령대', '비교 값']} rows={ratioRows.map(row => [row.label, formatNumber(row.value, '배')])} /></> : <p>비교할 수 있는 값이 없어요.</p>}
+          {ratioRows.some(row => row.value != null) ? <RatioBars rows={ratioRows} label="연령대별 상대 비교" /> : <p>비교할 수 있는 값이 없어요.</p>}
           {metric === 'avgDays' && frequencyRows.some(row => row.value != null) && <details className="insight-table explore-extra">
             <summary>평균 대비 이용일수도 보기</summary>
             <p>이 서비스 이용자 전체의 평균 일수와 각 연령대의 일수를 비교했어요.</p>
             <RatioBars label="평균 대비 이용일수" rows={frequencyRows} />
-            <InsightTable headings={['연령대', '평균 대비 이용일수']} rows={frequencyRows.map(row => [row.label, formatNumber(row.value, '배')])} />
           </details>}
         </section>
       </>}

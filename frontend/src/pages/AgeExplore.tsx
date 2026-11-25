@@ -2,9 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useData } from '../api/client';
 import { matchesInsights, type InsightsDocument } from '../api/insights';
-import { formatNumber } from '../api/numbers';
 import { ErrorNotice, Loading, Source } from '../components/Common';
-import { InsightTable } from '../components/InsightTable';
 import RatioBars from '../components/RatioBars';
 import RelativeUsageNote from '../components/RelativeUsageNote';
 import { useApp } from '../state';
@@ -52,13 +50,10 @@ function AgeRanks({ data, age, label, includeOther, onToggle }: {
         label: <Link to={`/explore?minor=${encodeURIComponent(point.minor_code)}&age=${encodeURIComponent(age)}`}>{point.minor_name}</Link>,
         value: point.multiplier, highlight: true,
       }))} /> : <p>비교 가능한 서비스가 없어요.</p>}
-      {!!all.length && <InsightTable headings={['서비스', '방향', '상대적 두드러짐']} rows={all.map(point =>
-        [point.minor_name, point.multiplier > 1 ? '더 두드러짐' : '덜 두드러짐', formatNumber(point.multiplier, '배')])} />}
     </section>
     <section className="insight-card insight-report-card"><h2>대분류별 요약</h2>
       <p>비교 가능한 서비스의 상대적 두드러짐을 분야별로 요약했어요.</p>
-      {majorRows.length ? <><RatioBars label="대분류별 상대적 두드러짐" rows={majorRows} />
-        <InsightTable headings={['대분류', '상대적 두드러짐']} rows={majorRows.map(item => [item.label, formatNumber(item.value, '배')])} /></> : <p>요약할 값이 없어요.</p>}
+      {majorRows.length ? <RatioBars label="대분류별 상대적 두드러짐" rows={majorRows} /> : <p>요약할 값이 없어요.</p>}
     </section>
   </>;
 }
