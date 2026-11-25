@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useData } from '../api/client';
 import { matchesInsights, type InsightsDocument } from '../api/insights';
 import { formatNumber, niceAxis } from '../api/numbers';
 import type { Profile } from '../api/types';
-import { ErrorNotice, Loading, monthLabel, Source } from '../components/Common';
+import { ErrorNotice, Loading, monthLabel, Source, withJosa } from '../components/Common';
 import { InsightTable } from '../components/InsightTable';
 import RatioBars from '../components/RatioBars';
 import RelativeUsageNote from '../components/RelativeUsageNote';
@@ -21,6 +21,8 @@ const metrics = {
 type Metric = keyof typeof metrics;
 const byName = (a: string, b: string) => a.localeCompare(b, 'ko');
 const preferred = ['portal', 'ott', 'weather', 'learn'];
+// 괄호 뒤에 조사를 붙일 때 쓰려고 조사만 떼어 낸다.
+const josa = (word: string, withoutFinal: string, withFinal: string) => withJosa(word, withoutFinal, withFinal).slice(word.length);
 
 export default function Explore() {
   const { meta, draft } = useApp();
@@ -37,12 +39,27 @@ export default function Explore() {
   const filtered = catalog.filter(item => !major || item.major === major)
     .sort((a, b) => byName(a.major, b.major) || byName(a.name, b.name) || a.code.localeCompare(b.code));
   const requested = params.get('minor');
+  const latest = useData<{ profiles: Profile[] }>(`/profiles?month=${month}`, draft.dataset);
+  // 처음 들어왔을 때(주소에 카테고리가 없을 때)는 고른 분야 안에서 연령대 간 이용일수 차이(최대÷최소)가
+  // 가장 큰 카테고리를 먼저 보여 준다. 여섯 연령대 값이 모두 있는 카테고리만 비교하고 '기타'는 뺀다.
+  const spread = (target: string) => {
+    const values = (latest.data?.profiles ?? []).filter(row => row.minorCode === target && row.month === month)
+      .map(row => row.avgDays).filter((value): value is number => value != null && value > 0);
+    return meta && values.length === meta.ageGroups.length ? Math.max(...values) / Math.min(...values) : 0;
+  };
+  const widest = latest.data ? filtered.filter(item => !item.name.includes('기타'))
+    .reduce<typeof filtered[number] | undefined>((best, item) => !best || spread(item.code) > spread(best.code) ? item : best, undefined) : undefined;
   const minor = filtered.find(item => item.code === requested)
+    ?? widest
     ?? preferred.map(code => filtered.find(item => item.code === code)).find(Boolean)
     ?? filtered.find(item => !item.name.includes('기타'))
     ?? filtered[0];
   const code = minor?.code ?? catalog[0]?.code ?? '';
-  const latest = useData<{ profiles: Profile[] }>(`/profiles?month=${month}`, draft.dataset);
+  // 자동으로 고른 카테고리는 주소에 남겨, 기준월만 바꿔도 카테고리가 바뀌지 않게 한다.
+  useEffect(() => {
+    if (requested || !widest) return;
+    setParams(current => { const next = new URLSearchParams(current); next.set('minor', widest.code); return next; }, { replace: true });
+  }, [requested, widest, setParams]);
   const trend = useData<{ profiles: Profile[] }>(`/profiles/trend?minor=${encodeURIComponent(code)}`, draft.dataset);
   const { data: insights } = useData<InsightsDocument>('/insights', draft.dataset);
   if (!meta) return null;
@@ -57,6 +74,12 @@ export default function Explore() {
   };
   const current = latest.data?.profiles.filter(row => row.minorCode === code && row.month === month) ?? [];
   const bars = meta.ageGroups.map(group => ({ ...group, value: raw(current.find(row => row.ageGroup === group.id)) }));
+  // 차이 요약: 가장 많은·적은 연령대와 그 차이를 숫자로 적어, 막대 높이 차이가 작아도 차이를 읽을 수 있게 한다.
+  const present = bars.filter((row): row is typeof row & { value: number } => row.value != null);
+  const highest = present.length > 1 ? present.reduce((a, b) => b.value > a.value ? b : a) : null;
+  const lowest = present.length > 1 ? present.reduce((a, b) => b.value < a.value ? b : a) : null;
+  const gapUnit = metric === 'ageShare' ? '%p' : unit;
+  const gapRatio = highest && lowest && lowest.value > 0 ? highest.value / lowest.value : null;
   const trends = trend.data?.profiles.filter(row => row.minorCode === code) ?? [];
   const segments = [...new Set(trends.map(row => row.segment))];
   const series = meta.ageGroups.flatMap((group, index) => segments.map(segment => ({
@@ -120,16 +143,22 @@ export default function Explore() {
         <section className="month-comparison">
           <h3>{title} · {monthLabel(month)}</h3>
           <p>{metric === 'ageShare' ? '이 서비스를 이용한 사람 중 해당 연령대가 차지하는 비중이에요.' : '이 서비스를 이용한 사람 기준 평균이에요.'}</p>
+          {highest && lowest && highest.id !== lowest.id && <p className="chart-gap-summary">
+            가장 많은 <strong>{highest.label}</strong>({formatNumber(highest.value, unit)}){josa(highest.label, '와', '과')} 가장 적은 <strong>{lowest.label}</strong>({formatNumber(lowest.value, unit)}){josa(lowest.label, '는', '은')}
+            {' '}<strong>{formatNumber(highest.value - lowest.value, gapUnit)}</strong> 차이가 나요.
+            {gapRatio != null && (gapRatio < 1.1 ? ' 연령대 간 차이가 10% 안쪽으로 작은 편이에요.' : ` 가장 많은 연령대가 가장 적은 연령대의 약 ${formatNumber(gapRatio, '배')}예요.`)}
+          </p>}
           {/* 값은 막대 위에 직접 표시한다. 스크린리더는 aria-label로 같은 값을 읽는다. */}
           <div className="chart-wrap" role="img"
             aria-label={`${minor.name} ${title}: ${bars.map(row => `${row.label} ${formatNumber(row.value, unit)}`).join(', ')}`}>
-            <ResponsiveContainer width="100%" height={240}><BarChart data={bars} margin={{ top: 22, right: 4, bottom: 0, left: 0 }}>
+            <ResponsiveContainer width="100%" height={240}><BarChart data={bars} margin={{ top: 22, right: 4, bottom: 0, left: 0 }} barCategoryGap="30%">
               <CartesianGrid vertical={false} stroke="#e8e8e2" />
               {/* 표가 없으므로 좁은 화면에서도 연령대 이름을 하나도 건너뛰지 않는다. */}
               <XAxis dataKey="label" interval={0} tick={{ fontSize: 10 }} />
               <YAxis {...chartAxis(bars.map(row => row.value))} />
               <Tooltip formatter={tooltip} />
-              <Bar dataKey="value" name={title} isAnimationActive={false}>{bars.map((row, index) =>
+              {/* 막대를 얇게(최대 44px) 그려 화면을 가볍게 하고 값 숫자가 먼저 보이게 한다. 축은 0부터 그대로 둔다. */}
+              <Bar dataKey="value" name={title} isAnimationActive={false} maxBarSize={44} radius={[6, 6, 0, 0]}>{bars.map((row, index) =>
                 <Cell key={row.id} fill={ageColor(index)} fillOpacity={row.id === chosenAge ? 1 : .35} />)}
                 <LabelList dataKey="value" position="top" formatter={tooltip} fontSize={10.5} fill="#3d4a43" />
               </Bar>
