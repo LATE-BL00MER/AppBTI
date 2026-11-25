@@ -116,7 +116,6 @@
 .usage-cell.empty .usage-cell-name { color: #b3bcb7; }
 .usage-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .usage-chip { padding: 4px 10px; border: 1px solid #cfd8d3; border-radius: 999px; background: #fff; color: var(--ink); font-size: .82rem; white-space: nowrap; }
-.usage-chip.active { border-color: var(--brand); background: var(--brand); color: #fff; font-weight: 700; }
 @media (max-width: 600px) {
   .usage-grid { gap: 4px; }
   .usage-axis { font-size: .74rem; }

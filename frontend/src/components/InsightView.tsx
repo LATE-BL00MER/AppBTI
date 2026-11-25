@@ -39,7 +39,6 @@ const cellName = (days: number, time: number) => days === 0 && time === 0 ? '평
 
 function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: Age[]; focus: Spotlight | null }) {
   const [code, setCode] = useState('');
-  const [age, setAge] = useState('');
   const choices = data.switching ?? data.top_switching;
   const picked = choices.find(item => item.minor_code === code)
     ?? choices.find(item => item.minor_code === focus?.minor_code) ?? choices[0];
@@ -48,10 +47,6 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
     ...point, name: ages.find(age => age.id === point.age_group)?.label ?? point.age_group,
   }));
   if (!picked || !points.length) return <p>두 지표에서 연령대별 이용 방식이 갈린 카테고리가 없어요.</p>;
-  const active = points.find(point => point.age_group === age)
-    ?? (focus && picked.minor_code === focus.minor_code ? points.find(point => point.age_group === focus.age_group) : undefined)
-    ?? points.find(point => point.days_level && point.time_level) ?? points[0];
-  const activeAge = active.age_group;
   const inCell = (days: number, time: number) => points.filter(point => point.days_level === days && point.time_level === time);
   const summary = DAY_LEVELS.flatMap(days => TIME_LEVELS.map(time => [cellName(days, time), inCell(days, time)] as const))
     .filter(([, rows]) => rows.length).map(([name, rows]) => `${name}: ${rows.map(row => row.name).join(', ')}`).join('. ');
@@ -61,12 +56,10 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
       <label>카테고리 선택<select value={picked.minor_code} onChange={event => setCode(event.target.value)}>
         {choices.map(item => <option key={item.minor_code} value={item.minor_code}>{item.minor_name}</option>)}
       </select></label>
-      <AgeSelect ages={ages} value={activeAge} onChange={setAge} />
     </div>
     {choices.length < data.switching_count &&
       <p className="insight-caption">전체 카테고리 목록을 보려면 분석 결과를 다시 만들어 주세요.</p>}
     <p className="insight-caption">기준은 {picked.minor_name}의 여섯 연령대 평균이에요. 평균 대비 ±{pretty(data.band, 'ratio')} 안쪽은 평균 수준으로 봐요.</p>
-    <p className="insight-caption" aria-live="polite"><strong>{picked.minor_name} · {active.name}</strong> · {active.quadrant}</p>
     {/* 산점도 대신 이용 방식 분류판: 연령대가 어느 칸(자주·오래, 가끔·짧게 …)에 속하는지 바로 읽히게 한다. */}
     <div className="usage-grid" role="group" aria-label={`${picked.minor_name} 연령대별 이용 방식. ${summary}`}>
       <span className="usage-axis usage-axis-corner" aria-hidden="true">일수 ↓ 시간 →</span>
@@ -78,8 +71,7 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
           const kind = days && time ? 'corner' : days || time ? 'edge' : 'center';
           return <div key={time} className={`usage-cell ${kind}${rows.length ? '' : ' empty'}`}>
             <span className="usage-cell-name">{cellName(days, time)}</span>
-            <div className="usage-chips">{rows.map(row => <span key={row.age_group}
-              className={row.age_group === activeAge ? 'usage-chip active' : 'usage-chip'}>{row.name}</span>)}</div>
+            <div className="usage-chips">{rows.map(row => <span key={row.age_group} className="usage-chip">{row.name}</span>)}</div>
           </div>;
         })}
       </Fragment>)}
