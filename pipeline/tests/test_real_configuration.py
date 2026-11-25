@@ -36,6 +36,7 @@ def test_calendar_day_variant_differs_only_in_time_basis_and_choices():
         edges, reps = s['time_choice_edges'], s['time_choice_minutes']
         assert len(edges)==len(reps)-1 and edges==sorted(edges)
         assert all((i==0 or reps[i]>=edges[i-1]) and (i==len(edges) or reps[i]<edges[i]) for i in range(len(reps)))
+    assert cal_s['time_choice_edges'] == [15, 30, 45, 90]
     assert cal_s['time_choice_minutes']==sorted(cal_s['time_choice_minutes']) and cal_s['time_choice_minutes'][0]>base_s['time_choice_minutes'][0]
     assert load_codebook(ROOT/'config/codebook.calendar_days.yaml')['metrics']['daily_time']['day_basis']=='calendar_days'
     assert load_codebook(ROOT/'config/codebook.yaml')['metrics']['daily_time']['day_basis']=='used_days'

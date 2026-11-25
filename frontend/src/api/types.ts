@@ -19,9 +19,11 @@ export interface Profile {
   month: string; ageGroup: string; minorCode: string; status: string;
   uu: number | null; avgDays: number | null; ageShare: number | null;
   referenceDays: number | null; relativeFrequency: number | null; avgDailyTime: number | null; segment: number;
+  ageRelativeDays?: number | null; ageRelativeTime?: number | null;
 }
 
 export interface ExploreRanking {
+  basis: 'relativeFrequency' | 'ageShare';
   status: 'available' | 'unavailable'; reason: string | null;
   items: { rank: number; minorCode: string; name: string; value: number }[];
 }
@@ -54,7 +56,7 @@ export interface SurveyRequest { ageGroup: string | null; answers: SurveyAnswer[
 export interface Ranking { ageGroup: string; label: string; rank: number; distance: number; isTied: boolean }
 export interface Evidence {
   questionId: string; minorCode: string; name: string; metric: SurveyMetric;
-  userValue: number; groupValue: number; unit: string; difference: number;
+  userValue: number; groupValue: number | null; unit: string; difference: number;
   direction: 'more' | 'less' | 'similar';
   /** 응답 전체 크기를 뺀 뒤 이 항목의 상대 배수(1 = 비중이 같음). 화면 막대 위치용 */
   relativeRatio: number;

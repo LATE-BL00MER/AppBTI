@@ -4,6 +4,12 @@ spring:
 server:
   port: 8080
 appbti:
+  insights-path: ${APPBTI_INSIGHTS_PATH:../data/processed/real/insights.json}
+  mock-insights-path: ${APPBTI_MOCK_INSIGHTS_PATH:../data/processed/mock/insights.json}
+  mock-time-insights-path: ${APPBTI_MOCK_TIME_INSIGHTS_PATH:../data/processed/mock-time/insights.json}
+  findings-path: ${APPBTI_FINDINGS_PATH:../data/processed/real/findings.json}
+  mock-findings-path: ${APPBTI_MOCK_FINDINGS_PATH:../data/processed/mock/findings.json}
+  mock-time-findings-path: ${APPBTI_MOCK_TIME_FINDINGS_PATH:../data/processed/mock-time/findings.json}
   # 경로는 backend 작업 디렉터리를 기준으로 한다. 실제 산출물 우선, 없으면 가상 산출물.
   profiles-path: ${APPBTI_PROFILES_PATH:../data/processed/real/profiles.json}
   mock-profiles-path: ${APPBTI_MOCK_PROFILES_PATH:../data/processed/mock/profiles.json}

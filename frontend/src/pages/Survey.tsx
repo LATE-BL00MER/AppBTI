@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { request, useData } from '../api/client';
 import type { SurveyAnswer, SurveyQuestion, SurveyQuestions, SurveyRequest, SurveyResult } from '../api/types';
 import { ErrorNotice, Loading } from '../components/Common';
+import { getPatternSource, type PatternSource } from '../pattern-navigation';
 import { useApp } from '../state';
+import SurveyPurpose from '../components/SurveyPurpose';
 import './survey.css';
 
 /** 한 파트에 넣는 시간 문항 수. 같은 답 형식끼리 묶고, 길어지면 나눈다. */
@@ -24,18 +26,19 @@ function buildParts(questions: SurveyQuestion[]): Part[] {
 
 export default function Survey() {
   const { draft } = useApp();
+  const patternSource = getPatternSource(useLocation().state);
   const { data, error, reload } = useData<SurveyQuestions>('/survey/questions', draft.dataset);
   if (error) return <div className="container page"><ErrorNotice message={error} retry={reload} /></div>;
   if (!data) return <div className="container"><Loading /></div>;
   if (!data.comparisonEnabled || !data.questions.length) return <div className="container page"><div className="notice">
     <h1>설문 비교를 준비하고 있어요.</h1>
-    <p>집단 통계와 비교할 기준을 확인하는 중이에요. 세대별 통계는 바로 살펴볼 수 있어요.</p>
-    <Link className="button primary" to="/explore">세대별 탐색하기</Link>
+    <p>연령대 통계와 비교할 기준을 확인하는 중이에요. 분야별 통계는 바로 살펴볼 수 있어요.</p>
+    <Link className="button primary" to="/explore">분야별 탐색</Link>
   </div></div>;
-  return <SurveyForm key={draft.dataset} data={data} />;
+  return <><SurveyPurpose /><SurveyForm key={draft.dataset} data={data} patternSource={patternSource} /></>;
 }
 
-function SurveyForm({ data }: { data: SurveyQuestions }) {
+function SurveyForm({ data, patternSource }: { data: SurveyQuestions; patternSource: PatternSource | null }) {
   // 연령대 선택은 결과 화면의 '내 연령대 통계와 견줘 보기'에서만 받는다(선택 사항). 결과에서 고른 값이 있으면 그대로 보낸다.
   const { draft, setAnswer } = useApp();
   const navigate = useNavigate();
@@ -72,13 +75,14 @@ function SurveyForm({ data }: { data: SurveyQuestions }) {
     const body: SurveyRequest = { ageGroup: draft.ageGroup, answers };
     try {
       const result = await request<SurveyResult>('/survey/result', draft.dataset, { method: 'POST', body: JSON.stringify(body) });
-      navigate('/result', { state: { result, dataset: draft.dataset } });
+      navigate('/result', { state: { result, dataset: draft.dataset, patternSource } });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '결과를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally { setBusy(false); }
   }
 
   return <div className="sv-page">
+    {patternSource && <Link to={patternSource.path} className="text-link sv-pattern-origin">← 보던 분야로 돌아가기</Link>}
     <div className="sv-progress" aria-label="설문 진행 상황">
       <div className="sv-progress-text">
         <span><b className="sv-part-dot">{step + 1}</b>{partTitle(part)} · 파트 {step + 1}/{parts.length}</span>
@@ -117,13 +121,13 @@ function SurveyForm({ data }: { data: SurveyQuestions }) {
 
 
     {isLast && answeredCount < data.minimumItems && <p className="sv-notice" role="status">
-      지금은 이용한다고 답한 문항이 {answeredCount}개예요. {data.minimumItems}개 이상이어야 비슷한 연령대를 찾을 수 있고, 적으면 결과 대신 세대별 탐색을 안내해요.
+      지금은 이용한다고 답한 문항이 {answeredCount}개예요. {data.minimumItems}개 이상이어야 비슷한 연령대를 찾을 수 있고, 적으면 결과 대신 분야별 탐색을 안내해요.
     </p>}
     {error && <p className="inline-error" role="alert">{error}</p>}
 
     <nav className="sv-nav" aria-label="파트 이동">
       {step === 0
-        ? <Link className="button secondary" to="/">← 처음으로</Link>
+        ? <Link className="button secondary" to={patternSource?.path ?? '/'}>{patternSource ? '← 보던 분야' : '← 처음으로'}</Link>
         : <button type="button" className="button secondary" onClick={() => setStep(step - 1)}>← 이전 파트</button>}
       <span className="sv-nav-hint">{isLast ? '답하지 않은 문항은 ‘잘 모르겠음’으로 처리돼요' : `파트 ${step + 1}/${parts.length}`}</span>
       {isLast

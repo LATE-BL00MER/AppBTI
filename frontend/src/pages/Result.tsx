@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { request } from '../api/client';
+import { request, useData } from '../api/client';
+import { insightSections, matchesInsights, type InsightsDocument } from '../api/insights';
+import { formatNumber } from '../api/numbers';
 import type { Evidence, SurveyRequest, SurveyResult } from '../api/types';
 import { EmptyResult, ErrorNotice, Loading, monthLabel, withJosa } from '../components/Common';
+import { getPatternSource, type PatternSource } from '../pattern-navigation';
 import { useApp } from '../state';
 import './result.css';
 
@@ -13,6 +16,7 @@ import './result.css';
 export default function Result() {
   const { draft } = useApp();
   const state = useLocation().state as { result?: SurveyResult; dataset?: string } | null;
+  const patternSource = getPatternSource(state);
   // 방문 기록의 결과는 제출 시점 것이라, 이후 결과 화면에서 고른 연령대(또래 비교)와 다를 수 있다.
   // 지금 고른 연령대와 맞지 않으면 쓰지 않고 다시 요청한다(뒤로 가기로 돌아왔을 때 비교가 비어 보이던 문제).
   const stateAge = state?.result?.peerComparison?.ageGroup.id ?? null;
@@ -38,16 +42,19 @@ export default function Result() {
   }, []);
 
   if (!result && !hasAnswers) return <div className="container"><EmptyResult /></div>;
-  if (error && !result) return <div className="container page"><ErrorNotice message={error} retry={() => fetchResult(draft.ageGroup)} /><Link to="/survey" className="text-link">응답 수정하기</Link></div>;
+  if (error && !result) return <div className="container page"><ErrorNotice message={error} retry={() => fetchResult(draft.ageGroup)} /><Link to="/survey" state={{ patternSource }} className="text-link">응답 수정하기</Link></div>;
   if (!result) return <div className="container"><Loading /></div>;
-  return <Report result={result} busy={busy} error={error} onPickAge={fetchResult} />;
+  return <Report result={result} busy={busy} error={error} onPickAge={fetchResult} patternSource={patternSource} />;
 }
 
-function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy: boolean; error: string | null; onPickAge: (age: string | null) => void }) {
+function Report({ result, busy, error, onPickAge, patternSource }: {
+  result: SurveyResult; busy: boolean; error: string | null;
+  onPickAge: (age: string | null) => void; patternSource: PatternSource | null;
+}) {
   const { meta, draft, setAgeGroup, resetSurvey } = useApp();
   const navigate = useNavigate();
   const period = result.referenceMonths.length === 2 ? `${monthLabel(result.referenceMonths[0])} ~ ${monthLabel(result.referenceMonths[1])}` : '';
-  const restart = () => { resetSurvey(); navigate('/survey'); };
+  const restart = () => { resetSurvey(); navigate('/survey', { state: { patternSource } }); };
 
   if (result.status === 'insufficient') return <div className="rs-page">
     <TopLine result={result} period={period} />
@@ -57,8 +64,9 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
       {result.reason && <p>{result.reason}</p>}
       <div className="rs-count"><strong>{result.comparedItems}<span> / {result.minimumItems}개</span></strong><span>비교할 수 있는 문항 / 최소 필요 문항</span></div>
       <div className="rs-actions">
-        <Link className="button primary" to="/survey">응답 이어서 하기</Link>
-        {result.nextAction && <Link className="button secondary" to={result.nextAction.path}>{result.nextAction.label} →</Link>}
+        <Link className="button primary" to="/survey" state={{ patternSource }}>응답 이어서 하기</Link>
+        {patternSource ? <Link className="button secondary" to={patternSource.path}>보던 분야로 돌아가기</Link> :
+          result.nextAction && <Link className="button secondary" to={result.nextAction.path}>{result.nextAction.label} →</Link>}
       </div>
       {result.nextAction?.message && <p className="rs-muted">{result.nextAction.message}</p>}
     </section>
@@ -77,7 +85,7 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
       <div>
         <p className="rs-eyebrow">가장 비슷한 연령대</p>
         <h1 id="match-title" className="rs-match">{matchLabels}</h1>
-        <p className="rs-sentence">전체 응답 패턴은 {asGroup(matchLabels)}의 통계와 가장 가까워요.</p>
+        <p className="rs-sentence">응답 패턴이 {matchLabels} 이용자 통계와 가장 비슷해요.</p>
         {result.nearTie?.isNear && result.nearTie.second && <p className="rs-sub">{withJosa(result.nearTie.second.label, '와', '과')}도 비슷합니다.</p>}
         {result.patternClarity === 'weak' && <p className="rs-sub">응답 패턴이 뚜렷하지 않아요. 여러 연령대와 비슷하게 나올 수 있어요.</p>}
         {result.matches.length > 1 && <p className="rs-sub">공동 1위예요. 아래 근거는 {evidenceLabel} 기준으로 보여 드려요.</p>}
@@ -127,7 +135,6 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
               {peer.more.map(item => <li key={item.questionId}><span className="rs-dir more" aria-hidden="true">↑</span>{item.message}</li>)}
               {peer.less.map(item => <li key={item.questionId}><span className="rs-dir less" aria-hidden="true">↓</span>{item.message}</li>)}
             </ul>}
-          {peer.suggestion && <p className="rs-suggestion"><span aria-hidden="true">✦</span>{peer.suggestion.message}</p>}
           <p className="rs-note">{peer.note}</p>
         </> : <>
           <div className="rs-card-head"><h2 id="peer-title">내 연령대 통계와 견줘 보기</h2><span className="rs-chip">선택 사항</span></div>
@@ -138,6 +145,8 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
         {error && <p className="inline-error" role="alert">{error}</p>}
       </section>
     </div>
+
+    <ReportBridge result={result} />
 
     <PatternMapCard result={result} />
     {/* 비슷한·먼 항목은 지도 아래 토글 안에 접어 둔다. */}
@@ -153,18 +162,56 @@ function Report({ result, busy, error, onPickAge }: { result: SurveyResult; busy
     <details className="rs-card rs-method">
       <summary>결과는 어떻게 계산했나요?</summary>
       <p>답한 문항만 모아 내 응답 안에서 서비스별 비중을 맞춘 뒤, 6개 연령대 이용자 통계({period})와 같은 방식으로 견줘 가장 가까운 순서를 정했어요. ‘사용 안 함’·‘잘 모르겠음’과 통계가 없는 문항은 비교에서 빼요.</p>
-      <p>실제 나이를 추정하거나 개인의 이용 기록을 분석한 결과가 아니에요. 스스로 답한 응답과 집단 통계의 패턴을 비교한 결과예요.</p>
+      <p>스스로 답한 응답과 연령대 통계의 패턴을 비교한 결과예요.</p>
       <Link className="text-link" to="/data">데이터와 비교 기준 알아보기</Link>
     </details>
     <Excluded items={result.excluded} />
 
     <div className="rs-actions bottom">
-      <Link className="button primary" to="/explore">세대별 통계 살펴보기 →</Link>
-      <Link className="button secondary" to="/survey">응답 수정하기</Link>
+      <Link className="button primary" to={patternSource?.path ?? "/explore/age"}>
+        {patternSource ? "보던 분야로 돌아가기" : "연령대별 탐색 →"}
+      </Link>
+      <Link className="button secondary" to="/survey" state={{ patternSource }}>응답 수정하기</Link>
       <button type="button" className="text-link" onClick={restart}>처음부터 다시 하기</button>
     </div>
     <Source text={result.source} />
   </div>;
+}
+
+/**
+ * 데이터 분석(인사이트 리포트)의 세 가지 발견과 내 설문 결과를 잇는다.
+ * 설문은 데이터를 보완하는 수단이므로, 결과를 리포트의 발견 위에 다시 놓아 보여 준다.
+ */
+function ReportBridge({ result }: { result: SurveyResult }) {
+  const { meta, draft } = useApp();
+  const { data } = useData<InsightsDocument>('/insights', draft.dataset);
+  if (!data || !meta || !matchesInsights(data, meta) || !result.matches.length) return null;
+  const match = result.evidenceGroup ?? result.matches[0];
+  const matchIds = new Set(result.matches.map(item => item.id));
+  const ageName = (id: string) => data.age_groups.find(age => age.id === id)?.label ?? id;
+  const answered = new Map([...result.closest, ...result.farthest].map(item => [item.minorCode, item.name]));
+  const connect = (id: (typeof insightSections)[number]['id']): string => {
+    if (id === 'generation_map') {
+      const near = data.insights.generation_map.chart_data.nearest.find(item => item.age_group === match.id);
+      return near ? `내 응답과 가장 비슷한 ${withJosa(match.label, '는', '은')} 연령대 지도에서 ${withJosa(ageName(near.closest_age), '와', '과')} 가장 가까워요.` : '';
+    }
+    const spot = data.spotlights[id];
+    if (!spot) return '';
+    if (spot.minor_code && answered.has(spot.minor_code)) return `${withJosa(answered.get(spot.minor_code)!, '는', '은')} 내가 답한 문항에도 있어요. 아래 ‘비슷한 항목과 다른 항목’에서 내 응답을 확인해 보세요.`;
+    if (matchIds.has(spot.age_group)) return `내 응답과 가장 비슷한 ${match.label}에 대한 발견이에요.`;
+    return `${match.label}에서 두드러지는 서비스는 연령대별 탐색에서 이어서 볼 수 있어요.`;
+  };
+  const lines = insightSections.map(({ id, title }) => ({ id, title, line: connect(id) })).filter(item => item.line);
+  if (!lines.length) return null;
+  return <section className="rs-card rs-bridge" aria-labelledby="bridge-title">
+    <div className="rs-card-head"><h2 id="bridge-title">리포트의 발견과 이어 보기</h2><span className="rs-chip">데이터 × 설문</span></div>
+    <ul className="rs-bridge-list">
+      {lines.map(({ id, title, line }) => <li key={id}>
+        <span>{line}</span>
+        <Link className="text-link" to={`/insights#${id}`}>{title} ↗</Link>
+      </li>)}
+    </ul>
+  </section>;
 }
 
 function TopLine({ result, period }: { result: SurveyResult; period: string }) {
@@ -174,10 +221,7 @@ function TopLine({ result, period }: { result: SurveyResult; period: string }) {
   </div>;
 }
 
-// 목업처럼 이름이 이미 '○집단'이면 '집단'을 다시 붙이지 않는다.
-const asGroup = (label: string) => label.endsWith('집단') ? label : `${label} 집단`;
 const metricLabel = (e: Evidence) => e.metric === 'days' ? '최근 7일 이용일' : '이용한 날 하루 시간';
-const fmt = (value: number) => new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 1 }).format(value);
 
 function EvidenceCard({ title, tone, mode, items, group }: { title: string; tone: 'similar' | 'different'; mode: SurveyResult['closestMode']; items: Evidence[]; group: string }) {
   // 먼 항목, 그리고 숫자까지 가까운 항목이 없을 때의 가까운 항목은 점 두 개(상대 비중)로 보여 준다.
@@ -202,18 +246,19 @@ function EvidenceCard({ title, tone, mode, items, group }: { title: string; tone
 // 시간은 계산용 대표 분(예: 84.9분) 대신 설문 선택지 문구로, 일수는 숫자와 환산 안내로 보여 준다.
 // 선택지 문구에 괄호가 있으면 괄호 안 범위만 쓴다. 예: '잠깐 확인만 해요 (3분 이내)' → '3분 이내'
 const shortLabel = (label: string) => label.match(/\(([^)]+)\)/)?.[1] ?? label;
-const userText = (e: Evidence) => e.userLabel ? shortLabel(e.userLabel) : `${fmt(e.userValue)}${e.unit}`;
-const groupText = (e: Evidence) => e.metric === 'time' && e.groupLabel ? shortLabel(e.groupLabel) : `${fmt(e.groupValue)}${e.unit}`;
+const userText = (e: Evidence) => e.userLabel ? shortLabel(e.userLabel) : formatNumber(e.userValue, e.unit);
+const groupText = (e: Evidence) => e.metric === 'time' && e.groupLabel ? shortLabel(e.groupLabel) : formatNumber(e.groupValue, e.unit);
 
 /** 화면 수치(나 vs 집단)를 나란히 그린다. 시간은 선택지 구간 순서(1~5)로 막대 길이를 정한다. */
 function PairBars({ item, group }: { item: Evidence; group: string }) {
   const byChoice = item.metric === 'time' && item.userChoice != null && item.groupChoice != null;
-  const max = byChoice ? 5 : item.metric === 'days' ? 7 : Math.max(item.userValue, item.groupValue) * 1.15 || 1;
+  const largestValue = item.groupValue == null ? item.userValue : Math.max(item.userValue, item.groupValue);
+  const max = byChoice ? 5 : item.metric === 'days' ? 7 : Math.max(1, largestValue * 1.15);
   const width = (value: number) => `${Math.min(value / max * 100, 100)}%`;
   const me = byChoice ? item.userChoice! : item.userValue, them = byChoice ? item.groupChoice! : item.groupValue;
   return <dl className="rs-bars">
     <div><dt>나</dt><dd><span className="rs-bar"><i className="me" style={{ width: width(me) }} /></span><b>{userText(item)}</b></dd></div>
-    <div><dt>{group}</dt><dd><span className="rs-bar"><i style={{ width: width(them) }} /></span><b>{groupText(item)}</b></dd></div>
+    <div><dt>{group}</dt><dd><span className="rs-bar">{them != null && <i style={{ width: width(them) }} />}</span><b>{groupText(item)}</b></dd></div>
   </dl>;
 }
 
@@ -252,13 +297,15 @@ function PatternMapCard({ result }: { result: SurveyResult }) {
   const map = result.patternMap;
   if (!map) return null;
   // 방향은 지도(주성분)를 따르되, 나와 각 연령대 사이 거리는 서버가 준 distance(순위 거리에서 모든 연령대 공통 부분을 뺀 값)에 맞춘다 → 지도 순서와 순위가 항상 같다.
-  const me0 = map.points.find(p => p.isUser)!;
+  const me0 = map.points.find(p => p.isUser);
+  if (!me0) return null;
   const ages = map.points.filter(p => !p.isUser);
-  const points = [me0, ...ages.map((p, i) => {
-    const d = p.distance ?? 0;
+  const points = [me0, ...ages.flatMap((p, i) => {
+    const d = p.distance;
+    if (d == null) return [];
     const dx = p.x - me0.x, dy = p.y - me0.y, len = Math.hypot(dx, dy);
     const angle = len > 1e-6 ? Math.atan2(dy, dx) : (2 * Math.PI * i) / ages.length;
-    return { ...p, x: me0.x + Math.cos(angle) * d, y: me0.y + Math.sin(angle) * d };
+    return [{ ...p, x: me0.x + Math.cos(angle) * d, y: me0.y + Math.sin(angle) * d }];
   })];
   // 가로·세로를 같은 눈금(unit)으로 그려 거리가 틀어지지 않게 하고, 높이는 점이 퍼진 범위에 맞춘다.
   const PAD = Math.min(64, W * 0.12), PAD_Y = 52;

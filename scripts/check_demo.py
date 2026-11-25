@@ -24,6 +24,12 @@ for dataset, timed in [("basic", False), ("time", True)]:
     meta = call("/meta" + suffix)
     assert meta["isMock"] and meta["metrics"]["dailyTime"] == timed
     assert len(meta["ageGroups"]) == 6
+    insights = call("/insights" + suffix)
+    assert insights["is_mock"] and insights["months"] == meta["months"]
+    frequency = insights["insights"]["frequency_duration"]["chart_data"]
+    assert frequency["switching_count"] == len(frequency["switching"])
+    findings = call("/findings" + suffix)
+    assert findings["isMock"] and findings["months"] == meta["months"]
     profiles = call("/profiles" + suffix)["profiles"]
     questions = call("/survey/questions" + suffix)
     assert questions["timeAvailable"] == timed and questions["comparisonEnabled"]
@@ -31,6 +37,7 @@ for dataset, timed in [("basic", False), ("time", True)]:
     answers = [{"questionId": q["id"], "status": "answered", "value": 3} for q in questions["questions"]]
     result = call("/survey/result" + suffix, {"ageGroup": meta["ageGroups"][2]["id"], "answers": answers})
     assert result["status"] == "comparable" and result["method"] == "clr_nearest" and len(result["rankings"]) == 6
+    assert len(result["patternMap"]["points"]) == len(meta["ageGroups"]) + 1
     assert result["comparedItems"] == len(answers) and result["peerComparison"] is not None
     peer = result["peerComparison"]
     assert (peer["statedDiffers"] is None) == peer["matchesStated"]

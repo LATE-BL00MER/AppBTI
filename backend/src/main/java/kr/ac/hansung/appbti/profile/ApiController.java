@@ -8,9 +8,16 @@ import kr.ac.hansung.appbti.similarity.SimilarityCalculator;
 import kr.ac.hansung.appbti.similarity.SimilaritySettings;
 import kr.ac.hansung.appbti.survey.SurveyQuestions;
 import kr.ac.hansung.appbti.survey.SurveyRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,11 +34,41 @@ public class ApiController {
     private final SurveyQuestions questions;
     private final PeerMessages.Loader peer;
 
+    @Value("${appbti.insights-path}") private String insightsPath;
+    @Value("${appbti.mock-insights-path}") private String mockInsightsPath;
+    @Value("${appbti.mock-time-insights-path}") private String mockTimeInsightsPath;
+    @Value("${appbti.findings-path}") private String findingsPath;
+    @Value("${appbti.mock-findings-path}") private String mockFindingsPath;
+    @Value("${appbti.mock-time-findings-path}") private String mockTimeFindingsPath;
+
     // 산출물·설정 저장소를 주입받는다.
     public ApiController(ProfileRepository repository, SimilaritySettings.Loader settings, ObjectMapper mapper, SurveySummary survey,
                          SurveyQuestions questions, PeerMessages.Loader peer) {
         this.repository = repository; this.settings = settings; this.mapper = mapper; this.survey = survey;
         this.questions = questions; this.peer = peer;
+    }
+
+    @GetMapping("/insights")
+    public ResponseEntity<byte[]> insights(@RequestParam(defaultValue = "basic") String dataset) {
+        var meta = repository.get(dataset).meta();
+        String path = meta.isMock() ? ("time".equals(dataset) ? mockTimeInsightsPath : mockInsightsPath) : insightsPath;
+        return readAnalysis(path, "INSIGHTS_UNAVAILABLE", "인사이트 분석 결과를 아직 준비하지 못했어요.");
+    }
+
+    @GetMapping("/findings")
+    public ResponseEntity<byte[]> findings(@RequestParam(defaultValue = "basic") String dataset) {
+        var meta = repository.get(dataset).meta();
+        String path = meta.isMock() ? ("time".equals(dataset) ? mockTimeFindingsPath : mockFindingsPath) : findingsPath;
+        return readAnalysis(path, "FINDINGS_UNAVAILABLE", "분야별 분석 결과를 아직 준비하지 못했어요.");
+    }
+
+    private ResponseEntity<byte[]> readAnalysis(String path, String code, String message) {
+        try {
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).cacheControl(CacheControl.noStore())
+                    .body(Files.readAllBytes(Path.of(path)));
+        } catch (IOException error) {
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, code, message);
+        }
     }
 
     // 기간·연령대·분류 목록과 설문 요약을 돌려준다.

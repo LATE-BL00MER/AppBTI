@@ -181,6 +181,11 @@ minor_categories:
 exclude_minor_names:
   - 안전민감
 
+composition_index:
+  reference_minor_code: messenger
+home_overview:
+  minor_codes: [portal, messenger, sns, ott, music, webtoon, game, mobile_bank]
+
 statuses:
   normal: normal
   missing: missing
