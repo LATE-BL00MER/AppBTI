@@ -81,6 +81,28 @@
 .insight-limit-heading { margin-top: 18px; font-size: 15px; color: var(--brand); }
 .explore-extra { margin-top: 16px; }
 
+/* 연령대별 탐색: 더/덜 두드러지는 TOP 10을 두 칸으로 나눈다. 데스크톱은 나란히, 좁은 화면은 위아래. */
+.rank-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.rank-list { min-width: 0; padding: 16px 18px; border-radius: 14px; background: #f6f9f7; }
+.rank-list.less { background: #f7f6fa; }
+.rank-list h3 { margin: 0; font-size: 1rem; }
+.rank-list.more h3 { color: var(--brand); }
+.rank-list.less h3 { color: #5f5478; }
+.rank-list .insight-caption { margin: 2px 0 10px; font-size: .78rem; }
+.rank-list ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.rank-list li { display: grid; grid-template-columns: 20px minmax(72px, 1fr) minmax(60px, 1.3fr) 44px; align-items: center; gap: 8px; min-height: 30px; font-size: .86rem; }
+.rank-no { color: var(--muted); font-size: .76rem; font-variant-numeric: tabular-nums; text-align: right; }
+.rank-list a { color: var(--ink); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-list a:hover, .rank-list a:focus-visible { text-decoration: underline; text-underline-offset: 2px; }
+.rank-track { display: block; height: 10px; border-radius: 5px; background: #e7ece9; overflow: hidden; }
+.rank-list.less .rank-track { background: #ebe8f0; }
+.rank-track i { display: block; height: 100%; border-radius: inherit; background: #287550; }
+.rank-list.less .rank-track i { background: #9d90b8; }
+.rank-list strong { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) {
+  .rank-split { grid-template-columns: 1fr; }
+}
+
 /* 자주 쓰기와 오래 쓰기: 이용 방식 분류판(세로 이용일수 × 가로 이용시간, 3×3) */
 .usage-grid { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 6px; max-width: 48rem; margin: 16px auto 4px; }
 .usage-axis { align-self: end; justify-self: center; padding-bottom: 2px; color: var(--muted); font-size: .8rem; font-weight: 650; }
