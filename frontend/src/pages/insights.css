@@ -33,11 +33,6 @@
 .insight-selects, .insight-contents { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .insight-selects label { max-width: 100%; min-width: 0; }
 .insight-selects .insight-caption { margin: 0; }
-.insight-scatter-labels { pointer-events: none; }
-.insight-scatter-labels path { fill: none; stroke-width: 1; opacity: .65; }
-.insight-scatter-labels text { fill: var(--muted); font-size: 12px; }
-.insight-scatter-labels .active text { fill: var(--brand); font-weight: 750; }
-.insight-scatter-labels .active path { stroke-width: 1.5; opacity: 1; }
 .insight-distance-list { display: grid; gap: 7px; margin: 12px 0; }
 .insight-distance-row { display: grid; grid-template-columns: minmax(65px, 1.1fr) minmax(65px, 2fr) 48px; align-items: center; gap: 8px; font-size: .83rem; }
 .insight-distance-track { display: block; position: relative; min-width: 0; height: 8px; background: #ecf0ee; border-radius: 8px; }
@@ -56,7 +51,6 @@
 .insight-report-card { margin-block: 16px; }
 .insight-headline { font-size: 1.08rem; font-weight: 700; }
 .insight-report [id] { scroll-margin-top: 90px; }
-.insight-report .insight-scatter { height: 300px; }
 .explore-pickers { display: grid; gap: 12px; margin-block: 16px; }
 .explore-pickers .group-picker { display: flex; flex-wrap: wrap; gap: 6px; }
 .survey-purpose { margin-block: 24px 4px; }
@@ -86,6 +80,35 @@
 }
 .insight-limit-heading { margin-top: 18px; font-size: 15px; color: var(--brand); }
 .explore-extra { margin-top: 16px; }
+
+/* 자주 쓰기와 오래 쓰기: 이용 방식 분류판(세로 이용일수 × 가로 이용시간, 3×3) */
+.usage-grid { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 6px; max-width: 48rem; margin: 16px auto 4px; }
+.usage-axis { align-self: end; justify-self: center; padding-bottom: 2px; color: var(--muted); font-size: .8rem; font-weight: 650; }
+.usage-axis-corner { justify-self: start; font-size: .72rem; font-weight: 500; }
+.usage-axis-row { align-self: center; justify-self: end; padding: 0 6px 0 0; }
+.usage-cell { display: flex; flex-direction: column; gap: 8px; min-height: 84px; padding: 10px 12px; border-radius: 12px; background: #f4f7f5; }
+.usage-cell.corner { background: #e9f2ec; }
+.usage-cell.empty { background: transparent; border: 1px dashed var(--line); }
+.usage-cell-name { color: var(--muted); font-size: .74rem; font-weight: 650; }
+.usage-cell.corner .usage-cell-name { color: #2f5a44; }
+.usage-cell.empty .usage-cell-name { color: #b3bcb7; }
+.usage-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.usage-chip { padding: 4px 10px; border: 1px solid #cfd8d3; border-radius: 999px; background: #fff; color: var(--ink); font-size: .82rem; white-space: nowrap; cursor: pointer; }
+.usage-chip:hover { border-color: var(--brand); }
+.usage-chip.active { border-color: var(--brand); background: var(--brand); color: #fff; font-weight: 700; }
+.usage-chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+@media (max-width: 600px) {
+  .usage-grid { gap: 4px; }
+  .usage-axis { font-size: .74rem; }
+  .usage-axis-corner { font-size: .62rem; }
+  .usage-axis-row { padding-right: 2px; }
+  .usage-cell { min-height: 64px; padding: 6px; gap: 5px; }
+  .usage-cell-name { font-size: .66rem; white-space: nowrap; }
+  /* 좁은 화면에서는 위·옆 축 이름으로 충분하므로 모서리·가운데 칸 이름만 남긴다. */
+  .usage-cell.edge .usage-cell-name { display: none; }
+  .usage-chips { gap: 4px; }
+  .usage-chip { padding: 2px 7px; font-size: .7rem; }
+}
 
 /* 연령대 지도: 이웃한 연령대 차이 중 가장 큰 쌍 강조 */
 .insight-distance-track > span.is-largest { background: var(--brand); }

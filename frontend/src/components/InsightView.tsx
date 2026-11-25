@@ -1,18 +1,13 @@
-import { useState } from 'react';
-import { CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, usePlotArea, useXAxisScale, useYAxisScale } from 'recharts';
+import { Fragment, useState } from 'react';
 import { insightSections, type Age, type InsightsDocument, type Spotlight } from '../api/insights';
 import { InsightTable } from './InsightTable';
-import { formatNumber as pretty, niceAxis } from '../api/numbers';
+import { formatNumber as pretty } from '../api/numbers';
 import RatioBars from './RatioBars';
 import PatternMap from './PatternMap';
 import AdjacentGaps from './AdjacentGaps';
 
 type Report = InsightsDocument['insights'];
 type Section = typeof insightSections[number]['id'];
-// 자주·오래 산점도: 강조 연령대는 연령대 색 대신 브랜드 초록 하나로 고정한다.
-// 가운데 연령대 색은 회색빛이라 다른 점과 구분되지 않았다. 나머지 점은 옅은 회색으로 낮춰 대비를 키운다.
-const neutral = '#c3ccc7';
-const highlight = '#006c48';
 
 export default function InsightView({ id, document, expanded = false }: { id: Section; document: InsightsDocument; expanded?: boolean }) {
   const { insights, age_groups: ages } = document;
@@ -41,6 +36,13 @@ function AgeSelect({ ages, value, onChange }: { ages: Age[]; value: string; onCh
 type FrequencyData = Report['frequency_duration']['chart_data'];
 type FrequencyPoint = FrequencyData['points'][number] & { name: string };
 
+// 분류판 칸 순서. 세로는 이용일수(위가 자주), 가로는 이용시간(오른쪽이 오래). 값은 파이프라인의 days_level·time_level(-1·0·1)이다.
+const DAY_LEVELS = [1, 0, -1] as const;
+const TIME_LEVELS = [-1, 0, 1] as const;
+const DAY_NAMES: Record<number, string> = { 1: '자주', 0: '일수 평균', [-1]: '가끔' };
+const TIME_NAMES: Record<number, string> = { 1: '오래', 0: '시간 평균', [-1]: '짧게' };
+const cellName = (days: number, time: number) => days === 0 && time === 0 ? '평균 수준' : `${DAY_NAMES[days]}·${TIME_NAMES[time]}`;
+
 function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: Age[]; focus: Spotlight | null }) {
   const [code, setCode] = useState('');
   const [age, setAge] = useState('');
@@ -48,18 +50,17 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
   const picked = choices.find(item => item.minor_code === code)
     ?? choices.find(item => item.minor_code === focus?.minor_code) ?? choices[0];
   const activeCode = picked?.minor_code;
-  const points = data.points.filter(point => point.minor_code === activeCode).map(point => ({
+  const points: FrequencyPoint[] = data.points.filter(point => point.minor_code === activeCode).map(point => ({
     ...point, name: ages.find(age => age.id === point.age_group)?.label ?? point.age_group,
   }));
-  const thresholds = activeCode ? data.thresholds[activeCode] : null;
-  if (!picked || !thresholds || !points.length) return <p>두 지표에서 연령대별 이용 방식이 갈린 카테고리가 없어요.</p>;
+  if (!picked || !points.length) return <p>두 지표에서 연령대별 이용 방식이 갈린 카테고리가 없어요.</p>;
   const active = points.find(point => point.age_group === age)
     ?? (focus && picked.minor_code === focus.minor_code ? points.find(point => point.age_group === focus.age_group) : undefined)
     ?? points.find(point => point.days_level && point.time_level) ?? points[0];
   const activeAge = active.age_group;
-  const others = points.filter(point => point.age_group !== activeAge);
-  const xAxis = niceAxis([thresholds.days * (1 + data.band), ...points.map(point => point.days)], '일');
-  const yAxis = niceAxis([thresholds.minutes * (1 + data.band), ...points.map(point => point.minutes)], '분');
+  const inCell = (days: number, time: number) => points.filter(point => point.days_level === days && point.time_level === time);
+  const summary = DAY_LEVELS.flatMap(days => TIME_LEVELS.map(time => [cellName(days, time), inCell(days, time)] as const))
+    .filter(([, rows]) => rows.length).map(([name, rows]) => `${name}: ${rows.map(row => row.name).join(', ')}`).join('. ');
 
   return <>
     <div className="insight-selects">
@@ -70,62 +71,29 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
     </div>
     {choices.length < data.switching_count &&
       <p className="insight-caption">전체 카테고리 목록을 보려면 분석 결과를 다시 만들어 주세요.</p>}
-    <p className="insight-caption">점선은 {picked.minor_name}의 여섯 연령대 평균이에요. 평균 대비 ±{pretty(data.band, 'ratio')} 안쪽은 평균 수준으로 봐요.</p>
+    <p className="insight-caption">기준은 {picked.minor_name}의 여섯 연령대 평균이에요. 평균 대비 ±{pretty(data.band, 'ratio')} 안쪽은 평균 수준으로 봐요.</p>
     <p className="insight-caption" aria-live="polite"><strong>{picked.minor_name} · {active.name}</strong> · {active.quadrant}</p>
-    <div className="insight-scatter" role="img" aria-label={`${picked.minor_name}의 연령대별 이용일수와 이용시간 산점도. 강조 연령대는 ${active.name}.`}>
-      <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 10, right: 88, bottom: 8, left: 0 }}>
-          <CartesianGrid strokeDasharray="2 6" />
-          <XAxis type="number" dataKey="days" name="월평균 이용일수" {...xAxis} />
-          <YAxis type="number" dataKey="minutes" name="일평균 이용시간" width={63} {...yAxis} />
-          <ReferenceArea x1={thresholds.days * (1 - data.band)} x2={thresholds.days * (1 + data.band)} fill="#74968a" fillOpacity={0.13} />
-          <ReferenceArea y1={thresholds.minutes * (1 - data.band)} y2={thresholds.minutes * (1 + data.band)} fill="#74968a" fillOpacity={0.13} />
-          <ReferenceLine x={thresholds.days} stroke="#6c8076" strokeDasharray="5 3" />
-          <ReferenceLine y={thresholds.minutes} stroke="#6c8076" strokeDasharray="5 3" />
-          <Tooltip labelFormatter={(_, entries) => entries[0]?.payload?.name ?? ''}
-            formatter={(value, name) => [pretty(typeof value === 'number' ? value : null, name === '월평균 이용일수' ? '일' : '분'), name]} />
-          <Scatter data={others} fill={neutral} isAnimationActive={false} />
-          {/* 강조 점은 마지막에 그려 다른 점 위에 오게 하고, 조금 크게·흰 테두리로 겹쳐도 보이게 한다. */}
-          <Scatter data={[active]} isAnimationActive={false} shape={(props: unknown) => {
-            const { cx, cy } = props as { cx?: number; cy?: number };
-            return cx == null || cy == null ? <g /> : <circle cx={cx} cy={cy} r={7} fill={highlight} stroke="#fff" strokeWidth={2} />;
-          }} />
-          <FrequencyAgeLabels points={points} activeAge={activeAge} activeColor={highlight} />
-        </ScatterChart>
-      </ResponsiveContainer>
+    {/* 산점도 대신 이용 방식 분류판: 연령대가 어느 칸(자주·오래, 가끔·짧게 …)에 속하는지 바로 읽히게 한다. */}
+    <div className="usage-grid" role="group" aria-label={`${picked.minor_name} 연령대별 이용 방식. ${summary}`}>
+      <span className="usage-axis usage-axis-corner" aria-hidden="true">일수 ↓ 시간 →</span>
+      {TIME_LEVELS.map(time => <span key={time} className="usage-axis" aria-hidden="true">{time === 0 ? '평균' : TIME_NAMES[time]}</span>)}
+      {DAY_LEVELS.map(days => <Fragment key={days}>
+        <span className="usage-axis usage-axis-row" aria-hidden="true">{days === 0 ? '평균' : DAY_NAMES[days]}</span>
+        {TIME_LEVELS.map(time => {
+          const rows = inCell(days, time);
+          const kind = days && time ? 'corner' : days || time ? 'edge' : 'center';
+          return <div key={time} className={`usage-cell ${kind}${rows.length ? '' : ' empty'}`}>
+            <span className="usage-cell-name">{cellName(days, time)}</span>
+            <div className="usage-chips">{rows.map(row => <button key={row.age_group} type="button"
+              className={row.age_group === activeAge ? 'usage-chip active' : 'usage-chip'}
+              aria-pressed={row.age_group === activeAge} onClick={() => setAge(row.age_group)}>{row.name}</button>)}</div>
+          </div>;
+        })}
+      </Fragment>)}
     </div>
     <InsightTable headings={['연령대', '월평균 이용일수', '일평균 이용시간', '판정', '비교 기간']}
       rows={points.map(point => [point.name, pretty(point.days, '일'), pretty(point.minutes, '분'), point.quadrant, pretty(point.common_months.length, '개월')])} />
   </>;
-}
-
-function FrequencyAgeLabels({ points, activeAge, activeColor }: { points: FrequencyPoint[]; activeAge: string; activeColor: string }) {
-  const plot = usePlotArea();
-  const scaleX = useXAxisScale();
-  const scaleY = useYAxisScale();
-  if (!plot || !scaleX || !scaleY) return null;
-  const labels = points.flatMap(point => {
-    const x = scaleX(point.days);
-    const y = scaleY(point.minutes);
-    return x == null || y == null ? [] : [{ ...point, x, y }];
-  }).sort((first, second) => first.y - second.y);
-
-  // 점이 붙어 있어도 연령대 글자가 겹치지 않도록 오른쪽 여백에 순서대로 배치한다.
-  const spacing = 18;
-  const right = plot.x + plot.width;
-  let previousY = plot.y - spacing + 7;
-  return <g className="insight-scatter-labels" aria-hidden="true">
-    {labels.map(({ age_group, name, x, y }, index) => {
-      const bottom = plot.y + plot.height - 7 - (labels.length - 1 - index) * spacing;
-      const labelY = Math.min(Math.max(y, previousY + spacing), bottom);
-      previousY = labelY;
-      const active = age_group === activeAge;
-      return <g key={age_group} className={active ? 'active' : undefined}>
-        <path d={`M ${x + 5} ${y} H ${right + 1} L ${right + 9} ${labelY}`} stroke={active ? activeColor : neutral} />
-        <text x={right + 13} y={labelY} dominantBaseline="central">{name}</text>
-      </g>;
-    })}
-  </g>;
 }
 
 function Signatures({ data, ages, expanded, focus }: { data: Report['common_signature']['chart_data']; ages: Age[]; expanded: boolean; focus: Spotlight | null }) {
