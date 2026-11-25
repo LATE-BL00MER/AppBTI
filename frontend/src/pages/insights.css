@@ -36,7 +36,7 @@
 .insight-scatter-labels { pointer-events: none; }
 .insight-scatter-labels path { fill: none; stroke-width: 1; opacity: .65; }
 .insight-scatter-labels text { fill: var(--muted); font-size: 12px; }
-.insight-scatter-labels .active text { fill: var(--ink); font-weight: 750; }
+.insight-scatter-labels .active text { fill: var(--brand); font-weight: 750; }
 .insight-scatter-labels .active path { stroke-width: 1.5; opacity: 1; }
 .insight-distance-list { display: grid; gap: 7px; margin: 12px 0; }
 .insight-distance-row { display: grid; grid-template-columns: minmax(65px, 1.1fr) minmax(65px, 2fr) 48px; align-items: center; gap: 8px; font-size: .83rem; }

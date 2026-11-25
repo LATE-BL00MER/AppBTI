@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { CartesianGrid, Cell, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, usePlotArea, useXAxisScale, useYAxisScale } from 'recharts';
-import { ageColor } from '../ageColors';
+import { CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, usePlotArea, useXAxisScale, useYAxisScale } from 'recharts';
 import { insightSections, type Age, type InsightsDocument, type Spotlight } from '../api/insights';
 import { InsightTable } from './InsightTable';
 import { formatNumber as pretty, niceAxis } from '../api/numbers';
@@ -10,7 +9,10 @@ import AdjacentGaps from './AdjacentGaps';
 
 type Report = InsightsDocument['insights'];
 type Section = typeof insightSections[number]['id'];
-const neutral = '#a2afa9';
+// 자주·오래 산점도: 강조 연령대는 연령대 색 대신 브랜드 초록 하나로 고정한다.
+// 가운데 연령대 색은 회색빛이라 다른 점과 구분되지 않았다. 나머지 점은 옅은 회색으로 낮춰 대비를 키운다.
+const neutral = '#c3ccc7';
+const highlight = '#006c48';
 
 export default function InsightView({ id, document, expanded = false }: { id: Section; document: InsightsDocument; expanded?: boolean }) {
   const { insights, age_groups: ages } = document;
@@ -42,7 +44,6 @@ type FrequencyPoint = FrequencyData['points'][number] & { name: string };
 function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: Age[]; focus: Spotlight | null }) {
   const [code, setCode] = useState('');
   const [age, setAge] = useState('');
-  const [query, setQuery] = useState('');
   const choices = data.switching ?? data.top_switching;
   const picked = choices.find(item => item.minor_code === code)
     ?? choices.find(item => item.minor_code === focus?.minor_code) ?? choices[0];
@@ -56,23 +57,17 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
     ?? (focus && picked.minor_code === focus.minor_code ? points.find(point => point.age_group === focus.age_group) : undefined)
     ?? points.find(point => point.days_level && point.time_level) ?? points[0];
   const activeAge = active.age_group;
-  const activeColor = ageColor(ages.findIndex(item => item.id === activeAge));
-  const term = query.trim().toLocaleLowerCase('ko-KR');
-  const filtered = choices.filter(item => `${item.minor_name} ${item.major}`.toLocaleLowerCase('ko-KR').includes(term));
+  const others = points.filter(point => point.age_group !== activeAge);
   const xAxis = niceAxis([thresholds.days * (1 + data.band), ...points.map(point => point.days)], '일');
   const yAxis = niceAxis([thresholds.minutes * (1 + data.band), ...points.map(point => point.minutes)], '분');
 
   return <>
     <div className="insight-selects">
-      <label>카테고리 검색<input type="search" value={query} onChange={event => setQuery(event.target.value)} /></label>
-      <label>카테고리 선택<select value={picked.minor_code} disabled={!filtered.length} onChange={event => setCode(event.target.value)}>
-        {!filtered.some(item => item.minor_code === picked.minor_code) &&
-          <option value={picked.minor_code} disabled>{picked.minor_name} (현재 선택)</option>}
-        {filtered.map(item => <option key={item.minor_code} value={item.minor_code}>{item.minor_name}</option>)}
+      <label>카테고리 선택<select value={picked.minor_code} onChange={event => setCode(event.target.value)}>
+        {choices.map(item => <option key={item.minor_code} value={item.minor_code}>{item.minor_name}</option>)}
       </select></label>
       <AgeSelect ages={ages} value={activeAge} onChange={setAge} />
     </div>
-    {term && <p className="insight-caption" role="status">{filtered.length ? `검색 결과 ${pretty(filtered.length, '개')}` : '검색한 이름과 맞는 카테고리가 없어요.'}</p>}
     {choices.length < data.switching_count &&
       <p className="insight-caption">전체 카테고리 목록을 보려면 분석 결과를 다시 만들어 주세요.</p>}
     <p className="insight-caption">점선은 {picked.minor_name}의 여섯 연령대 평균이에요. 평균 대비 ±{pretty(data.band, 'ratio')} 안쪽은 평균 수준으로 봐요.</p>
@@ -89,9 +84,13 @@ function FrequencyDuration({ data, ages, focus }: { data: FrequencyData; ages: A
           <ReferenceLine y={thresholds.minutes} stroke="#6c8076" strokeDasharray="5 3" />
           <Tooltip labelFormatter={(_, entries) => entries[0]?.payload?.name ?? ''}
             formatter={(value, name) => [pretty(typeof value === 'number' ? value : null, name === '월평균 이용일수' ? '일' : '분'), name]} />
-          <Scatter data={points} isAnimationActive={false}>{points.map(point => <Cell key={point.age_group}
-            fill={point.age_group === activeAge ? activeColor : neutral} />)}</Scatter>
-          <FrequencyAgeLabels points={points} activeAge={activeAge} activeColor={activeColor} />
+          <Scatter data={others} fill={neutral} isAnimationActive={false} />
+          {/* 강조 점은 마지막에 그려 다른 점 위에 오게 하고, 조금 크게·흰 테두리로 겹쳐도 보이게 한다. */}
+          <Scatter data={[active]} isAnimationActive={false} shape={(props: unknown) => {
+            const { cx, cy } = props as { cx?: number; cy?: number };
+            return cx == null || cy == null ? <g /> : <circle cx={cx} cy={cy} r={7} fill={highlight} stroke="#fff" strokeWidth={2} />;
+          }} />
+          <FrequencyAgeLabels points={points} activeAge={activeAge} activeColor={highlight} />
         </ScatterChart>
       </ResponsiveContainer>
     </div>
