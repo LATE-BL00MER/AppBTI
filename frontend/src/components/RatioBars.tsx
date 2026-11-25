@@ -14,7 +14,7 @@ export default function RatioBars({ rows, label }: { rows: RatioRow[]; label: st
       return <div className="ratio-row" key={row.id}>
         <span>{row.label}</span><span className="ratio-track" aria-hidden="true">
           {row.value === 0 && <span className="ratio-zero" title="관측값이 0인 항목" />}
-          {end != null && <i className={row.highlight ? 'highlight' : ''}
+          {end != null && <i className={[row.highlight ? 'highlight' : '', end < 50 ? 'below' : ''].filter(Boolean).join(' ') || undefined}
             style={{ left: `${Math.min(end, 50)}%`, width: `${Math.abs(end - 50)}%` }} />}
         </span><strong>{formatNumber(row.value, '배')}</strong>
       </div>;

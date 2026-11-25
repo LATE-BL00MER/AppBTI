@@ -6,6 +6,7 @@ import { InsightTable } from './InsightTable';
 import { formatNumber as pretty, niceAxis } from '../api/numbers';
 import RatioBars from './RatioBars';
 import PatternMap from './PatternMap';
+import AdjacentGaps from './AdjacentGaps';
 
 type Report = InsightsDocument['insights'];
 type Section = typeof insightSections[number]['id'];
@@ -15,7 +16,16 @@ export default function InsightView({ id, document, expanded = false }: { id: Se
   const { insights, age_groups: ages } = document;
   const focus = document.spotlights[id];
   if (!expanded && !focus) return null;
-  if (id === 'generation_map') return <PatternMap map={insights.generation_map.chart_data} ages={ages} compact={!expanded} focusAge={focus?.age_group} />;
+  if (id === 'generation_map') {
+    const map = insights.generation_map.chart_data;
+    // 헤드라인은 이웃한 연령대 쌍을 비교하므로 그래프도 같은 기준을 먼저 보여 준다. 산출물에 쌍 정보가 없으면 예전 그래프를 쓴다.
+    if (!map.adjacent?.length) return <PatternMap map={map} ages={ages} compact={!expanded} focusAge={focus?.age_group} />;
+    return <>
+      <AdjacentGaps map={map} ages={ages} />
+      {expanded && <><h4 className="insight-subheading">연령대를 골라 가까운 순서 보기</h4>
+        <PatternMap map={map} ages={ages} focusAge={focus?.age_group} /></>}
+    </>;
+  }
   if (id === 'frequency_duration') return <FrequencyDuration data={insights.frequency_duration.chart_data} ages={ages} focus={focus} />;
   return <Signatures data={insights.common_signature.chart_data} ages={ages} expanded={expanded} focus={focus} />;
 }

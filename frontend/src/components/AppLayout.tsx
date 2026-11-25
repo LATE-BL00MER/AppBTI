@@ -2,12 +2,16 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useApp } from '../state';
 import { ErrorNotice, Loading } from './Common';
+import { useScrollReveal } from './useScrollReveal';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { meta, error, reload, draft, changeDataset } = useApp();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useScrollReveal(pathname, pathname !== '/survey');
+  // 새로고침했을 때 브라우저가 이전 스크롤 위치를 복원하면 화면이 중간에서 시작하므로, 항상 맨 위에서 시작한다.
+  useEffect(() => { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; }, []);
   useEffect(() => { window.scrollTo(0, 0); document.title = `${({ '/': '인사이트 요약', '/insights': '인사이트 리포트', '/explore/age': '연령대별 탐색', '/survey': '내 위치 찍어보기', '/result': '나의 패턴 리포트', '/explore': '분야별 탐색', '/patterns': '분야별 연령대 패턴', '/data': '데이터 안내' } as Record<string, string>)[pathname] || '페이지 안내'} | AppBTI`; }, [pathname]);
   return (
     <div className="app-shell">

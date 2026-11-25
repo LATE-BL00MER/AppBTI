@@ -86,3 +86,7 @@
 }
 .insight-limit-heading { margin-top: 18px; font-size: 15px; color: var(--brand); }
 .explore-extra { margin-top: 16px; }
+
+/* 연령대 지도: 이웃한 연령대 차이 중 가장 큰 쌍 강조 */
+.insight-distance-track > span.is-largest { background: var(--brand); }
+.insight-subheading { margin: 20px 0 4px; font-size: 15px; }
