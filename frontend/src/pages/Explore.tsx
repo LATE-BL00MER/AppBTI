@@ -27,15 +27,14 @@ export default function Explore() {
   const [params, setParams] = useSearchParams();
   const [monthChoice, setMonth] = useState('');
   const [major, setMajor] = useState('');
-  const [search, setSearch] = useState('');
   const [age, setAge] = useState(params.get('age') ?? '');
   const startMetric = params.get('metric');
   const [metricChoice, setMetric] = useState<Metric>(startMetric === 'ageShare' || startMetric === 'avgDailyTime' ? startMetric : 'avgDays');
   const month = monthChoice || meta?.months.at(-1) || '';
-  const query = search.trim().toLocaleLowerCase('ko');
   const catalog = meta?.minorCategories ?? [];
   const majors = [...(meta?.majorCategories ?? [])].sort(byName);
-  const filtered = catalog.filter(item => (!major || item.major === major) && item.name.toLocaleLowerCase('ko').includes(query))
+  // 카테고리 목록은 대분류 버튼으로만 좁힌다(검색 입력칸은 #51에서 뺐다).
+  const filtered = catalog.filter(item => !major || item.major === major)
     .sort((a, b) => byName(a.major, b.major) || byName(a.name, b.name) || a.code.localeCompare(b.code));
   const requested = params.get('minor');
   const minor = filtered.find(item => item.code === requested)
@@ -94,10 +93,9 @@ export default function Explore() {
         {majors.map(name => <button key={name} type="button" aria-pressed={major === name} onClick={() => setMajor(name)}>{name}</button>)}
       </div>
       <div className="insight-selects">
-        <label>카테고리 검색<input type="search" value={search} onChange={event => setSearch(event.target.value)} /></label>
         <label>카테고리<select value={minor?.code ?? ''} disabled={!minor} onChange={event =>
           setParams(current => { const next = new URLSearchParams(current); next.set('minor', event.target.value); return next; })}>
-          {!minor && <option value="">검색 결과 없음</option>}
+          {!minor && <option value="">선택할 카테고리 없음</option>}
           {majors.map(name => {
             const options = filtered.filter(item => item.major === name);
             return options.length > 0 && <optgroup key={name} label={name}>{options.map(item =>
@@ -106,7 +104,7 @@ export default function Explore() {
         </select></label>
       </div>
     </section>
-    {!minor ? <p>검색 조건에 맞는 서비스가 없어요.</p> : <section className="explore-main">
+    {!minor ? <p>이 분야에서 살펴볼 카테고리가 없어요.</p> : <section className="explore-main">
       <div className="explore-title"><div><span className="context-label">{minor.major}</span><h2>{minor.name}</h2><p>{minor.description}</p></div>
         <Link className="text-link" to={`/patterns?${new URLSearchParams({ major: minor.major, minor: minor.code, age: chosenAge ?? '' })}`}>{minor.major} 분야 연령대 패턴 더 보기 ↗</Link></div>
       <div className="metric-tabs" role="group" aria-label="비교 지표">
