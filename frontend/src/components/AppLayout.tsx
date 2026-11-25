@@ -12,7 +12,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   useScrollReveal(pathname, pathname !== '/survey');
   // 새로고침했을 때 브라우저가 이전 스크롤 위치를 복원하면 화면이 중간에서 시작하므로, 항상 맨 위에서 시작한다.
   useEffect(() => { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; }, []);
-  useEffect(() => { window.scrollTo(0, 0); document.title = `${({ '/': '인사이트 요약', '/insights': '인사이트 리포트', '/explore/age': '연령대별 탐색', '/survey': '내 위치 찍어보기', '/result': '나의 패턴 리포트', '/explore': '분야별 탐색', '/patterns': '분야별 연령대 패턴', '/data': '데이터 안내' } as Record<string, string>)[pathname] || '페이지 안내'} | AppBTI`; }, [pathname]);
+  useEffect(() => { window.scrollTo(0, 0); document.title = `${({ '/': '인사이트 요약', '/insights': '인사이트 리포트', '/explore/age': '연령대별 탐색', '/survey': '내 습관 비교하기', '/result': '나의 패턴 리포트', '/explore': '분야별 탐색', '/patterns': '분야별 연령대 패턴', '/data': '데이터 안내' } as Record<string, string>)[pathname] || '페이지 안내'} | AppBTI`; }, [pathname]);
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">본문으로 바로가기</a>
@@ -25,7 +25,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <NavLink to="/explore/age">연령대별 탐색</NavLink>
           <NavLink to="/explore" end>분야별 탐색</NavLink>
           <NavLink to="/data">데이터 안내</NavLink>
-          {meta?.comparisonEnabled && <NavLink to="/survey">내 위치 찍어보기</NavLink>}
+          {meta?.comparisonEnabled && <NavLink to="/survey">내 습관 비교하기</NavLink>}
         </nav>
       </div></header>
       <main id="main" tabIndex={-1}>{error ? <div className="container page"><ErrorNotice message={error} retry={reload} />{draft.dataset !== 'basic' && <button className="text-link" onClick={() => changeDataset('basic')}>기본 데이터로 돌아가기</button>}</div> : !meta ? <div className="container"><Loading /></div> : children}</main>

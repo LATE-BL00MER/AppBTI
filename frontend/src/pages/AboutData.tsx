@@ -26,6 +26,6 @@ export default function AboutData() {
         <article><h3>평균 대비 이용일수</h3><p>해당 연령대의 월평균 이용일수를 같은 서비스의 이용자 전체 평균 일수로 나눈 값입니다.</p></article>
       </div>
     </section>
-    <div className="data-bottom"><p>이제 직접 패턴을 살펴볼까요?</p><Link to="/survey" className="button primary">내 위치 찍어보기</Link><Link to="/explore" className="button secondary">분야별 탐색</Link></div>
+    <div className="data-bottom"><p>이제 직접 패턴을 살펴볼까요?</p><Link to="/survey" className="button primary">내 습관 비교하기</Link><Link to="/explore" className="button secondary">분야별 탐색</Link></div>
   </div>;
 }

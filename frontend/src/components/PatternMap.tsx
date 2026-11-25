@@ -2,12 +2,13 @@ import { useState } from 'react';
 import type { Age, AgeMap } from '../api/insights';
 import { ageColor } from '../ageColors';
 import { formatNumber } from '../api/numbers';
-import { withJosa } from './Common';
+import { keepTogether, withJosa } from './Common';
 
 /** 고른 연령대 기준 문장. 아래 막대(가까운 순서)와 같은 내용을 말한다. */
 export function ageMapSentence(map: AgeMap, ages: Age[], age: string): string | null {
   if (!map.distance_matrix || !map.age_order.includes(age)) return null;
-  const name = (id: string) => ages.find(item => item.id === id)?.label ?? id;
+  // '20대 미만', '60대 이상'이 줄 끝에서 갈라지지 않게 붙여 쓴다.
+  const name = (id: string) => keepTogether(ages.find(item => item.id === id)?.label ?? id);
   const row = map.distance_matrix[map.age_order.indexOf(age)];
   const ranks = map.age_order.flatMap((other, i) => other === age ? [] : [{ other, distance: row[i] }])
     .sort((a, b) => a.distance - b.distance);
@@ -19,8 +20,10 @@ export function ageMapSentence(map: AgeMap, ages: Age[], age: string): string | 
   return `${withJosa(name(age), '와', '과')} 가장 가까운 연령대는 ${name(closest)}, 가장 먼 연령대는 ${withJosa(name(farthest), '예요', '이에요')}.${tie}`;
 }
 
-export default function PatternMap({ map, ages, matches = [], compact = false, focusAge, overall, explanation }: {
+export default function PatternMap({ map, ages, matches = [], compact = false, focusAge, overall, explanation, hideCaption = false }: {
   map: AgeMap; ages: Age[]; matches?: string[]; compact?: boolean; focusAge?: string;
+  /** 홈 카드처럼 바깥에서 설명 문장을 따로 그릴 때 */
+  hideCaption?: boolean;
   /** 리포트에서: 전체 데이터 기준 문장(이웃 연령대 중 차이가 가장 큰 쌍)과 막대 설명 */
   overall?: string; explanation?: string;
 }) {
@@ -40,7 +43,7 @@ export default function PatternMap({ map, ages, matches = [], compact = false, f
     ? '근소' : rank === ranks.length - 1 ? '가장 멂' : '';
 
   return <div className="insight-map">
-    {compact && <p className="insight-caption">{name(selected)} 기준 · 막대가 짧을수록 가까워요.</p>}
+    {compact && !hideCaption && <p className="insight-caption">{name(selected)} 기준 · 막대가 짧을수록 가까워요.</p>}
     {!compact && <p className="insight-headline" aria-live="polite">{ageMapSentence(map, ages, selected)}</p>}
     {!compact && explanation && <p className="insight-caption">{explanation}</p>}
     {!compact && <label>기준 연령대<select value={selected} onChange={event => setChosen(event.target.value)}>
