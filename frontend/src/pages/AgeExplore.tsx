@@ -48,14 +48,15 @@ function AgeRanks({ data, age, label, includeOther, onToggle }: {
       <h2>{label}에서 두드러지는 서비스</h2>
       <RelativeUsageNote />
       <label><input type="checkbox" checked={includeOther} onChange={event => onToggle(event.target.checked)} /> 기타 분류 포함</label>
-      {top.length || bottom.length ? <div className="rank-split">
+      {/* key: 연령대·기타 포함을 바꿀 때마다 막대를 새로 그려 다시 차오르게 한다. */}
+      {top.length || bottom.length ? <div className="rank-split" key={`${age}-${includeOther}`}>
         <RankList title="더 두드러지는 TOP 10" hint="여섯 연령대 평균보다 높은 순" tone="more" rows={top} reach={reach} link={link} />
         <RankList title="덜 두드러지는 TOP 10" hint="여섯 연령대 평균보다 낮은 순" tone="less" rows={bottom} reach={reach} link={link} />
       </div> : <p>비교 가능한 서비스가 없어요.</p>}
     </section>
     <section className="insight-card insight-report-card"><h2>대분류별 요약</h2>
       <p>비교 가능한 서비스의 상대적 두드러짐을 분야별로 요약했어요.</p>
-      {majorRows.length ? <RatioBars label="대분류별 상대적 두드러짐" rows={majorRows} /> : <p>요약할 값이 없어요.</p>}
+      {majorRows.length ? <RatioBars key={`${age}-${includeOther}`} label="대분류별 상대적 두드러짐" rows={majorRows} /> : <p>요약할 값이 없어요.</p>}
     </section>
   </>;
 }

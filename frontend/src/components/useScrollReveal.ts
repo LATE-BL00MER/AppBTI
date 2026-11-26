@@ -8,6 +8,8 @@ const TARGETS = 'main section:not(#findings):not(.home-findings), main .insight-
 const STEP_MS = 110;
 // 블록 윗부분이 화면 아래쪽 88% 지점을 넘으면 나타낸다.
 const TRIGGER = 0.88;
+// 등장 지연(최대 440ms)+차트 지연(250ms)+차트 시간(1.4s)이 끝난 뒤
+const SETTLE_MS = 2500;
 
 export function useScrollReveal(key: string, enabled = true) {
   useEffect(() => {
@@ -26,6 +28,8 @@ export function useScrollReveal(key: string, enabled = true) {
         if (element.getBoundingClientRect().top > window.innerHeight * TRIGGER) continue;
         element.style.setProperty('--reveal-delay', `${Math.min(order++, 4) * STEP_MS}ms`);
         element.classList.add('is-visible');
+        // 첫 등장이 끝나면 이후 다시 그려지는 차트는 기다리지 않고 바로 차오른다(design.css --chart-delay).
+        window.setTimeout(() => element.classList.add('reveal-settled'), SETTLE_MS);
         pending.delete(element);
       }
     };

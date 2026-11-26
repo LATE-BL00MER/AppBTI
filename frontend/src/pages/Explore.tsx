@@ -104,6 +104,8 @@ export default function Explore() {
   const chartAxis = (values: (number | null)[]) => niceAxis(metric === 'ageShare' ? [100] : values, unit);
   const tooltip = (value: unknown) => formatNumber(typeof value === 'number' ? value : null, unit);
 
+  // 카테고리·지표·기준월이 바뀌면 차트를 새로 그려 다시 차오르게 한다(design.css chart-grow). 강조 연령대만 바꿀 때는 그대로 둔다.
+  const chartKey = `${minor?.code}-${metric}-${month}`;
   return <div className="container explore-page">
     <div className="page-heading"><div><h1>분야별 탐색</h1><p>서비스를 고르고 연령대별 이용 차이를 살펴보세요.</p></div>
       <label className="select-label">기준월<select value={month} onChange={event => setMonth(event.target.value)}>
@@ -149,7 +151,7 @@ export default function Explore() {
             {gapRatio != null && (gapRatio < 1.1 ? ' 연령대 간 차이가 10% 안쪽으로 작은 편이에요.' : ` 가장 많은 연령대가 가장 적은 연령대의 약 ${formatNumber(gapRatio, '배')}예요.`)}
           </p>}
           {/* 값은 막대 위에 직접 표시한다. 스크린리더는 aria-label로 같은 값을 읽는다. */}
-          <div className="chart-wrap" role="img"
+          <div key={chartKey} className="chart-wrap" role="img"
             aria-label={`${minor.name} ${title}: ${bars.map(row => `${row.label} ${formatNumber(row.value, unit)}`).join(', ')}`}>
             <ResponsiveContainer width="100%" height={240}><BarChart data={bars} margin={{ top: 22, right: 4, bottom: 0, left: 0 }} barCategoryGap="30%">
               <CartesianGrid vertical={false} stroke="#e8e8e2" />
@@ -169,18 +171,18 @@ export default function Explore() {
         <section className="month-comparison">
           <h3>{metric === 'ageShare' ? '기준 서비스 대비 구성 지수' : '상대적 두드러짐'}</h3>
           {metric === 'ageShare' ? <p>같은 월·연령대에서 이 서비스의 구성비를 {analysis?.composition_index?.reference.name ?? '기준 서비스'}의 구성비와 견준 값이에요.</p> : <RelativeUsageNote />}
-          {ratioRows.some(row => row.value != null) ? <RatioBars rows={ratioRows} label="연령대별 상대 비교" /> : <p>비교할 수 있는 값이 없어요.</p>}
+          {ratioRows.some(row => row.value != null) ? <RatioBars key={chartKey} rows={ratioRows} label="연령대별 상대 비교" /> : <p>비교할 수 있는 값이 없어요.</p>}
           {metric === 'avgDays' && frequencyRows.some(row => row.value != null) && <details className="insight-table explore-extra">
             <summary>평균 대비 이용일수도 보기</summary>
             <p>이 서비스 이용자 전체의 평균 일수와 각 연령대의 일수를 비교했어요.</p>
-            <RatioBars label="평균 대비 이용일수" rows={frequencyRows} />
+            <RatioBars key={chartKey} label="평균 대비 이용일수" rows={frequencyRows} />
           </details>}
         </section>
       </>}
       <section id="monthly-trend" className="trend-section">
         <h3>{title}의 월별 변화</h3>
         {trend.error ? <ErrorNotice message={trend.error} retry={trend.reload} /> : !trend.data ? <Loading /> : <>
-          <div className="chart-wrap" role="img" aria-label={`${minor.name} ${title} 월별 변화`}>
+          <div key={`${minor.code}-${metric}`} className="chart-wrap" role="img" aria-label={`${minor.name} ${title} 월별 변화`}>
             <ResponsiveContainer width="100%" height={250}><LineChart data={lineData}>
               <CartesianGrid vertical={false} stroke="#e8e8e2" />
               <XAxis dataKey="month" tickFormatter={(value: string) => value.split(' ').at(-1) ?? value} />
