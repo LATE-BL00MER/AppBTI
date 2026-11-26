@@ -347,6 +347,7 @@ function PatternMapCard({ result }: { result: SurveyResult }) {
   });
   return <section className="rs-card rs-map-card" aria-labelledby="map-title">
     <div className="rs-card-head"><h2 id="map-title">응답 패턴 지도</h2><span className="rs-chip">대략적인 위치</span></div>
+    <p className="rs-muted">★에서 가까울수록 응답 패턴이 비슷한 연령대예요. 가까운 순서가 순위와 같고, 가로·세로 방향에는 의미가 없어요.</p>
     <div ref={wrap}>
     <svg className="rs-map" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`나와 6개 연령대의 응답 패턴 지도. 가장 가까운 연령대는 ${result.matches.map(m => m.label).join(', ')}`}>
       {points.filter(p => !p.isUser && (p.id === top || p.id === focus)).map(p =>

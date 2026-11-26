@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 // 페이지에 들어오면 첫 화면 블록이 차례로 올라오고, 스크롤하면 아래 블록이 화면에 들어올 때 나타난다.
 // 데이터가 늦게 그려지는 화면도 있어서 새로 생긴 블록까지 따라가 관찰한다.
-// 설문 화면에는 적용하지 않는다. 움직임 줄이기 설정이 켜져 있으면 CSS에서 이동 없이 서서히 나타나게만 한다.
+// 설문 화면에는 적용하지 않는다(문항이 스크롤 전까지 숨지 않게 survey.css의 진입 애니메이션을 쓴다). 움직임 줄이기 설정이 켜져 있으면 CSS에서 이동 없이 서서히 나타나게만 한다.
 // 카드를 여러 장 담는 큰 묶음(#findings, .home-findings)은 통째로 숨기지 않고 안의 카드가 하나씩 나타나게 한다.
 const TARGETS = 'main section:not(#findings):not(.home-findings), main .insight-card, main .page-heading';
 const STEP_MS = 110;
