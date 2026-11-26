@@ -99,7 +99,8 @@ function AgeExploreBridge({ id, title, explanation, document }: { id: string; ti
     {pick ? <>
       <p className="insight-headline" aria-live="polite">{standoutSentence(pick)}</p>
       <p className="insight-caption">{explanation}</p>
-      <AgeStandout document={document} pick={pick} />
+      {/* key: 연령대를 바꿀 때마다 막대를 새로 그려 다시 차오르게 한다(design.css chart-grow). */}
+      <AgeStandout key={pick.age.id} document={document} pick={pick} />
     </> : <p className="insight-headline">{label}에서 다른 연령대보다 두드러지는 서비스가 없어요.</p>}
     <Link className="button primary" to={`/explore/age?age=${encodeURIComponent(ageId)}`}>{label} 연령대별 탐색으로 이어 보기 →</Link>
   </article>;

@@ -49,7 +49,8 @@ export default function PatternMap({ map, ages, matches = [], compact = false, f
     {!compact && <label>기준 연령대<select value={selected} onChange={event => setChosen(event.target.value)}>
       {map.age_order.map(age => <option key={age} value={age}>{name(age)}</option>)}
     </select></label>}
-    <div className="insight-distance-list" aria-label={`${name(selected)} 기준 이용 패턴 차이. 막대가 짧을수록 가까워요.`}>
+    {/* key: 기준 연령대를 바꿀 때마다 막대를 새로 그려 다시 차오르게 한다(design.css chart-grow). */}
+    <div key={selected} className="insight-distance-list" aria-label={`${name(selected)} 기준 이용 패턴 차이. 막대가 짧을수록 가까워요.`}>
       {ranks.map(({age, distance}, i) => <div className="insight-distance-row" key={age}>
         <span>{formatNumber(i + 1, '위')} · {name(age)}</span>
         <span className="insight-distance-track" aria-hidden="true">
