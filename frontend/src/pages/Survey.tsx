@@ -105,8 +105,8 @@ function SurveyForm({ data, patternSource }: { data: SurveyQuestions; patternSou
 
     {step === 0 && <p className="sv-tip" role="note">
       <span aria-hidden="true">✦</span>
-      <span>정확하지 않아도 괜찮아요. 최근 7일을 떠올리며 가장 가까운 답을 골라 주세요. 쓰지 않는 서비스는 ‘사용 안 함’을 눌러주세요.
-        응답은 이 탭에만 잠시 보관하고 서버에 저장하지 않아요.</span>
+      <span>정확하지 않아도 괜찮아요. 최근 7일 기준으로 가장 가까운 답을 골라 주세요.
+        안 쓰는 서비스는 ‘사용 안 함’을 눌러 주세요. 응답은 서버에 저장하지 않아요.</span>
     </p>}
 
     <div className="sv-questions">
