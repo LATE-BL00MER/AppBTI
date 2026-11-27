@@ -186,7 +186,7 @@ def service_level(value, reference):
 
 def frequency_duration(days, minutes, ages, categories, eligible, preferred_services=frozenset()):
     method = ("중분류별 공통 관측월의 지표 기하평균을 연령대마다 구한 뒤, 같은 서비스의 여섯 연령대 값을 "
-              "동일 가중 평균했습니다. 한 지표라도 평균 대비 ±10% 범위면 분면 전환에서 제외했습니다.")
+              "동일 가중 평균했습니다.\n한 지표라도 평균 대비 ±10% 범위면 분면 전환에서 제외했습니다.")
     points = []
     thresholds = {}
     switching = []

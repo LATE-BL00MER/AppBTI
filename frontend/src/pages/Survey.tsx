@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { request, useData } from '../api/client';
 import type { SurveyAnswer, SurveyQuestion, SurveyQuestions, SurveyRequest, SurveyResult } from '../api/types';
@@ -10,6 +10,34 @@ import './survey.css';
 
 /** 한 파트에 넣는 시간 문항 수. 같은 답 형식끼리 묶고, 길어지면 나눈다. */
 const PART_SIZE = 5;
+
+// 스크롤할 때마다 블록이 다시 나타나게 한다. 화면 밖으로 나간 블록은 숨겨 두고(sv-away),
+// 다시 들어오면 나간 방향에서 올라오거나 내려오며 나타난다. 화면 안에 있는 문항은 숨기지 않는다.
+const SCROLL_TARGETS = '.sv-part-card, .sv-tip, .sv-question, .sv-nav, .sv-tracker';
+
+function useScrollReplay(root: RefObject<HTMLElement | null>, key: unknown) {
+  useEffect(() => {
+    const element = root.current;
+    // 움직임 줄이기 설정이면 숨기지 않는다(design.css가 전환 효과를 끄므로 갑자기 튀어나오게 된다).
+    if (!element || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const targets = [...element.querySelectorAll<HTMLElement>(SCROLL_TARGETS)];
+    const io = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        const target = entry.target as HTMLElement;
+        if (entry.isIntersecting) { target.classList.remove('sv-away'); continue; }
+        // 화면 위로 나갔으면 다시 들어올 때 위에서 내려오게 한다. 위로 올릴 때는 문항 카드만 다시 나타나고,
+        // 안내 카드·버튼 같은 나머지 블록은 숨기지 않는다.
+        const above = entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0);
+        if (above && !target.classList.contains('sv-question')) continue;
+        target.classList.toggle('sv-above', above);
+        target.classList.add('sv-away');
+      }
+    // 아래쪽 10% 안으로 들어와야 나타나고, 그 아래로 내려가면 다시 숨는다.
+    }, { rootMargin: '0px 0px -10% 0px' });
+    targets.forEach(target => io.observe(target));
+    return () => { io.disconnect(); targets.forEach(target => target.classList.remove('sv-away', 'sv-above')); };
+  }, [root, key]);
+}
 
 interface Part { metric: SurveyQuestion['metric']; questions: SurveyQuestion[] }
 
@@ -47,16 +75,19 @@ function SurveyForm({ data, patternSource }: { data: SurveyQuestions; patternSou
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const heading = useRef<HTMLHeadingElement>(null);
-  // 파트가 실제로 바뀌었을 때만 제목으로 스크롤한다. '첫 실행 건너뛰기'는 개발 모드(StrictMode)에서
-  // 효과가 두 번 실행돼 첫 화면부터 아래로 스크롤되는 문제가 있었다.
-  const shownStep = useRef(step);
+  // 파트 이동 버튼을 누를 때마다 화면 맨 위로 올린다(지금 파트를 다시 눌러도 올라간다).
+  // 누른 횟수(jump)가 0이면 건너뛰므로, 개발 모드(StrictMode)에서 효과가 두 번 실행돼도 첫 화면은 움직이지 않는다.
+  const [jump, setJump] = useState(0);
+  const goTo = (index: number) => { setStep(index); setJump(count => count + 1); };
+  const page = useRef<HTMLDivElement>(null);
+  useScrollReplay(page, step);
 
   useEffect(() => {
-    if (shownStep.current === step) return;
-    shownStep.current = step;
+    if (!jump) return;
     heading.current?.focus({ preventScroll: true });
-    heading.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  }, [step]);
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+  }, [jump]);
 
   const ids = new Set(data.questions.map(q => q.id));
   // 문항이 바뀌었을 때 예전 응답이 섞이지 않게, 지금 문항에 있는 응답만 센다.
@@ -81,7 +112,7 @@ function SurveyForm({ data, patternSource }: { data: SurveyQuestions; patternSou
     } finally { setBusy(false); }
   }
 
-  return <div className="sv-page">
+  return <div className="sv-page" ref={page}>
     {patternSource && <Link to={patternSource.path} className="text-link sv-pattern-origin">← 보던 분야로 돌아가기</Link>}
     <div className="sv-progress" aria-label="설문 진행 상황">
       <div className="sv-progress-text">
@@ -128,17 +159,17 @@ function SurveyForm({ data, patternSource }: { data: SurveyQuestions; patternSou
     <nav className="sv-nav" aria-label="파트 이동">
       {step === 0
         ? <Link className="button secondary" to={patternSource?.path ?? '/'}>{patternSource ? '← 보던 분야' : '← 처음으로'}</Link>
-        : <button type="button" className="button secondary" onClick={() => setStep(step - 1)}>← 이전 파트</button>}
+        : <button type="button" className="button secondary" onClick={() => goTo(step - 1)}>← 이전 파트</button>}
       <span className="sv-nav-hint">{isLast ? '답하지 않은 문항은 ‘잘 모르겠음’으로 처리돼요' : `파트 ${step + 1}/${parts.length}`}</span>
       {isLast
         ? <button type="button" className="button primary" disabled={busy} onClick={submit}>{busy ? '결과 준비 중…' : '결과 보기 →'}</button>
-        : <button type="button" className="button primary" onClick={() => setStep(step + 1)}>다음 파트 →</button>}
+        : <button type="button" className="button primary" onClick={() => goTo(step + 1)}>다음 파트 →</button>}
     </nav>
 
     <ol className="sv-tracker" aria-label="파트 목록">
       {parts.map((p, index) => {
         const state = index === step ? '진행 중' : partDone(p) ? '응답 완료' : '대기';
-        return <li key={index}><button type="button" aria-current={index === step ? 'step' : undefined} className={index === step ? 'current' : partDone(p) ? 'done' : ''} onClick={() => setStep(index)}>
+        return <li key={index}><button type="button" aria-current={index === step ? 'step' : undefined} className={index === step ? 'current' : partDone(p) ? 'done' : ''} onClick={() => goTo(index)}>
           <span aria-hidden="true">{p.metric === 'days' ? <CalendarIcon /> : <ClockIcon />}</span>
           <span><strong>{partTitle(p)}</strong><small>{state}</small></span>
         </button></li>;

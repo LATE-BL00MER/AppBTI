@@ -55,7 +55,7 @@ export default function InsightsReport() {
           {id !== 'generation_map' && <><p className="insight-headline">{data.insights[id].headline}</p>
             <p className="insight-caption">{explanations[id]}</p></>}
           <InsightView id={id} document={data} expanded explanation={id === 'generation_map' ? explanations[id] : undefined} />
-          <details className="insight-table"><summary>어떻게 계산했나요?</summary><p>{data.insights[id].method_note}</p></details>
+          <details className="insight-table"><summary>어떻게 계산했나요?</summary><p className="insight-method-note">{data.insights[id].method_note}</p></details>
         </article>)}
     </section>
     <section id="limits" className="insight-story">
