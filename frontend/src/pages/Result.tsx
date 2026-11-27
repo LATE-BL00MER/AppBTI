@@ -161,7 +161,7 @@ function Report({ result, busy, error, onPickAge, patternSource }: {
 
     <details className="rs-card rs-method">
       <summary>결과는 어떻게 계산했나요?</summary>
-      <p>답한 문항만 모아 내 응답 안에서 서비스별 비중을 맞춘 뒤, 6개 연령대 이용자 통계({period})와 같은 방식으로 견줘 가장 가까운 순서를 정했어요. ‘사용 안 함’·‘잘 모르겠음’과 통계가 없는 문항은 비교에서 빼요.</p>
+      <p>답한 문항만 모아 내 응답 안에서 서비스별 비중을 맞춘 뒤, 6개 연령대 이용자 통계({period})와 같은 방식으로 비교해 가장 가까운 순서를 정했어요.<br />‘사용 안 함’·‘잘 모르겠음’과 통계가 없는 문항은 비교에서 빼요.</p>
       <p>스스로 답한 응답과 연령대 통계의 패턴을 비교한 결과예요.</p>
       <Link className="text-link" to="/data">데이터와 비교 기준 알아보기</Link>
     </details>

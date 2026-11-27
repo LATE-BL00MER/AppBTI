@@ -29,11 +29,11 @@ export default function InsightsReport() {
   return <div className="container insight-page insight-report">
     <header className="insight-hero">
       <h1>인사이트 리포트</h1>
-      <p>같은 서비스를 어떤 연령대가 자주 찾고 오래 쓰는지, 월별 집계에서 그 근거를 비교했어요.</p>
+      <p>같은 서비스를 어떤 연령대가 자주 찾고 오래 쓰는지,<br />월별 집계에서 그 근거를 비교했어요.</p>
     </header>
     <section id="data" className="insight-story">
       <h2>어떤 데이터를 봤나요?</h2>
-      {meta && <p>{monthLabel(meta.months[0])}부터 {monthLabel(meta.months.at(-1)!)}까지 {formatNumber(meta.ageGroups.length, '개')} 연령대의 {formatNumber(meta.minorCategories.length, '개')} 카테고리를 살펴봤어요. 월별 이용자 수, 1인당 월평균 이용일수, 1인당 일평균 이용시간을 사용했어요.</p>}
+      {meta && <p>{monthLabel(meta.months[0])}부터 {monthLabel(meta.months.at(-1)!)}까지 {formatNumber(meta.ageGroups.length, '개')} 연령대의 {formatNumber(meta.minorCategories.length, '개')} 카테고리를 살펴봤어요.<br />월별 이용자 수, 1인당 월평균 이용일수, 1인당 일평균 이용시간을 사용했어요.</p>}
       <Source />
     </section>
     <section id="method" className="insight-story">
@@ -62,13 +62,13 @@ export default function InsightsReport() {
       <h2>집계로 어디까지 읽을 수 있나요?</h2>
       <h3 className="insight-limit-heading">선택 설문으로 보완하는 부분</h3>
       <ul>
-        <li>집계는 연령대별 평균이라, 같은 연령대 안에서도 사람마다 습관이 얼마나 다른지는 보이지 않아요.
-          선택 설문은 내 응답을 여섯 연령대의 패턴과 내 연령대 통계에 견줘, 평균 뒤에 가려진 개인 차이를 보여줘요.</li>
+        <li>집계는 연령대별 평균이에요.<br />그래서 같은 연령대 안에서 사람마다 다른 습관은 보이지 않아요.<br />
+          선택 설문은 내 응답을 여섯 연령대의 패턴과 내 연령대 통계에 비교해 그 차이를 보여줘요.</li>
       </ul>
       <h3 className="insight-limit-heading">이번 데이터와 설문으로도 알 수 없는 부분</h3>
       <ul>
-        <li>연령대 전체 인원 자료가 없어, 해당 연령대 전체 중 서비스 이용자가 얼마나 되는지는 알 수 없어요.</li>
-        <li>서비스를 찾은 이유나 여러 서비스를 함께 쓰는 방식은 집계에도, 이용일수·시간을 묻는 설문에도 담기지 않아요.</li>
+        <li>연령대 전체 인원 자료는 없어요.<br />그래서 연령대 전체 중 서비스 이용자가 얼마나 되는지는 알 수 없어요.</li>
+        <li>서비스를 찾은 이유나 여러 서비스를 함께 쓰는 방식은 알 수 없어요.<br />집계와 이용일수·시간을 묻는 설문 모두에 담기지 않아요.</li>
       </ul>
       <Link className="text-link" to="/data">데이터 범위와 비교 기준 보기 ↗</Link>
     </section>
